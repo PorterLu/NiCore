@@ -5,22 +5,24 @@ import chisel3.util._
 import Control._
 
 object Alu {
-	val ALU_ADD = 0.U(4.W)
-	val ALU_SUB = 1.U(4.W)
-	val ALU_AND = 2.U(4.W)
-	val ALU_OR	= 3.U(4.W)
-	val ALU_XOR = 4.U(4.W)
-	val ALU_SLT = 5.U(4.W)
-	val ALU_SLL = 6.U(4.W)
-	val ALU_SLTU = 7.U(4.W)
-	val ALU_SRL	= 8.U(4.W)
-	val ALU_SRA = 9.U(4.W)
-	val ALU_COPY_A = 10.U(4.W)
-	val ALU_COPY_B = 11.U(4.W)
-	val ALU_MUL	= 12.U(4.W)
-	val ALU_DIV = 13.U(4.W)
-	val ALU_REM = 14.U(4.W)
-	val ALU_XXX = 15.U(4.W)
+	val ALU_ADD = 0.U(5.W)
+	val ALU_SUB = 1.U(5.W)
+	val ALU_AND = 2.U(5.W)
+	val ALU_OR	= 3.U(5.W)
+	val ALU_XOR = 4.U(5.W)
+	val ALU_SLT = 5.U(5.W)
+	val ALU_SLL = 6.U(5.W)
+	val ALU_SLTU = 7.U(5.W)
+	val ALU_SRL	= 8.U(5.W)
+	val ALU_SRA = 9.U(5.W)
+	val ALU_COPY_A = 10.U(5.W)
+	val ALU_COPY_B = 11.U(5.W)
+	val ALU_MUL	= 12.U(5.W)
+	val ALU_DIV = 13.U(5.W)
+	val ALU_REM = 14.U(5.W)
+	val ALU_DIVU = 15.U(5.W)
+	val ALU_REMU = 16.U(5.W)
+	val ALU_XXX = 17.U(5.W)
 }
 
 class AluIO(width: Int) extends Bundle{
@@ -62,7 +64,9 @@ class AluSimple(val width: Int) extends Alu {
 			ALU_XOR -> (io.A ^ io.B),
 			ALU_MUL -> (io.A * io.B), 
 			ALU_DIV -> Mux(io.width_type === W_W, ((io.A(31,0).asSInt) / (io.B(31,0).asSInt)).asUInt ,(io.A.asSInt / io.B.asSInt).asUInt),
+			ALU_DIVU -> Mux(io.width_type === W_W, io.A(31,0) / io.B(31,0), io.A / io.B),
 			ALU_REM -> Mux(io.width_type === W_W, ((io.A(31,0).asSInt) % (io.B(31,0).asSInt)).asUInt ,(io.A.asSInt % io.B.asSInt).asUInt),
+			ALU_REMU -> Mux(io.width_type === W_W, io.A(31,0) % io.B(31,0), io.A % io.B),
 			ALU_COPY_A -> io.A
 		)
 	)

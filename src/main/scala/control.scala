@@ -125,9 +125,13 @@ object Control{
 		MUL 	->	List(PC_4,		A_RS1,	B_RS2,	 W_D,	IMM_X,		ALU_MUL,		BR_XXX,		ST_XXX,		LD_XXX,		WB_ALU,		Y,		EX_S),
 		MULW	->	List(PC_4,		A_RS1,	B_RS2,	 W_W,	IMM_X,		ALU_MUL,		BR_XXX,		ST_XXX,		LD_XXX,		WB_ALU,		Y,		EX_S),
 		DIV 	->	List(PC_4,		A_RS1,	B_RS2,	 W_D,	IMM_X,		ALU_DIV,		BR_XXX,		ST_XXX,		LD_XXX,		WB_ALU,		Y,		EX_S),
+		DIVU	->  List(PC_4, 		A_RS1, 	B_RS2,	 W_D,	IMM_X,		ALU_DIVU,		BR_XXX,		ST_XXX,		LD_XXX,		WB_ALU,		Y,		EX_S),
 		DIVW 	-> 	List(PC_4,		A_RS1,	B_RS2,	 W_W,	IMM_X,		ALU_DIV,		BR_XXX,		ST_XXX,		LD_XXX,		WB_ALU,		Y,		EX_S),
+		DIVUW	->	List(PC_4,		A_RS1,	B_RS2,	 W_W,	IMM_X,		ALU_DIVU,		BR_XXX,		ST_XXX,		LD_XXX,		WB_ALU,		Y,		EX_S),
 		REM		->	List(PC_4,		A_RS1,	B_RS2,	 W_D,	IMM_X,		ALU_REM,		BR_XXX,		ST_XXX,		LD_XXX,		WB_ALU,		Y,		EX_S),
+		REMU	->	List(PC_4,		A_RS1,	B_RS2,	 W_D,	IMM_X,		ALU_REMU,		BR_XXX,		ST_XXX,		LD_XXX,		WB_ALU,		Y,		EX_S),
 		REMW	->	List(PC_4,		A_RS1,	B_RS2,	 W_W,	IMM_X,		ALU_REM,		BR_XXX,		ST_XXX,		LD_XXX,		WB_ALU,		Y,		EX_S),
+		REMUW	->  List(PC_4,		A_RS1,	B_RS2,	 W_W,	IMM_X,		ALU_REMU,		BR_XXX,		ST_XXX,		LD_XXX,		WB_ALU,		Y,		EX_S),
 		EBREAK 	->	List(PC_4,		A_XXX,	B_XXX,	 W_D,	IMM_X,		ALU_XXX,		BR_XXX,		ST_XXX,		LD_XXX,		WB_CSR,		N,		EX_S)
 	)
 
