@@ -1,15 +1,15 @@
 [
   {
     "class":"firrtl.transforms.DedupedResult",
-    "original":"~exp7|bcd7",
-    "duplicate":"~exp7|exp7/bcd_1:bcd7",
-    "index":0.3333333333333333
+    "original":"~Datapath|Mem",
+    "duplicate":"~Datapath|Datapath/imem:Mem",
+    "index":0.5
   },
   {
     "class":"firrtl.transforms.DedupedResult",
-    "original":"~exp7|bcd7_1",
-    "duplicate":"~exp7|exp7/bcd_2:bcd7",
-    "index":0.6666666666666666
+    "original":"~Datapath|Mem_1",
+    "duplicate":"~Datapath|Datapath/dmem:Mem",
+    "index":0.625
   },
   {
     "class":"firrtl.EmitCircuitAnnotation",

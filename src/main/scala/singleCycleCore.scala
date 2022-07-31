@@ -1,4 +1,4 @@
-package myCPU
+//package myCPU
 
 import chisel3._
 import chisel3.util._
@@ -7,7 +7,8 @@ import chisel3.experimental._
 import chisel3.util.experimental.loadMemoryFromFile
 import chisel3.stage.ChiselStage
 import chisel3.util.BitPat 
-import Control._
+import myCPU.Control._
+import myCPU.Control
 /*
 object Instructions {
 	//----------------------|-------*****-----***-----*******
@@ -20,7 +21,10 @@ object Instructions {
 	def EBREAK 	= 	BitPat("b00000000000100000000000001110011")
 }*/
 
-import Instructions._
+import myCPU.Instructions._
+import myCPU.AluSimple
+import myCPU.ImmGenWire
+import myCPU.BrCondSimple
 
 class ebreak extends BlackBox with HasBlackBoxInline{
     val io = IO(new Bundle{

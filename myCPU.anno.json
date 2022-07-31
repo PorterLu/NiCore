@@ -1,5 +1,17 @@
 [
   {
+    "class":"firrtl.transforms.DedupedResult",
+    "original":"~myCPU|Mem",
+    "duplicate":"~myCPU|myCPU/datapath:Datapath/imem:Mem",
+    "index":0.4
+  },
+  {
+    "class":"firrtl.transforms.DedupedResult",
+    "original":"~myCPU|Mem_1",
+    "duplicate":"~myCPU|myCPU/datapath:Datapath/dmem:Mem",
+    "index":0.5
+  },
+  {
     "class":"firrtl.EmitCircuitAnnotation",
     "emitter":"firrtl.VerilogEmitter"
   },
