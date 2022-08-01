@@ -141,6 +141,11 @@ class CSR extends Module{
 		val trapVec = Output(UInt(64.W))
 		val stall = Input(Bool())
 		val trap = Output(Bool())
+
+		val fd_enable = Input(Bool())
+		val de_enable = Input(Bool())
+		val em_enable = Input(Bool())
+		val mw_enable = Input(Bool())
 		//val hasInt = Output(Bool())		//输出是否中断
 		//val sepc = Output(Bool())			//输出s模式的exception pc
 		//val mepc = Output(Bool())			//输出m模式的exception pc
@@ -179,9 +184,9 @@ class CSR extends Module{
 	val instret = minstret.asUInt
 
 
-	//														writable				
-	//													readable |
-	val default = 					List(0.U, 			false.B,false.B);
+	//																writable				
+	//														readable |
+	val default = 					List(0.U, 				false.B,false.B);
 	val csrTable = Array(
 		BitPat(CSR_CYCLE)		->	List(cycle, 			true.B,	false.B),
 		BitPat(CSR_INSTRET) 	->	List(instret, 			true.B,	false.B),
@@ -215,38 +220,29 @@ class CSR extends Module{
 		BitPat(CSR_MINSTRET)	->	List(instret,			true.B,	true.B),
 	)
 
-	//从csrTable获取，寄存器中存储的信息，并且得知是否可读可写
-	val data :: (readable: Bool)  :: (writable: Bool) :: Nil = ListLookup(io.r_addr, default, csrTable)
+	//csr这里要处理enable信号用于提示哪些流水寄存器中的信息不可用，下面每一个从io中得到的信息都要进行有效性判断
 
-	//是否满足了读写寄存器的读要求
-	val instValid = MuxLookup(io.r_op, false.B, Seq(
+	//从csrTable获取，寄存器中存储的信息，并且得知是否可读可写
+	val data :: (readable: Bool)  :: (writable: Bool) :: Nil = ListLookup(io.r_addr, default, csrTable)		//读这里不判断有效性，因为不影响之后运行流的处理
+
+	//是否满足了读写寄存器的读要求, 
+	val instValid = MuxLookup(io.r_op, true.B, Seq(
 		R	-> 	readable,
 		W	->	writable,
 		RW	->	(readable && writable),
 		RS	->	(readable && writable),
 		RC	->	(readable && writable)
-	))
-
-
-/*
-	val instValid = MuxLookup(io.csr_cmd, false.B, Seq(
-		CSR_R	-> 	readable,
-		CSR_W	->	writable,
-		CSR_RW	->	(readable && writable),
-		CSR_RS	->	(readable && writable),
-		CSR_RC	->	(readable && writable)
-	))
-*/
-
+	)) || (~io.fd_enable)
 
 	//这个是illegal指令的判断
-	val modeValid = (io.r_addr(9,8) <= mode) && (io.inst_mode <= mode)	//模式判断，总共12位地址8，9两位是特权位
-	val valid = instValid && modeValid								//访问方式和权限两重判断
+//	printf(p"csr_mode:${io.r_addr(9, 8)}  inst_mode:${io.inst_mode}\n")
+	val modeValid = ((io.r_addr(9,8) <= mode) && (io.inst_mode <= mode)) ||	(~io.fd_enable) //模式判断，总共12位地址8，9两位是特权位
+	val valid = instValid && (modeValid || (io.r_op === CSR.N))								//访问方式和权限两重判断
 	io.r_data := data
 
 	//准备要写入csr的数据
 	val csrData :: _ :: _ :: Nil = ListLookup(io.w_op, default, csrTable)
-	val writeEn = io.w_op === W || io.w_op === RW || io.w_op === RC || io.w_op === RS
+	val writeEn = (io.w_op === W || io.w_op === RW || io.w_op === RC || io.w_op === RS) && io.mw_enable
 	val writeData = MuxLookup(io.w_op, 0.U, Seq(
 		W 	-> io.w_data,
 		RW 	-> io.w_data,
@@ -256,8 +252,8 @@ class CSR extends Module{
 
 
 	//中断的判断
-	val flagIntS = sip.asUInt & sie.asUInt				//s模式中断判断，对应的中断使能并且sip中该位已经挂起
-	val flagIntM = mip.asUInt & mie.asUInt 				//M模式中断判断
+	val flagIntS = sip.asUInt & sie.asUInt 					//s模式中断判断，对应的中断使能并且sip中该位已经挂起
+	val flagIntM = mip.asUInt & mie.asUInt 					//M模式中断判断
 
 	/*
 	*	是否是s和m模式的中断，还要考虑相关的csr寄存器：
@@ -279,17 +275,22 @@ class CSR extends Module{
 	*/
 
 	//异常具体判断
-	val hasExc 	= !hasInt && (!valid || io.illegal_inst.orR || 
-							io.fetch_misalign || io.load_misalign || io.store_misalign || io.inst === Instructions.ECALL || io.inst === Instructions.EBREAK)
+//	printf(p"valid:${valid} illegal_inst:${(io.illegal_inst.orR || io.fetch_misalign) && io.fd_enable} ls_misalign:${(io.load_misalign || io.store_misalign) && io.de_enable}\n")
+	val hasExc 	= !hasInt && ((!valid) || ((io.illegal_inst.orR || io.fetch_misalign) && io.fd_enable)
+							|| ((io.load_misalign || io.store_misalign) && io.de_enable) 
+							|| ((io.inst === Instructions.ECALL || io.inst === Instructions.EBREAK) && io.mw_enable))
+
+
 	val excCause = 	Mux(io.inst === Instructions.ECALL, EXC_U_ECALL, 
 						Mux(io.inst === Instructions.EBREAK, EXC_BRK_POINT,
 							Mux(io.load_misalign, EXC_LOAD_ADDR,  
 								Mux(io.store_misalign, EXC_STORE_ADDR,
-						 			Mux(valid || (io.illegal_inst =/= 0.U), EXC_ILL_INST, io.fetch_misalign)
+						 			Mux((!valid) || (io.illegal_inst =/= 0.U), EXC_ILL_INST, io.fetch_misalign)
 								)
 							)
 						)
 					)
+
 	val hasExcS = hasExc && medeleg.asUInt(excCause(4,0))
 	val handExcS = !mode(1) && hasExcS		//这里是想说明M模式下是无论如何都不会到S模式进行处理的
 
@@ -313,11 +314,11 @@ class CSR extends Module{
 							Cat(false.B, excCause))
 
 	//根据情况刷新不同阶段的流水线						
-	when(hasInt || io.isMret || io.isSret){
+	when(hasInt || ((io.isMret || io.isSret) && io.mw_enable)){
 		io.flush_mask := "b1111".U
 	}.elsewhen(hasExc){
 		io.flush_mask := Mux((excCause === EXC_U_ECALL) || (excCause === EXC_BRK_POINT), "b1111".U,
-			Mux((excCause === EXC_LOAD_ADDR) || (excCause === EXC_STORE_ADDR), "b0011".U,
+			Mux((excCause === EXC_LOAD_ADDR) || (excCause === EXC_STORE_ADDR), "b0111".U,
 				Mux(excCause === EXC_ILL_INST, "b0011".U, 
 					Mux(excCause === EXC_INST_ADDR, "b0011".U, "b0".U)
 				)
@@ -355,7 +356,8 @@ class CSR extends Module{
 	val trapMode = Mux(hasInt, intMode, 
 					Mux(io.isSret, sretMode,
 					Mux(io.isMret, mretMode, excMode)))
-	mode := trapMode
+	val nextMode = Mux((hasInt || hasExc) & !writeEn, trapMode, mode)
+	mode := nextMode
 
 	//如果有中断，会将相应的位置高, 这里由于sip是线网所以会同步更新				
 	mip.meip := mip.meip | io.extern		
@@ -377,7 +379,29 @@ class CSR extends Module{
 
 
 	//exceptions and interrupts handling
-	when((hasExc || hasInt || io.isSret || io.isMret) && !io.stall){
+	when(writeEn && !io.stall){
+		when(io.w_addr === CSR_SSTATUS){ mstatus.castAssign(SstatusCsr(), writeData)}
+		when(io.w_addr === CSR_SIE){ mie.castAssign(SieCsr(), writeData) }
+		when(io.w_addr === CSR_SIP){ mip.castAssign(SipCsr(), writeData) }
+		when(io.w_addr === CSR_MCYCLE){ mcycle <= writeData }
+		when(io.w_addr === CSR_MINSTRET){ minstret <= writeData }
+		when(io.w_addr === CSR_STVEC){ stvec <= writeData }
+		when(io.w_addr === CSR_SSCRATCH){ sscratch <= writeData }
+		when(io.w_addr === CSR_SEPC){ sepc <= writeData }
+		when(io.w_addr === CSR_SCAUSE){ scause <= writeData }
+		when(io.w_addr === CSR_STVAL){ stval <= writeData }
+		//when(io.w_addr === CSR_SATP){ stap := writeData }
+		when(io.w_addr === CSR_MSTATUS){ mstatus <= writeData }
+		when(io.w_addr === CSR_MEDELEG){ medeleg <= writeData }
+		when(io.w_addr === CSR_MIDELEG){ mideleg <= writeData }
+		when(io.w_addr === CSR_MIE){ mie <= writeData }
+		when(io.w_addr === CSR_MTVEC){ mtvec <= writeData }
+		when(io.w_addr === CSR_MSCRATCH){ mscratch <= writeData }
+		when(io.w_addr === CSR_MEPC){ mepc <= writeData }
+		when(io.w_addr === CSR_MCAUSE){ mcause <= writeData }
+		when(io.w_addr === CSR_MTVAL){ mtval <= writeData }
+		//when(io.w_addr === CSR_MIP){ mipReal := writeData }
+	}.elsewhen((hasExc || hasInt || ((io.isSret || io.isMret) && io.mw_enable)) && !io.stall){
 		when(io.isSret){
 			mstatus.sie := mstatus.spie
 			mstatus.spie := true.B
@@ -402,28 +426,6 @@ class CSR extends Module{
 			mstatus.mpp := mode
 		}
 		
-	}.elsewhen(writeEn && !io.stall){
-		when(io.w_addr === CSR_SSTATUS){ mstatus.castAssign(SstatusCsr(), writeData)}
-		when(io.w_addr === CSR_SIE){ mie.castAssign(SieCsr(), writeData) }
-		when(io.w_addr === CSR_SIP){ mip.castAssign(SipCsr(), writeData) }
-		when(io.w_addr === CSR_MCYCLE){ mcycle <= writeData }
-		when(io.w_addr === CSR_MINSTRET){ minstret <= writeData }
-		when(io.w_addr === CSR_STVEC){ stvec <= writeData }
-		when(io.w_addr === CSR_SSCRATCH){ sscratch <= writeData }
-		when(io.w_addr === CSR_SEPC){ sepc <= writeData }
-		when(io.w_addr === CSR_SCAUSE){ scause <= writeData }
-		when(io.w_addr === CSR_STVAL){ stval <= writeData }
-		//when(io.w_addr === CSR_SATP){ stap := writeData }
-		when(io.w_addr === CSR_MSTATUS){ mstatus <= writeData }
-		when(io.w_addr === CSR_MEDELEG){ medeleg <= writeData }
-		when(io.w_addr === CSR_MIDELEG){ mideleg <= writeData }
-		when(io.w_addr === CSR_MIE){ mie <= writeData }
-		when(io.w_addr === CSR_MTVEC){ mtvec <= writeData }
-		when(io.w_addr === CSR_MSCRATCH){ mscratch <= writeData }
-		when(io.w_addr === CSR_MEPC){ mepc <= writeData }
-		when(io.w_addr === CSR_MCAUSE){ mcause <= writeData }
-		when(io.w_addr === CSR_MTVAL){ mtval <= writeData }
-		//when(io.w_addr === CSR_MIP){ mipReal := writeData }
 	}
 
 	//io.hasInt := hasInt
@@ -432,7 +434,8 @@ class CSR extends Module{
 	//io.sepc := sepc.asUInt
 	//io.mepc := mepc.asUInt
 	io.trapVec := trapVec
-	io.trap := hasExc || hasInt || io.isSret || io.isMret
+//	printf(p"hasExc:${hasExc} hasInt:${hasInt} isSret:${io.isSret} isMret:${io.isMret}\n")
+	io.trap := hasExc || hasInt || ((io.isSret || io.isMret) && io.mw_enable)
 	//io.pageEn   := !mode(1) && satp.mode
 	//io.basePpn  := satp.ppn
 	//io.sum      := mstatus.sum

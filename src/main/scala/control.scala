@@ -144,7 +144,8 @@ object Control{
 		MRET 	-> 	List(PC_EPC,	A_XXX,	B_XXX,	 W_D,	IMM_X,		ALU_XXX,		BR_XXX,		ST_XXX,		LD_XXX,		WB_CSR,		N,		CSR_MODE_M,	CSR_NOP,		N,		Y),
 		SRET	-> 	List(PC_EPC,	A_XXX,	B_XXX,	 W_D,	IMM_X,		ALU_XXX,		BR_XXX,		ST_XXX,		LD_XXX,		WB_CSR,		N,		CSR_MODE_S,	CSR_NOP,		N,		Y),
 		ECALL 	-> 	List(PC_4,		A_XXX,	B_XXX,	 W_D,	IMM_X,		ALU_XXX,		BR_XXX,		ST_XXX,		LD_XXX,		WB_CSR,		N,		CSR_MODE_U,	CSR_NOP,		N,		N),
-		EBREAK 	->	List(PC_4,		A_XXX,	B_XXX,	 W_D,	IMM_X,		ALU_XXX,		BR_XXX,		ST_XXX,		LD_XXX,		WB_CSR,		N,		CSR_MODE_U,	CSR_NOP,		N,		N)
+		EBREAK 	->	List(PC_4,		A_XXX,	B_XXX,	 W_D,	IMM_X,		ALU_XXX,		BR_XXX,		ST_XXX,		LD_XXX,		WB_CSR,		N,		CSR_MODE_U,	CSR_NOP,		N,		N),
+//		BitPat(NOP)	->	List(PC_4,		A_RS1,	B_IMM,	 W_D,	IMM_X,		ALU_XXX,		BR_XXX,		ST_XXX,		LD_XXX,		WB_CSR,		N,		CSR_MODE_U,	CSR_NOP,		N,		N)
 	)
 
 }
@@ -169,6 +170,7 @@ class ControlSignals extends Bundle{
 	val is_kill = Output(Bool())
 }
 
+//	PC_SEL		A_SEL	B_SEL	 WIDTH	IMM_SEL 	ALU_OP	 		BR_TYPE		ST_TYPE		LD_TYPE	 	WB_SEL		WB_EN	PRV			csr_cmd	 	illegal	 kill
 class Control extends Module{
 	val io = IO(new ControlSignals)
 	val ctrlSignals = ListLookup(io.inst, Control.default, Control.map)
