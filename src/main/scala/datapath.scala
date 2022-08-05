@@ -1,5 +1,6 @@
 package myCPU
 
+
 import chisel3._
 import chisel3.util._
 import chisel3.util.BitPat
@@ -7,6 +8,7 @@ import Control._
 import Instructions._ 
 import chisel3.stage.ChiselStage
 import chisel3.experimental.BundleLiterals._
+import cache._
 import CSR_OP._ 
 import CSR._ 
 
@@ -310,9 +312,11 @@ class Datapath extends Module{
 	//pc设置为next_pc, 存储的读取地址也设为next_pc
 	pc := next_pc 
 	//printf(p"next_pc:${Hexadecimal(next_pc)};  is_trap:${csr.io.trap};  pc_sel:${io.ctrl.pc_sel}\n")
+
 	imem.io.addr := next_pc
 	imem.io.enable := !stall
 	imem.io.wen := false.B
+
 
 	//如何解释enable为false
 	when(flush_fd){
@@ -691,7 +695,7 @@ class Datapath extends Module{
 	csr.io.isSret := mw_pipe_reg.inst === Instructions.SRET
 	csr.io.isMret := mw_pipe_reg.inst === Instructions.MRET
 	csr.io.excPC := mw_pipe_reg.pc
-	csr.io.stall := stall
+	//csr.io.stall := stall
 
 	io.pc := mw_pipe_reg.pc
 	io.inst := mw_pipe_reg.inst

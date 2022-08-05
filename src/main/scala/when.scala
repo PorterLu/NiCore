@@ -8,10 +8,14 @@ class A extends Module{
 		val in = Input(UInt(4.W))
 	})
 
+	//io.out := 0.U
+	//when(io.in === 1.U)
+	//{
+	//	io.out := io.in
+	//}
 	io.out := 0.U
-	when(io.in === 1.U)
-	{
-		io.out := io.in
+	when(io.in === 1.U){
+		io.out := 2.U
 	}
 }
 
