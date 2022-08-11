@@ -126,6 +126,8 @@ class CSR extends Module{
 
 //		val hasException = Input(Bool())	//外部输入的是否陷入的信号
 
+		val jump_addr = Input(UInt(64.W))
+		val jump_taken = Input(Bool())
 
 		val isSret = Input(Bool())			//输入的是否是sret的信号
 		val isMret = Input(Bool())			//输入的是否是mret的信号
@@ -411,7 +413,7 @@ class CSR extends Module{
 			mstatus.mpie := true.B
 			mstatus.mpp := CSR_MODE_U					//mpp有两位
 		}.elsewhen(handIntS || handExcS){
-			sepc 	<= io.excPC
+			sepc 	<= Mux(io.jump_taken, io.jump_addr, io.excPC + 4.U)	//考虑跳转指令时发生中断的情况
 			scause 	<= cause
 			stval 	<= io.excValue
 			mstatus.spie := mstatus.sie					//

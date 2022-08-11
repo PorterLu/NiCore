@@ -8,9 +8,16 @@ import Control._
 import Instructions._ 
 import chisel3.stage.ChiselStage
 import chisel3.experimental.BundleLiterals._
+import cacheArbiter._ 
 import cache._
+import axi4._ 
 import CSR_OP._ 
 import CSR._ 
+
+class CacheIO extends Bundle{
+	val cpu_request = Output(new CPU_Request)
+	val cpu_response = Input(new CPU_Response)
+}
 
 class RegisterFile(readPorts : Int) extends Module{
     require(readPorts >= 0)
@@ -52,6 +59,25 @@ class Mem extends BlackBox{
 		val mask = Input(UInt(8.W))
 		val rdata = Output(UInt(64.W))
 		val enable = Input(Bool())
+		//val valid = Input(Bool())
+		//val ready = Output(Bool())
+		val wen = Input(Bool())
+	})
+}
+
+class Memory extends BlackBox{
+	val io = IO(new Bundle{
+		val clock = Input(Clock())
+		val reset = Input(Bool())
+		//val pc_addr = Input(UInt(64.W))
+		//val pc_data = Output(UInt(64.W))
+		val addr = Input(UInt(64.W))
+		val wdata = Input(UInt(64.W))
+		val mask = Input(UInt(8.W))
+		val rdata = Output(UInt(64.W))
+		//val enable = Input(Bool())
+		val valid = Input(Bool())
+		val ready = Output(Bool())
 		val wen = Input(Bool())
 	})
 }
@@ -107,6 +133,8 @@ class  execute_mem_pipeline_reg extends Bundle{
 	val csr_write_op = UInt(3.W)
 	val csr_write_addr = UInt(12.W)
 	val csr_write_data = UInt(64.W)
+	val jump_addr = UInt(64.W)
+	val jump_taken = Bool()
 	val st_data = UInt(64.W)
 	val st_type = UInt(3.W)
 	val ld_type = UInt(3.W)
@@ -126,7 +154,9 @@ class mem_writeback_pipeline_reg extends Bundle{
 	val csr_read_data = UInt(64.W)
 	val csr_write_op = UInt(3.W)
 	val csr_write_addr = UInt(12.W)
-	val csr_write_data = UInt(64.W)	
+	val csr_write_data = UInt(64.W)
+	val jump_addr = UInt(64.W)
+	val jump_taken = Bool()	
 	val st_type = UInt(3.W)
 	val ld_type = UInt(3.W)
 	val wb_sel = UInt(2.W)
@@ -141,6 +171,8 @@ class DatapathIO extends Bundle{
 	val pc = Output(UInt(64.W))
 	val inst = Output(UInt(32.W))
 	val start = Output(Bool())
+	val icache = new CacheIO
+	val dcache = new CacheIO
 }
 
 
@@ -194,6 +226,8 @@ class Datapath extends Module{
 			_.csr_write_op -> 0.U,
 			_.csr_write_addr -> 0.U,
 			_.csr_write_data -> 0.U,
+			_.jump_addr -> 0.U,
+			_.jump_taken -> false.B,
 			_.st_data -> 0.U,
 			_.st_type -> 0.U,
 			_.ld_type -> 0.U,
@@ -213,6 +247,8 @@ class Datapath extends Module{
 			_.csr_write_op -> 0.U,
 			_.csr_write_addr -> 0.U,
 			_.csr_write_data -> 0.U,
+			_.jump_addr -> 0.U,
+			_.jump_taken -> false.B,
 			_.st_type -> 0.U,
 			_.ld_type -> 0.U,
 			_.wb_sel -> 0.U,
@@ -224,13 +260,16 @@ class Datapath extends Module{
 	
 	//必须使得enable信号为false时，对应的流水线寄存器中输出的内容不对CPU状态机的运行产生影响
 
-	val stall = false.B									//stall暂时设置为false
 	val alu = Module(new AluSimple(64))					
 	val immGen = Module(new ImmGenWire)
 	val brCond = Module(new BrCondSimple(64))			//专门用于跳转判断
 	val regFile = Module(new RegisterFile(35))			//有35个读口的寄存器文件
-	val imem = Module(new Mem)							//指令mem
-	val dmem = Module(new Mem)							//数据mem
+	//val imem = Module(new Memory)							//指令mem
+	//val dmem = Module(new Mem)							//数据mem
+	//val icache = Module(new Cache)
+	//val dcache = Module(new Cache)
+	val stall = !io.icache.cpu_response.ready || ( (em_pipe_reg.ld_type.orR || em_pipe_reg.st_type.orR) && em_pipe_reg.enable && !io.dcache.cpu_response.ready)		//stall暂时设置为false
+
 	val csr = Module(new CSR)							//csr寄存器文件，同时可以用于特权判断，中断和异常处理
 
 	val jump_addr = Wire(UInt(64.W))					//要跳转的地址
@@ -253,10 +292,10 @@ class Datapath extends Module{
 	csr.io.int_soft := false.B
 
 	//mem的始终，mem读取的时机这里也依靠时钟
-	imem.io.clock := clock								//input mem clock
-	imem.io.reset := reset								//input reset
-	dmem.io.clock := clock
-	dmem.io.reset := reset
+	//imem.io.clock := clock								//input mem clock
+	//imem.io.reset := reset								//input reset
+	//dmem.io.clock := clock
+	//dmem.io.reset := reset
 	 
 	//向csr寄存器输入是否阻塞，阻塞的过程中无法处理中断异常，并且无法写入csr寄存器
 	csr.io.stall := stall
@@ -299,6 +338,7 @@ class Datapath extends Module{
 		IndexedSeq(
 		csr.io.trap -> csr.io.trapVec,
 		csr_atomic -> pc,
+		(!started && stall) -> pc,
 //		(io.ctrl.pc_sel === PC_EPC) -> csr.io.trapVec,
 		(((de_pipe_reg.pc_sel === PC_ALU) && de_pipe_reg.enable)|| brCond_taken) ->(jump_addr >> 1.U << 1.U))							//是否jmp和jmp的结果应该和branch一样放在执行阶段
 	)
@@ -307,16 +347,36 @@ class Datapath extends Module{
 
 	//如果是跳转，异常和还未开始等情况，那么获取的是一条NOP指令，否则是从指令存储器中读取一条指令
 	//printf(p"pc(2):${pc(2)} ;rdata: ${Hexadecimal(imem.io.rdata)}\n")
-	val inst = Mux(started || is_kill_inst || brCond_taken || csr.io.trap, Instructions.NOP, Mux(pc(2).asBool, imem.io.rdata(63, 32) ,imem.io.rdata(31, 0)))//这里的br_taken要考虑信号是否有效, 同时kill信号也要判断是否有效
+	//val inst = Mux(started || is_kill_inst || brCond_taken || csr.io.trap, Instructions.NOP, Mux(pc(2).asBool, imem.io.rdata(63, 32) ,imem.io.rdata(31, 0)))//这里的br_taken要考虑信号是否有效, 同时kill信号也要判断是否有效
+	val	inst = Mux(started || is_kill_inst || brCond_taken || csr.io.trap, Instructions.NOP, Mux(pc(2).asBool, io.icache.cpu_response.data(63, 32), io.icache.cpu_response.data(31, 0))) 
 
+	printf(p"ready: ${Hexadecimal(io.icache.cpu_response.ready)}\n")
+	printf(p"pc: ${Hexadecimal(pc)}\n")
+	printf(p"next_pc: ${Hexadecimal(next_pc)}\n")
+	printf(p"inst: ${inst}\n")
 	//pc设置为next_pc, 存储的读取地址也设为next_pc
 	pc := next_pc 
 	//printf(p"next_pc:${Hexadecimal(next_pc)};  is_trap:${csr.io.trap};  pc_sel:${io.ctrl.pc_sel}\n")
 
+	/*
 	imem.io.addr := next_pc
 	imem.io.enable := !stall
 	imem.io.wen := false.B
+	*/
 
+	io.icache.cpu_request.addr := next_pc
+	io.icache.cpu_request.valid := true.B
+	io.icache.cpu_request.data := 0.U
+	io.icache.cpu_request.rw := false.B
+	io.icache.cpu_request.mask := 0.U
+
+	//imem.io.addr := icache.io.mem_request.addr
+	//imem.io.data := icache.io.mem_request.wdata
+	//imem.io.wen  := icache.io.mem_request.rw
+	//imem.io.valid := icache.io.mem_request.valid
+
+	//icache.io.mem_response.data := imem.io.rdata
+	//icache.io.mem_response.ready := imem.io.ready
 
 	//如何解释enable为false
 	when(flush_fd){
@@ -464,7 +524,8 @@ class Datapath extends Module{
 	csr.io.de_enable := de_pipe_reg.enable
 	val src1_data = WireInit(0.U(64.W))
 	val src2_data = WireInit(0.U(64.W))
-	val load_data_hazard = dmem.io.rdata >> ((em_pipe_reg.alu_out& "h07".U) << 3.U)
+	//val load_data_hazard = dmem.io.rdata >> ((em_pipe_reg.alu_out& "h07".U) << 3.U)
+	val load_data_hazard = io.dcache.cpu_response.data >> ((em_pipe_reg.alu_out & "h07".U) << 3.U)
 	val load_data_ext_hazard = Mux(em_pipe_reg.ld_type === LD_LW, Cat(Mux(load_data_hazard(31).asBool, "hffffffff".U, 0.U(32.W)), load_data_hazard(31, 0)),
 								Mux(em_pipe_reg.ld_type === LD_LWU, Cat(Fill(32, 0.U), load_data_hazard(31, 0)),
 									Mux(em_pipe_reg.ld_type === LD_LH, Cat(Mux(load_data_hazard(15).asBool, "hffffffffffff".U, 0.U(48.W)), load_data_hazard(15, 0)),
@@ -579,6 +640,8 @@ class Datapath extends Module{
 		em_pipe_reg.csr_write_op := 0.U
 		em_pipe_reg.csr_write_addr := 0.U
 		em_pipe_reg.csr_write_data := 0.U
+		em_pipe_reg.jump_addr := 0.U
+		em_pipe_reg.jump_taken := false.B
 		em_pipe_reg.st_data := 0.U
 		em_pipe_reg.st_type := ST_XXX
 		em_pipe_reg.ld_type := LD_XXX
@@ -596,6 +659,8 @@ class Datapath extends Module{
 		em_pipe_reg.csr_write_op := de_pipe_reg.csr_write_op
 		em_pipe_reg.csr_write_addr := de_pipe_reg.csr_write_addr
 		em_pipe_reg.csr_write_data := de_pipe_reg.csr_write_data
+		em_pipe_reg.jump_addr := alu_out
+		em_pipe_reg.jump_taken := brCond_taken || (de_pipe_reg.pc_sel === PC_ALU && de_pipe_reg.enable)
 		em_pipe_reg.st_data := src2_data
 		em_pipe_reg.st_type := de_pipe_reg.st_type
 		em_pipe_reg.ld_type := de_pipe_reg.ld_type
@@ -615,13 +680,17 @@ class Datapath extends Module{
 	//printf(p"execute-mem:\n ")
 	/****** Mem *********/
 	csr.io.em_enable := em_pipe_reg.enable
+	io.dcache.cpu_request.valid := Mux(stall, (em_pipe_reg.ld_type.orR || em_pipe_reg.st_type.orR) && em_pipe_reg.enable, (de_pipe_reg.ld_type.orR || de_pipe_reg.st_type.orR) && de_pipe_reg.enable)
 	//dmem.io.enable := Mux(stall, ((de_pipe_reg.st_type.orR) || (de_pipe_reg.ld_type.orR)) && de_pipe_reg.enable, ((em_pipe_reg.st_type.orR) || (em_pipe_reg.st_type.orR)) )
-	dmem.io.enable := Mux(stall, (em_pipe_reg.ld_type.orR || em_pipe_reg.st_type.orR) && em_pipe_reg.enable, (de_pipe_reg.ld_type.orR || de_pipe_reg.st_type.orR) && de_pipe_reg.enable)
-	dmem.io.wen := Mux(stall, em_pipe_reg.st_type.orR && em_pipe_reg.enable, de_pipe_reg.st_type.orR && de_pipe_reg.enable)
-	dmem.io.addr := Mux(stall, em_pipe_reg.alu_out, alu_out)					//这里是地址提前一个周期输入，因为访存必定要延后一个周期，提前一个周期输入地址保证每个周期都可以
+	//dmem.io.enable := Mux(stall, (em_pipe_reg.ld_type.orR || em_pipe_reg.st_type.orR) && em_pipe_reg.enable, (de_pipe_reg.ld_type.orR || de_pipe_reg.st_type.orR) && de_pipe_reg.enable)
+	io.dcache.cpu_request.rw := Mux(stall, em_pipe_reg.st_type.orR && em_pipe_reg.enable, em_pipe_reg.st_type.orR && de_pipe_reg.enable)
+	//dmem.io.wen := Mux(stall, em_pipe_reg.st_type.orR && em_pipe_reg.enable, de_pipe_reg.st_type.orR && de_pipe_reg.enable)
+	io.dcache.cpu_request.addr := Mux(stall, em_pipe_reg.alu_out, alu_out)
+	//dmem.io.addr := Mux(stall, em_pipe_reg.alu_out, alu_out)					//这里是地址提前一个周期输入，因为访存必定要延后一个周期，提前一个周期输入地址保证每个周期都可以
 	//printf(p"\ndmem_addr: ${Hexadecimal(dmem.io.addr)} alu_out:${alu_out}\n\n")
 	//dmem.io.wdata := (de_pipe_reg.rs2 << (alu_out(2, 0) << 3.U))(63, 0)
-	dmem.io.wdata := Mux(stall, em_pipe_reg.st_data << (em_pipe_reg.alu_out(2, 0) << 3.U), src2_data << (alu_out(2, 0) << 3.U))(63, 0)
+	io.dcache.cpu_request.data := Mux(stall, em_pipe_reg.st_data << (em_pipe_reg.alu_out(2, 0) << 3.U), src2_data << (alu_out(2, 0) << 3.U))(63, 0)
+	//dmem.io.wdata := Mux(stall, em_pipe_reg.st_data << (em_pipe_reg.alu_out(2, 0) << 3.U), src2_data << (alu_out(2, 0) << 3.U))(63, 0)
 	val st_mask = Mux(stall, Mux(em_pipe_reg.st_type === ST_SW, "b00001111".U, 
 								Mux(em_pipe_reg.st_type === ST_SH, "b00000011".U,
 									Mux(em_pipe_reg.st_type === ST_SB, "b00000001".U, "b11111111".U)
@@ -635,9 +704,10 @@ class Datapath extends Module{
 		
 		
 		
-	
-	dmem.io.mask := Mux(st_mask === "b11111111".U, st_mask(7, 0), Mux(stall, (st_mask << em_pipe_reg.alu_out(2,0))(7, 0), (st_mask << alu_out(2,0))(7, 0)))
-	val load_data = dmem.io.rdata >> ((em_pipe_reg.alu_out & "h07".U) << 3.U)
+	io.dcache.cpu_request.mask := Mux(st_mask === "b11111111".U, st_mask(7, 0), Mux(stall, (st_mask << em_pipe_reg.alu_out(2,0))(7, 0), (st_mask << alu_out(2,0))(7, 0)))
+	//dmem.io.mask := Mux(st_mask === "b11111111".U, st_mask(7, 0), Mux(stall, (st_mask << em_pipe_reg.alu_out(2,0))(7, 0), (st_mask << alu_out(2,0))(7, 0)))
+	val load_data = io.dcache.cpu_response.data >> ((em_pipe_reg.alu_out & "h07".U) << 3.U)
+	//val load_data = dmem.io.rdata >> ((em_pipe_reg.alu_out & "h07".U) << 3.U)
 	val load_data_ext = Mux(em_pipe_reg.ld_type === LD_LW, Cat(Mux(load_data(31).asBool, "hffffffff".U, 0.U(32.W)), load_data(31, 0)),
 							Mux(em_pipe_reg.ld_type === LD_LWU, Cat(Fill(32, 0.U), load_data(31, 0)),
 								Mux(em_pipe_reg.ld_type === LD_LH, Cat(Mux(load_data(15).asBool, "hffffffffffff".U, 0.U(48.W)), load_data(15, 0)),
@@ -671,6 +741,8 @@ class Datapath extends Module{
 		mw_pipe_reg.wb_en := em_pipe_reg.wb_en
 		mw_pipe_reg.pc := em_pipe_reg.pc
 		mw_pipe_reg.inst := em_pipe_reg.inst
+		mw_pipe_reg.jump_addr := em_pipe_reg.jump_addr
+		mw_pipe_reg.jump_taken := em_pipe_reg.jump_taken
 		mw_pipe_reg.csr_read_data := em_pipe_reg.csr_read_data
 		mw_pipe_reg.csr_write_op := em_pipe_reg.csr_write_op
 		mw_pipe_reg.csr_write_data := em_pipe_reg.csr_write_data
@@ -695,6 +767,8 @@ class Datapath extends Module{
 	csr.io.isSret := mw_pipe_reg.inst === Instructions.SRET
 	csr.io.isMret := mw_pipe_reg.inst === Instructions.MRET
 	csr.io.excPC := mw_pipe_reg.pc
+	csr.io.jump_taken := mw_pipe_reg.jump_taken
+	csr.io.jump_addr := mw_pipe_reg.jump_taken
 	//csr.io.stall := stall
 
 	io.pc := mw_pipe_reg.pc
@@ -714,11 +788,94 @@ class myCPU extends Module{
 		val pc_debug = Output(UInt(64.W))
 		val inst = Output(UInt(32.W))
 		val start = Output(Bool())
+		
+		//write address channel
+		val master_awready = Input(Bool())
+		val master_awvalid = Output(Bool())
+		val master_awaddr = Output(UInt(32.W))
+		val master_awid = Output(UInt(4.W))
+		val master_awlen = Output(UInt(8.W))
+		val master_awsize = Output(UInt(3.W))
+		val master_awburst = Output(UInt(2.W))
+
+		//write data channel
+		val master_wready = Input(Bool())
+		val master_wvalid = Output(Bool())
+		val master_wdata = Output(UInt(64.W))
+		val master_wstrb = Output(UInt(8.W))
+		val master_wlast = Output(Bool())
+
+		//write response
+		val master_bready = Output(Bool())
+		val master_bvalid = Input(Bool())
+		val master_bresp = Input(UInt(2.W))
+		val master_bid = Input(UInt(4.W))
+
+		//read address channel
+		val master_arready = Input(Bool())
+		val master_arvalid = Output(Bool())
+		val master_araddr = Output(UInt(32.W))
+		val master_arid = Output(UInt(4.W))
+		val master_arlen = Output(UInt(8.W))
+		val master_arsize = Output(UInt(3.W))
+		val master_arburst = Output(UInt(2.W))
+
+		//read data channel
+		val master_rready = Output(Bool())
+		val master_rvalid = Input(Bool())
+		val master_rresp = Input(UInt(2.W))
+		val master_rdata = Input(UInt(64.W))
+		val master_rlast = Input(Bool())
+		val master_rid = Input(UInt(4.W))	
 	})
 
 	val datapath = Module(new Datapath) 
 	val control = Module(new Control)
+	val icache = Module(new Cache)
+	val dcache = Module(new Cache)
+	val arb = Module(new CacheArbiter) 
 	datapath.io.ctrl <> control.io
+	datapath.io.icache.cpu_request <> icache.io.cpu_request
+	datapath.io.dcache.cpu_request <> dcache.io.cpu_request
+	datapath.io.icache.cpu_response <> icache.io.cpu_response
+	datapath.io.dcache.cpu_response <> dcache.io.cpu_response
+	icache.io.mem_io <> arb.io.icache
+	dcache.io.mem_io <> arb.io.dcache
+	
+	arb.io.axi_out.aw.ready := io.master_awready
+	io.master_awvalid := arb.io.axi_out.aw.valid
+	io.master_awaddr := arb.io.axi_out.aw.bits.addr
+	io.master_awid := arb.io.axi_out.aw.bits.id
+	io.master_awlen := arb.io.axi_out.aw.bits.len
+	io.master_awsize := arb.io.axi_out.aw.bits.size
+	io.master_awburst := arb.io.axi_out.aw.bits.burst
+
+	arb.io.axi_out.w.ready := io.master_wready
+	io.master_wvalid := arb.io.axi_out.w.valid
+	io.master_wdata := arb.io.axi_out.w.bits.data
+	io.master_wstrb := arb.io.axi_out.w.bits.strb
+	io.master_wlast := arb.io.axi_out.w.bits.last
+
+	io.master_bready := arb.io.axi_out.b.ready
+	arb.io.axi_out.b.valid := io.master_bvalid
+	arb.io.axi_out.b.bits.resp := io.master_bresp
+	arb.io.axi_out.b.bits.id := io.master_bid
+
+	arb.io.axi_out.ar.ready := io.master_arready
+	io.master_arvalid := arb.io.axi_out.ar.valid
+	io.master_araddr := arb.io.axi_out.ar.bits.addr
+	io.master_arid := arb.io.axi_out.ar.bits.id
+	io.master_arlen := arb.io.axi_out.ar.bits.len
+	io.master_arsize := arb.io.axi_out.ar.bits.size
+	io.master_arburst := arb.io.axi_out.ar.bits.burst
+
+	io.master_rready := arb.io.axi_out.r.ready
+	arb.io.axi_out.r.valid := io.master_rvalid
+	arb.io.axi_out.r.bits.resp := io.master_rresp
+	arb.io.axi_out.r.bits.data := io.master_rdata
+	arb.io.axi_out.r.bits.last := io.master_rlast
+	arb.io.axi_out.r.bits.id := io.master_rid 
+
 	io.inst := datapath.io.inst
 	io.pc_debug := datapath.io.pc
 	io.start := datapath.io.start
