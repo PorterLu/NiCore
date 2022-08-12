@@ -163,12 +163,5 @@
     "sources":[
       "~myCPU|myCPU>io_master_bvalid"
     ]
-  },
-  {
-    "class":"firrtl.transforms.CombinationalPath",
-    "sink":"~myCPU|myCPU>io_master_rready",
-    "sources":[
-      "~myCPU|myCPU>io_master_rvalid"
-    ]
   }
 ]
