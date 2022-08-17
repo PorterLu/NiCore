@@ -182,7 +182,6 @@
     "class":"firrtl.transforms.CombinationalPath",
     "sink":"~myCPU|myCPU>io_master_wdata",
     "sources":[
-      "~myCPU|myCPU>io_master_wready",
       "~myCPU|myCPU>io_master_rvalid",
       "~myCPU|myCPU>io_master_rdata"
     ]

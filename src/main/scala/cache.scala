@@ -132,13 +132,13 @@ class data_cache extends Module{
 		data_mem.write(io.cache_req.write_index, io.data_write)
 		//data_mem.write(io.cache_req.index, io.data_write)
 		//printf(p"we: ${io.cache_req.we}; index: ${io.cache_req.index};  write_data: ${Hexadecimal(io.data_write.asUInt)}\n")
-		for(i <- 0 until 8){
-			printf(p"${i}:\n")
-			for(j <- 0 until 16){
-				printf(p"${j}; data:${Hexadecimal(data_mem(i).data((j+1)*64 - 1, j*64))};\n")
-			}
-			printf("\n")
-		}
+		//for(i <- 0 until 8){
+		//	printf(p"${i}:\n")
+		//	for(j <- 0 until 16){
+		//		printf(p"${j}; data:${Hexadecimal(data_mem(i).data((j+1)*64 - 1, j*64))};\n")
+		//	}
+		//	printf("\n")
+		//}
 	}
 	//for(i <- 0 until 32){
 	//	printf(p"data:${Hexadecimal(((data_mem.read(io.cache_req.index)).asUInt)(32*(i+1)-1, 32*i))}\n")
@@ -451,12 +451,21 @@ class Cache(cache_name: String) extends Module{
 				
 
 				for(i <- 0 until nWays){
+					tag_mem(i).io.tag_write.dirty := tag_mem(i).io.tag_read.dirty
+					tag_mem(i).io.tag_write.tag := tag_mem(i).io.tag_read.tag
 					when(is_match(i)){
 						tag_mem(i).io.cache_req.we := true.B				//写tag使能
 						tag_mem(i).io.tag_write.visit := 0.U 				//将visit重置
 						tag_mem(i).io.tag_write.valid := true.B
-						tag_mem(i).io.tag_write.dirty := tag_mem(i).io.tag_read.dirty
-						tag_mem(i).io.tag_write.tag := tag_mem(i).io.tag_read.tag
+						//tag_mem(i).io.tag_write.dirty := tag_mem(i).io.tag_read.dirty
+						//tag_mem(i).io.tag_write.tag := tag_mem(i).io.tag_read.tag
+						when(cpu_request_rw){
+							tag_mem(i).io.tag_write.dirty := true.B
+						}
+					}.elsewhen(tag_mem(i).io.tag_read.valid){
+						tag_mem(i).io.cache_req.we := true.B				//写tag使能
+						tag_mem(i).io.tag_write.visit := Mux((~tag_mem(i).io.tag_read.visit) === 0.U, tag_mem(i).io.tag_read.visit, tag_mem(i).io.tag_read.visit + 1.U) 
+						tag_mem(i).io.tag_write.valid := tag_mem(i).io.tag_read.valid
 					}
 				}
 
@@ -468,10 +477,10 @@ class Cache(cache_name: String) extends Module{
 							//printf(p"cpu_request_addr: ${cpu_request_addr_reg}\n")
 							data_mem(i).io.cache_req.we := true.B					//写数据使能
 							//data_mem(i).io.cache_req.index := cpu_request_addr_index
-							tag_mem(i).io.cache_req.we := true.B
-							tag_mem(i).io.tag_write.valid := true.B					//tag的valid设置为1
-							tag_mem(i).io.tag_write.dirty := true.B					//tag的dirty设置为1
-							tag_mem(i).io.tag_write.tag := tag_mem(i).io.tag_read.tag		//io.cpu_request.addr(addr_len - 1, blockSize_len + groupId_len)	//写的tag在请求的地址位中
+							//tag_mem(i).io.cache_req.we := true.B
+							//tag_mem(i).io.tag_write.valid := true.B					//tag的valid设置为1
+							//tag_mem(i).io.tag_write.dirty := true.B					//tag的dirty设置为1
+							//tag_mem(i).io.tag_write.tag := tag_mem(i).io.tag_read.tag		//io.cpu_request.addr(addr_len - 1, blockSize_len + groupId_len)	//写的tag在请求的地址位中
 							response_data := data_mem(i).io.data_read.data
 							//part := Wire(Vec(8, UInt(64.W)))							
 							for(j <- 0 until 8){
@@ -573,18 +582,20 @@ class Cache(cache_name: String) extends Module{
 						}
 					}
 				}
-			}
-			//如果为命中需要进行清零操作，如果未命中需要进行加1操作
-			for(i <- 0 until nWays){
-				when((i.U =/= max) && tag_mem(i).io.tag_read.valid){
-					//printf("I am here")
-					tag_mem(i).io.cache_req.we := true.B
-					tag_mem(i).io.tag_write.valid := true.B
-					tag_mem(i).io.tag_write.dirty := tag_mem(i).io.tag_read.dirty
-					tag_mem(i).io.tag_write.visit := Mux((~tag_mem(i).io.tag_read.visit) === 0.U, tag_mem(i).io.tag_read.visit, tag_mem(i).io.tag_read.visit + 1.U) 
-					tag_mem(i).io.tag_write.tag := tag_mem(i).io.tag_read.tag
+
+				for(i <- 0 until nWays){
+					when((i.U =/= max) && tag_mem(i).io.tag_read.valid){
+						//printf("I am here")
+						tag_mem(i).io.cache_req.we := true.B
+						tag_mem(i).io.tag_write.valid := true.B
+						tag_mem(i).io.tag_write.dirty := tag_mem(i).io.tag_read.dirty
+						tag_mem(i).io.tag_write.visit := Mux((~tag_mem(i).io.tag_read.visit) === 0.U, tag_mem(i).io.tag_read.visit, tag_mem(i).io.tag_read.visit + 1.U) 
+						tag_mem(i).io.tag_write.tag := tag_mem(i).io.tag_read.tag
+					}
 				}
 			}
+			//如果为命中需要进行清零操作，如果未命中需要进行加1操作
+			
 		} 
 		is(sReadAddr){
 			//printf("sReadAddr\n")
@@ -698,7 +709,7 @@ class Cache(cache_name: String) extends Module{
 			io.mem_io.w.valid := true.B
 			io.mem_io.w.bits.strb := "b11111111".U
 			//io.mem_request.addr := writeback_addr + (index << log2Ceil(bitWidth).U)
-			when(io.mem_io.w.ready){
+			//when(io.mem_io.w.ready){
 				for(i <- 0 until nWays){
 					when(i.U === replace){
 						cache_data := VecInit.tabulate(16){k => data_mem(i).io.data_read.data((k+1)*word_len - 1, k*word_len)}
@@ -707,7 +718,7 @@ class Cache(cache_name: String) extends Module{
 					}
 				}
 				//printf(p"index:${index}\n")
-			}
+			//}
 			
 			//io.mem_request.rw := true.B
 			when(last){
