@@ -144,13 +144,19 @@
     "class":"chisel3.experimental.EnumAnnotations$EnumDefAnnotation",
     "typeName":"cache.CacheState",
     "definition":{
-      "sRefill":3,
-      "sWriteAck":6,
+      "sRefill":9,
+      "sWriteAck":12,
       "sIdle":0,
-      "sWriteAddr":5,
-      "sMatch":1,
-      "sReadAddr":4,
-      "sWriteback":2
+      "sWriteAddr":11,
+      "sMatch":7,
+      "sReadAddr":10,
+      "sUnCacheWriteAck":5,
+      "sReMatch":6,
+      "sUnCacheReadData":3,
+      "sUnCacheWriteAddr":2,
+      "sUnCacheReadAddr":1,
+      "sUnCacheWriteData":4,
+      "sWriteback":8
     }
   },
   {
@@ -159,9 +165,26 @@
   },
   {
     "class":"firrtl.transforms.CombinationalPath",
-    "sink":"~myCPU|myCPU>io_master_bready",
+    "sink":"~myCPU|myCPU>io_master_wlast",
     "sources":[
+      "~myCPU|myCPU>io_master_wready"
+    ]
+  },
+  {
+    "class":"firrtl.transforms.CombinationalPath",
+    "sink":"~myCPU|myCPU>io_stall",
+    "sources":[
+      "~myCPU|myCPU>io_master_rvalid",
       "~myCPU|myCPU>io_master_bvalid"
+    ]
+  },
+  {
+    "class":"firrtl.transforms.CombinationalPath",
+    "sink":"~myCPU|myCPU>io_master_wdata",
+    "sources":[
+      "~myCPU|myCPU>io_master_wready",
+      "~myCPU|myCPU>io_master_rvalid",
+      "~myCPU|myCPU>io_master_rdata"
     ]
   }
 ]

@@ -238,8 +238,8 @@ class CSR extends Module{
 
 	//这个是illegal指令的判断
 //	printf(p"csr_mode:${io.r_addr(9, 8)}  inst_mode:${io.inst_mode}\n")
-	val modeValid = ((io.r_addr(9,8) <= mode) && (io.inst_mode <= mode)) ||	(~io.fd_enable) //模式判断，总共12位地址8，9两位是特权位
-	val valid = instValid && (modeValid || (io.r_op === CSR.N))								//访问方式和权限两重判断
+	val modeValid = (((io.r_addr(9,8) <= mode) || (io.r_op === CSR.N)) && (io.inst_mode <= mode)) || (~io.fd_enable) //模式判断，总共12位地址8，9两位是特权位
+	val valid = instValid && (modeValid)								//访问方式和权限两重判断
 	io.r_data := data
 
 	//准备要写入csr的数据
@@ -280,7 +280,7 @@ class CSR extends Module{
 //	printf(p"valid:${valid} illegal_inst:${(io.illegal_inst.orR || io.fetch_misalign) && io.fd_enable} ls_misalign:${(io.load_misalign || io.store_misalign) && io.de_enable}\n")
 	val hasExc 	= !hasInt && ((!valid) || ((io.illegal_inst.orR || io.fetch_misalign) && io.fd_enable)
 							|| ((io.load_misalign || io.store_misalign) && io.de_enable) 
-							|| ((io.inst === Instructions.ECALL || io.inst === Instructions.EBREAK) && io.mw_enable))
+							|| ((io.inst === Instructions.ECALL || io.inst === Instructions.EBREAK) && io.em_enable))
 
 
 	val excCause = 	Mux(io.inst === Instructions.ECALL, EXC_U_ECALL, 
@@ -316,8 +316,8 @@ class CSR extends Module{
 							Cat(false.B, excCause))
 
 	//根据情况刷新不同阶段的流水线						
-	when(hasInt || ((io.isMret || io.isSret) && io.mw_enable)){
-		io.flush_mask := "b1111".U
+	when(hasInt || ((io.isMret || io.isSret) && io.em_enable)){		//防止处理异常前已经对内存进行了写
+		io.flush_mask := "b0111".U
 	}.elsewhen(hasExc){
 		io.flush_mask := Mux((excCause === EXC_U_ECALL) || (excCause === EXC_BRK_POINT), "b1111".U,
 			Mux((excCause === EXC_LOAD_ADDR) || (excCause === EXC_STORE_ADDR), "b0111".U,
