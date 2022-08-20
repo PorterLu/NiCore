@@ -10,6 +10,7 @@ import chisel3.experimental.BundleLiterals._
 import cacheArbiter._ 
 import cache._
 import axi4._ 
+import mdu._ 
 import CSR_OP._ 
 import CSR._ 
 
@@ -264,6 +265,8 @@ class Datapath extends Module{
 	val immGen = Module(new ImmGenWire)
 	val brCond = Module(new BrCondSimple(64))			//专门用于跳转判断
 	val regFile = Module(new RegisterFile(35))			//有35个读口的寄存器文件
+	val multiplier = Module(new Multiplier)
+	val divider = Module(new Divider)
 	//val imem = Module(new Memory)							//指令mem
 	//val dmem = Module(new Mem)							//数据mem
 	//val icache = Module(new Cache)
@@ -271,10 +274,11 @@ class Datapath extends Module{
 	val started = RegNext(reset.asBool)
 	//val replay = io.dcache.cpu_response.replay
 	//val dcache_response_reg = RegInit(false.B)
-
+	val mul_stall = WireInit(false.B)//multiplier.io.mul_valid && !mul_result_enable
+	val div_stall = WireInit(false.B)//divider.io.div_valid && !div_result_enable
 	val dcache_stall = (em_pipe_reg.ld_type.orR || em_pipe_reg.st_type.orR) && em_pipe_reg.enable && (!io.dcache.cpu_response.ready)
-	val stall = !io.icache.cpu_response.ready || ( dcache_stall) 	//stall暂时设置为false
-	val cache_abort = !io.icache.cpu_response.ready
+	val stall = !io.icache.cpu_response.ready || ( dcache_stall) ||	mul_stall || div_stall//stall暂时设置为false
+	//val cache_abort = !io.icache.cpu_response.ready
 	//val load_stall = em_pipe_reg.enable && em_pipe_reg.ld_type.orR && ((de_pipe_reg.src1_addr === em_pipe_reg.dest) || (de_pipe_reg.src2_addr === em_pipe_reg.dest))
 
 	val csr = Module(new CSR)							//csr寄存器文件，同时可以用于特权判断，中断和异常处理
@@ -545,6 +549,7 @@ class Datapath extends Module{
 		
 	/****** Execute *****/
 	csr.io.de_enable := de_pipe_reg.enable
+	val computation_result = WireInit(0.U(64.W))
 	val src1_data = WireInit(0.U(64.W))
 	val src2_data = WireInit(0.U(64.W))
 	//val load_data_hazard = dmem.io.rdata >> ((em_pipe_reg.alu_out& "h07".U) << 3.U)
@@ -561,6 +566,75 @@ class Datapath extends Module{
 								)
 							)
 
+	val src_unready = ((de_pipe_reg.src1_addr === em_pipe_reg.dest) 
+						|| (de_pipe_reg.src2_addr === em_pipe_reg.dest)) && em_pipe_reg.ld_type.orR && !io.dcache.cpu_response.ready && em_pipe_reg.enable && de_pipe_reg.enable
+	val mul_result = RegInit(0.U(64.W))
+	val mul_result_enable = RegInit(false.B)
+	val div_result = RegInit(0.U(64.W))
+	val div_result_enable = RegInit(false.B)
+
+	val alu_out = alu.io.out
+	val alu_sum = alu.io.sum
+	//printf(p"src_unready: ${src_unready}; mul_stall:${mul_stall}; mul_result_enable:${mul_result_enable}; dcache_response:${io.dcache.cpu_response.ready}\n")
+	//printf(p"mul_valid: ${multiplier.io.mul_valid}; src_unready: ${src_unready}; mul_stall:${mul_stall}; mul_result_enable:${mul_result_enable}; dcache_response:${io.dcache.cpu_response.ready}; flush:${flush_de}\n")
+	//printf(p"div_valid: ${divider.io.div_valid}; src_unready: ${src_unready}; div_stall:${div_stall}; div_result_enable:${div_result_enable}; dcache_response:${io.dcache.cpu_response.ready}; flush:${flush_de}\n")
+	//val rem_div_select_reg = RegInit(false.B)
+	mul_stall := de_pipe_reg.enable  && !mul_result_enable && (de_pipe_reg.alu_op === Alu.ALU_MUL) //&& multiplier.io.mul_valid
+	div_stall := de_pipe_reg.enable  && !div_result_enable && ((de_pipe_reg.alu_op === Alu.ALU_REM) 
+																|| (de_pipe_reg.alu_op === Alu.ALU_DIV) 
+																|| (de_pipe_reg.alu_op === Alu.ALU_REMU) 
+																|| (de_pipe_reg.alu_op === Alu.ALU_DIVU)) //divider.io.div_valid//
+
+
+	multiplier.io.mul_valid := ((de_pipe_reg.alu_op === Alu.ALU_MUL) && de_pipe_reg.enable) && !src_unready
+	multiplier.io.flush := flush_de
+	multiplier.io.mulw := Mux(de_pipe_reg.wd_type === W_D, false.B, true.B)
+	multiplier.io.mul_op := Mux(de_pipe_reg.inst === MUL || de_pipe_reg.inst === MULW, MulOp.mul.asUInt, 
+							Mux(de_pipe_reg.inst === MULH, MulOp.mulh.asUInt,
+								Mux(de_pipe_reg.inst === MULHSU, MulOp.mulhsu.asUInt, MulOp.mulhu.asUInt)
+							)
+						)
+
+	multiplier.io.multilicand := src1_data.asSInt
+	multiplier.io.multiplier := src2_data.asSInt
+
+	divider.io.div_valid := ((de_pipe_reg.alu_op === Alu.ALU_DIVU) || 
+								(de_pipe_reg.alu_op === Alu.ALU_DIV) || 
+								(de_pipe_reg.alu_op === Alu.ALU_REM) || 
+								(de_pipe_reg.alu_op === Alu.ALU_REMU)) && de_pipe_reg.enable && !src_unready
+	divider.io.flush := flush_de
+	divider.io.divw := Mux(de_pipe_reg.wd_type === W_D, false.B, true.B)
+	divider.io.div_signed := (de_pipe_reg.alu_op === Alu.ALU_DIV) || (de_pipe_reg.alu_op === Alu.ALU_REM)
+	divider.io.dividend := src1_data.asSInt
+	divider.io.divisor := src2_data.asSInt
+	//rem_div_select_reg := de_pipe_reg.alu_op === Alu.ALU_REM || de_pipe_reg.alu_op === Alu.ALU_REMU
+
+	when(flush_de){
+		mul_result_enable := false.B
+	}.elsewhen(multiplier.io.out_valid){
+		mul_result := multiplier.io.result.asUInt
+		mul_result_enable := true.B
+	}
+
+	when(flush_de){
+		mul_result_enable := false.B
+	}.elsewhen(divider.io.out_valid){
+		div_result_enable := true.B
+		when(de_pipe_reg.alu_op === Alu.ALU_DIVU || de_pipe_reg.alu_op === Alu.ALU_DIV){
+			div_result := divider.io.quotient.asUInt
+		}.elsewhen(de_pipe_reg.alu_op === Alu.ALU_REMU || de_pipe_reg.alu_op === Alu.ALU_REM){
+			div_result := divider.io.remainder.asUInt
+		}
+	}
+
+	multiplier.io.out_ready := mul_result_enable
+	divider.io.out_ready := div_result_enable
+
+	computation_result := Mux(de_pipe_reg.alu_op === Alu.ALU_DIV || de_pipe_reg.alu_op === Alu.ALU_DIVU, div_result,
+								Mux(de_pipe_reg.alu_op === Alu.ALU_REM || de_pipe_reg.alu_op === Alu.ALU_REMU, div_result,
+									Mux(de_pipe_reg.alu_op === Alu.ALU_MUL, mul_result, alu_out)
+								)
+							)
 
 	when(em_pipe_reg.enable && em_pipe_reg.wb_en && (de_pipe_reg.src1_addr === em_pipe_reg.dest) && (de_pipe_reg.src1_addr =/= 0.U)){
 		//printf("\n\n Hazard detect1\n\n")
@@ -598,9 +672,6 @@ class Datapath extends Module{
 		src2_data := de_pipe_reg.rs2
 	}
 
-
-
-
 	//printf(p"\n\n src1_data:${Hexadecimal(src1_data)}\n\n")
 	//printf(p"src1_data: ${Hexadecimal(src1_data)}; src2_data: ${Hexadecimal(src2_data)}; br_taken:${brCond_taken}; br_type:${de_pipe_reg.br_type}\n")
 
@@ -612,9 +683,6 @@ class Datapath extends Module{
 	alu.io.B := Mux(de_pipe_reg.wd_type === W_W, B_data(31, 0), B_data)
 
 	//printf(p"alu.io.A: ${Hexadecimal(alu.io.A)}, alu.io.B: ${Hexadecimal(alu.io.B)}\n")
-
-	val alu_out = alu.io.out
-	val alu_sum = alu.io.sum
 	
 	jmp_occur := de_pipe_reg.enable && (de_pipe_reg.pc_sel === PC_ALU)
 	jmp_flush := jmp_occur
@@ -633,7 +701,6 @@ class Datapath extends Module{
 
 	brCond_taken := brCond.io.taken && de_pipe_reg.enable	//taken需要信号有效时才产生作用
 	br_flush := brCond_taken
-
 
 	csr.io.store_misalign := (de_pipe_reg.st_type =/= ST_XXX) && 
 										MuxCase(false.B,
@@ -655,7 +722,7 @@ class Datapath extends Module{
 	csr.io.load_misalign_addr := alu_sum
 	csr.io.store_misalign_addr := alu_sum
 
-	when((flush_em ) && !stall){			//|| load_stall
+	when((flush_em) && !stall){			//|| load_stall
 		em_pipe_reg.inst := Instructions.NOP
 		em_pipe_reg.dest := 0.U
 		em_pipe_reg.alu_out := 0.U
@@ -677,7 +744,9 @@ class Datapath extends Module{
 	}.elsewhen(!stall){
 		em_pipe_reg.inst := de_pipe_reg.inst
 		em_pipe_reg.dest := de_pipe_reg.dest
-		em_pipe_reg.alu_out := alu_out
+		em_pipe_reg.alu_out := computation_result //alu_result
+		mul_result_enable := false.B
+		div_result_enable := false.B
 		em_pipe_reg.alu_sum := alu_sum
 		em_pipe_reg.csr_read_data := de_pipe_reg.csr_read_data
 		em_pipe_reg.csr_write_op := de_pipe_reg.csr_write_op

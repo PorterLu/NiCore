@@ -3,109 +3,109 @@
     "class":"firrtl.transforms.DedupedResult",
     "original":"~myCPU|tag_cache",
     "duplicate":"~myCPU|myCPU/icache:Cache/tag_mem_0:tag_cache",
-    "index":0.2962962962962963
+    "index":0.3448275862068966
   },
   {
     "class":"firrtl.transforms.DedupedResult",
     "original":"~myCPU|tag_cache_1",
     "duplicate":"~myCPU|myCPU/icache:Cache/tag_mem_1:tag_cache",
-    "index":0.3333333333333333
+    "index":0.3793103448275862
   },
   {
     "class":"firrtl.transforms.DedupedResult",
     "original":"~myCPU|tag_cache_2",
     "duplicate":"~myCPU|myCPU/icache:Cache/tag_mem_2:tag_cache",
-    "index":0.37037037037037035
+    "index":0.41379310344827586
   },
   {
     "class":"firrtl.transforms.DedupedResult",
     "original":"~myCPU|tag_cache_3",
     "duplicate":"~myCPU|myCPU/icache:Cache/tag_mem_3:tag_cache",
-    "index":0.4074074074074074
+    "index":0.4482758620689655
   },
   {
     "class":"firrtl.transforms.DedupedResult",
     "original":"~myCPU|data_cache",
     "duplicate":"~myCPU|myCPU/icache:Cache/data_mem_0:data_cache",
-    "index":0.4444444444444444
+    "index":0.4827586206896552
   },
   {
     "class":"firrtl.transforms.DedupedResult",
     "original":"~myCPU|data_cache_1",
     "duplicate":"~myCPU|myCPU/icache:Cache/data_mem_1:data_cache",
-    "index":0.48148148148148145
+    "index":0.5172413793103449
   },
   {
     "class":"firrtl.transforms.DedupedResult",
     "original":"~myCPU|data_cache_2",
     "duplicate":"~myCPU|myCPU/icache:Cache/data_mem_2:data_cache",
-    "index":0.5185185185185185
+    "index":0.5517241379310345
   },
   {
     "class":"firrtl.transforms.DedupedResult",
     "original":"~myCPU|data_cache_3",
     "duplicate":"~myCPU|myCPU/icache:Cache/data_mem_3:data_cache",
-    "index":0.5555555555555556
+    "index":0.5862068965517241
   },
   {
     "class":"firrtl.transforms.DedupedResult",
     "original":"~myCPU|Cache",
     "duplicate":"~myCPU|myCPU/icache:Cache",
-    "index":0.5925925925925926
+    "index":0.6206896551724138
   },
   {
     "class":"firrtl.transforms.DedupedResult",
     "original":"~myCPU|tag_cache_4",
     "duplicate":"~myCPU|myCPU/dcache:Cache/tag_mem_0:tag_cache",
-    "index":0.6296296296296297
+    "index":0.6551724137931034
   },
   {
     "class":"firrtl.transforms.DedupedResult",
     "original":"~myCPU|tag_cache_5",
     "duplicate":"~myCPU|myCPU/dcache:Cache/tag_mem_1:tag_cache",
-    "index":0.6666666666666666
+    "index":0.6896551724137931
   },
   {
     "class":"firrtl.transforms.DedupedResult",
     "original":"~myCPU|tag_cache_6",
     "duplicate":"~myCPU|myCPU/dcache:Cache/tag_mem_2:tag_cache",
-    "index":0.7037037037037037
+    "index":0.7241379310344828
   },
   {
     "class":"firrtl.transforms.DedupedResult",
     "original":"~myCPU|tag_cache_7",
     "duplicate":"~myCPU|myCPU/dcache:Cache/tag_mem_3:tag_cache",
-    "index":0.7407407407407407
+    "index":0.7586206896551724
   },
   {
     "class":"firrtl.transforms.DedupedResult",
     "original":"~myCPU|data_cache_4",
     "duplicate":"~myCPU|myCPU/dcache:Cache/data_mem_0:data_cache",
-    "index":0.7777777777777778
+    "index":0.7931034482758621
   },
   {
     "class":"firrtl.transforms.DedupedResult",
     "original":"~myCPU|data_cache_5",
     "duplicate":"~myCPU|myCPU/dcache:Cache/data_mem_1:data_cache",
-    "index":0.8148148148148148
+    "index":0.8275862068965517
   },
   {
     "class":"firrtl.transforms.DedupedResult",
     "original":"~myCPU|data_cache_6",
     "duplicate":"~myCPU|myCPU/dcache:Cache/data_mem_2:data_cache",
-    "index":0.8518518518518519
+    "index":0.8620689655172413
   },
   {
     "class":"firrtl.transforms.DedupedResult",
     "original":"~myCPU|data_cache_7",
     "duplicate":"~myCPU|myCPU/dcache:Cache/data_mem_3:data_cache",
-    "index":0.8888888888888888
+    "index":0.896551724137931
   },
   {
     "class":"firrtl.transforms.DedupedResult",
     "original":"~myCPU|Cache_1",
     "duplicate":"~myCPU|myCPU/dcache:Cache",
-    "index":0.9259259259259259
+    "index":0.9310344827586207
   },
   {
     "class":"firrtl.EmitCircuitAnnotation",
@@ -158,6 +158,44 @@
       "sUnCacheWriteData":4,
       "sWriteback":8
     }
+  },
+  {
+    "class":"chisel3.experimental.EnumAnnotations$EnumComponentAnnotation",
+    "target":"myCPU.Divider.next_state",
+    "enumTypeName":"mdu.DivState"
+  },
+  {
+    "class":"chisel3.experimental.EnumAnnotations$EnumDefAnnotation",
+    "typeName":"mdu.DivState",
+    "definition":{
+      "sIdle":0,
+      "sCalc":1,
+      "sOver":2
+    }
+  },
+  {
+    "class":"chisel3.experimental.EnumAnnotations$EnumComponentAnnotation",
+    "target":"myCPU.Divider.div_state",
+    "enumTypeName":"mdu.DivState"
+  },
+  {
+    "class":"chisel3.experimental.EnumAnnotations$EnumComponentAnnotation",
+    "target":"myCPU.Multiplier.next_state",
+    "enumTypeName":"mdu.MulState"
+  },
+  {
+    "class":"chisel3.experimental.EnumAnnotations$EnumDefAnnotation",
+    "typeName":"mdu.MulState",
+    "definition":{
+      "sIdle":0,
+      "sCalc":1,
+      "sOver":2
+    }
+  },
+  {
+    "class":"chisel3.experimental.EnumAnnotations$EnumComponentAnnotation",
+    "target":"myCPU.Multiplier.mul_state",
+    "enumTypeName":"mdu.MulState"
   },
   {
     "class":"firrtl.transforms.BlackBoxTargetDirAnno",

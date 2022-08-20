@@ -54,7 +54,7 @@ class AluSimple(val width: Int) extends Alu {
 		Seq(
 			ALU_ADD -> (io.A + io.B),
 			ALU_SUB -> (io.A - io.B),
-			ALU_SRA -> (Mux(io.width_type === W_W, io.A(31,0).asSInt ,io.A.asSInt) >> shamt).asUInt,
+			ALU_SRA -> (Mux(io.width_type === W_W, io.A(31,0).asSInt ,	io.A.asSInt) >> shamt).asUInt,
 			ALU_SRL -> (io.A >> shamt),
 			ALU_SLL -> (io.A << shamt),
 			ALU_SLT -> (io.A.asSInt < io.B.asSInt),
@@ -62,11 +62,11 @@ class AluSimple(val width: Int) extends Alu {
 			ALU_AND -> (io.A & io.B),
 			ALU_OR -> (io.A | io.B),
 			ALU_XOR -> (io.A ^ io.B),
-			ALU_MUL -> (io.A * io.B), 
-			ALU_DIV -> Mux(io.width_type === W_W, ((io.A(31,0).asSInt) / (io.B(31,0).asSInt)).asUInt ,(io.A.asSInt / io.B.asSInt).asUInt),
-			ALU_DIVU -> Mux(io.width_type === W_W, io.A(31,0) / io.B(31,0), io.A / io.B),
-			ALU_REM -> Mux(io.width_type === W_W, ((io.A(31,0).asSInt) % (io.B(31,0).asSInt)).asUInt ,(io.A.asSInt % io.B.asSInt).asUInt),
-			ALU_REMU -> Mux(io.width_type === W_W, io.A(31,0) % io.B(31,0), io.A % io.B),
+			//ALU_MUL -> (io.A * io.B), 
+			//ALU_DIV -> Mux(io.width_type === W_W, ((io.A(31,0).asSInt) / (io.B(31,0).asSInt)).asUInt ,(io.A.asSInt / io.B.asSInt).asUInt),
+			//ALU_DIVU -> Mux(io.width_type === W_W, io.A(31,0) / io.B(31,0), io.A / io.B),
+			//ALU_REM -> Mux(io.width_type === W_W, ((io.A(31,0).asSInt) % (io.B(31,0).asSInt)).asUInt ,(io.A.asSInt % io.B.asSInt).asUInt),
+			//ALU_REMU -> Mux(io.width_type === W_W, io.A(31,0) % io.B(31,0), io.A % io.B),
 			ALU_COPY_A -> io.A
 		)
 	)
