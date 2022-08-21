@@ -196,7 +196,8 @@ class Cache(cache_name: String) extends Module{
 	//val replay_reg = WireInit(false.B)
 
 	//printf(p"addr:${Cat(io.cpu_request.addr(addr_len - 1, 3), 0.U(3.W))}\n")
-	cpu_request_addr_reg := Cat(io.cpu_request.addr(addr_len - 1, 3), 0.U(3.W))		//cpu访存地址
+	val align_addr = Cat(io.cpu_request.addr(addr_len - 1, 3), 0.U(3.W))
+	cpu_request_addr_reg := align_addr	//cpu访存地址
 	cpu_request_data := io.cpu_request.data
 	cpu_request_mask := io.cpu_request.mask
 	cpu_request_rw := io.cpu_request.rw

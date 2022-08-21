@@ -234,6 +234,7 @@ class Divider extends Module{
 					dividend := Mux(io.divw, Cat(0.U(96.W), io.dividend(31,0).asUInt), Cat(0.U(64.W), io.dividend.asUInt))
 					divisor := Mux(io.divw, Cat(0.U(64.W), io.divisor(31, 0).asUInt, 0.U(32.W)), Cat(io.divisor.asUInt, 0.U(64.W)))
 				}
+				//printf(p"dividend: ${io.dividend}; divisor:${io.divisor}\n")
 
 				is_w := io.divw 
 				is_sign := io.div_signed
@@ -297,6 +298,7 @@ class Divider extends Module{
 				io.quotient := result(63, 0).asSInt
 				io.remainder := dividend(63, 0).asSInt
 			}
+			//printf(p"${Hexadecimal(result)}; ${Hexadecimal(dividend)}\n")
 			next_state := sIdle
 		}
 	}

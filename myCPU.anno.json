@@ -133,22 +133,23 @@
   {
     "class":"chisel3.experimental.EnumAnnotations$EnumComponentAnnotation",
     "target":"myCPU.Cache.next_state",
-    "enumTypeName":"cache.CacheState"
+    "enumTypeName":"cache_single_port.CacheState"
   },
   {
     "class":"chisel3.experimental.EnumAnnotations$EnumComponentAnnotation",
     "target":"myCPU.Cache.cache_state",
-    "enumTypeName":"cache.CacheState"
+    "enumTypeName":"cache_single_port.CacheState"
   },
   {
     "class":"chisel3.experimental.EnumAnnotations$EnumDefAnnotation",
-    "typeName":"cache.CacheState",
+    "typeName":"cache_single_port.CacheState",
     "definition":{
       "sRefill":9,
       "sWriteAck":12,
       "sIdle":0,
       "sWriteAddr":11,
       "sMatch":7,
+      "wait_a_cycle":13,
       "sReadAddr":10,
       "sUnCacheWriteAck":5,
       "sReMatch":6,

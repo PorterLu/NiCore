@@ -8,7 +8,8 @@ import Instructions._
 import chisel3.stage.ChiselStage
 import chisel3.experimental.BundleLiterals._
 import cacheArbiter._ 
-import cache._
+//import cache._
+import cache_single_port._ 
 import axi4._ 
 import mdu._ 
 import CSR_OP._ 
@@ -552,6 +553,7 @@ class Datapath extends Module{
 	val computation_result = WireInit(0.U(64.W))
 	val src1_data = WireInit(0.U(64.W))
 	val src2_data = WireInit(0.U(64.W))
+	//printf(p"src1:${src1_data}; src2:${src2_data}\n")
 	//val load_data_hazard = dmem.io.rdata >> ((em_pipe_reg.alu_out& "h07".U) << 3.U)
 	val load_data_hazard = io.dcache.cpu_response.data >> ((em_pipe_reg.alu_out & "h07".U) << 3.U)
 	val load_data_ext_hazard = Mux(em_pipe_reg.ld_type === LD_LW, Cat(Mux(load_data_hazard(31).asBool, "hffffffff".U, 0.U(32.W)), load_data_hazard(31, 0)),
@@ -586,7 +588,7 @@ class Datapath extends Module{
 																|| (de_pipe_reg.alu_op === Alu.ALU_DIVU)) //divider.io.div_valid//
 
 
-	multiplier.io.mul_valid := ((de_pipe_reg.alu_op === Alu.ALU_MUL) && de_pipe_reg.enable) && !src_unready
+	multiplier.io.mul_valid := ((de_pipe_reg.alu_op === Alu.ALU_MUL) && de_pipe_reg.enable) && !src_unready && !mul_result_enable
 	multiplier.io.flush := flush_de
 	multiplier.io.mulw := Mux(de_pipe_reg.wd_type === W_D, false.B, true.B)
 	multiplier.io.mul_op := Mux(de_pipe_reg.inst === MUL || de_pipe_reg.inst === MULW, MulOp.mul.asUInt, 
@@ -601,7 +603,7 @@ class Datapath extends Module{
 	divider.io.div_valid := ((de_pipe_reg.alu_op === Alu.ALU_DIVU) || 
 								(de_pipe_reg.alu_op === Alu.ALU_DIV) || 
 								(de_pipe_reg.alu_op === Alu.ALU_REM) || 
-								(de_pipe_reg.alu_op === Alu.ALU_REMU)) && de_pipe_reg.enable && !src_unready
+								(de_pipe_reg.alu_op === Alu.ALU_REMU)) && de_pipe_reg.enable && !src_unready && !div_result_enable
 	divider.io.flush := flush_de
 	divider.io.divw := Mux(de_pipe_reg.wd_type === W_D, false.B, true.B)
 	divider.io.div_signed := (de_pipe_reg.alu_op === Alu.ALU_DIV) || (de_pipe_reg.alu_op === Alu.ALU_REM)
@@ -617,9 +619,10 @@ class Datapath extends Module{
 	}
 
 	when(flush_de){
-		mul_result_enable := false.B
+		div_result_enable := false.B
 	}.elsewhen(divider.io.out_valid){
 		div_result_enable := true.B
+		//printf(p"quotient:${divider.io.quotient.asUInt}; remainder:${divider.io.remainder.asUInt}\n")
 		when(de_pipe_reg.alu_op === Alu.ALU_DIVU || de_pipe_reg.alu_op === Alu.ALU_DIV){
 			div_result := divider.io.quotient.asUInt
 		}.elsewhen(de_pipe_reg.alu_op === Alu.ALU_REMU || de_pipe_reg.alu_op === Alu.ALU_REM){
@@ -627,6 +630,7 @@ class Datapath extends Module{
 		}
 	}
 
+	//printf(p"div_result: ${div_result}; div_result_enable: ${div_result_enable}\n")
 	multiplier.io.out_ready := mul_result_enable
 	divider.io.out_ready := div_result_enable
 
