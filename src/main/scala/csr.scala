@@ -4,8 +4,8 @@ import chisel3.util._
 import Control._
 import CSR_OP._ 
 
+//design new exception and interrupt response order
 object ExceptCause{
-
 	val EXC_S_SOFT_INT = 1.U(63.W)		//s模式软件中断
 	val EXC_M_SOFT_INT = 3.U(63.W)		//m模式软件中断
 	val EXC_S_TIMER_INT = 5.U(63.W)		//s模式时钟中断，应该是不存在的
@@ -243,7 +243,7 @@ class CSR extends Module{
 	io.r_data := data
 
 	//准备要写入csr的数据
-	val csrData :: _ :: _ :: Nil = ListLookup(io.w_op, default, csrTable)
+	val csrData :: _ :: _ :: Nil = ListLookup(io.w_addr, default, csrTable)
 	val writeEn = (io.w_op === W || io.w_op === RW || io.w_op === RC || io.w_op === RS) && io.mw_enable
 	val writeData = MuxLookup(io.w_op, 0.U, Seq(
 		W 	-> io.w_data,
@@ -315,17 +315,21 @@ class CSR extends Module{
 	val cause = Mux(hasInt, Cat(true.B, intCause),
 							Cat(false.B, excCause))
 
-	//根据情况刷新不同阶段的流水线						
-	when(hasInt || ((io.isMret || io.isSret) && io.em_enable)){		//防止处理异常前已经对内存进行了写
-		io.flush_mask := "b0111".U
-	}.elsewhen(hasExc){
-		io.flush_mask := Mux((excCause === EXC_U_ECALL) || (excCause === EXC_BRK_POINT), "b1111".U,
-			Mux((excCause === EXC_LOAD_ADDR) || (excCause === EXC_STORE_ADDR), "b0111".U,
-				Mux(excCause === EXC_ILL_INST, "b0011".U, 
-					Mux(excCause === EXC_INST_ADDR, "b0011".U, "b0".U)
-				)
-			)		
-		)
+	//根据情况刷新不同阶段的流水线
+	when(!io.stall){						
+		when(hasInt || ((io.isMret || io.isSret) && io.em_enable)){		//防止处理异常前已经对内存进行了写
+			io.flush_mask := "b0111".U
+		}.elsewhen(hasExc){
+			io.flush_mask := Mux((excCause === EXC_U_ECALL) || (excCause === EXC_BRK_POINT), "b0111".U,
+								Mux((excCause === EXC_LOAD_ADDR) || (excCause === EXC_STORE_ADDR), "b0011".U,
+									Mux(excCause === EXC_ILL_INST, "b0001".U, 
+										Mux(excCause === EXC_INST_ADDR, "b0001".U, "b0".U)
+									)
+								)		
+							)
+		}.otherwise{
+			io.flush_mask := 0.U
+		}
 	}.otherwise{
 		io.flush_mask := 0.U
 	}
@@ -358,7 +362,7 @@ class CSR extends Module{
 	val trapMode = Mux(hasInt, intMode, 
 					Mux(io.isSret, sretMode,
 					Mux(io.isMret, mretMode, excMode)))
-	val nextMode = Mux((hasInt || hasExc) & !writeEn, trapMode, mode)
+	val nextMode = Mux((hasInt || hasExc) & !writeEn, trapMode, mode)		//冲刷之前的所有寄存器，所以不会存在异常和写同时存在的情况
 	mode := nextMode
 
 	//如果有中断，会将相应的位置高, 这里由于sip是线网所以会同步更新				
@@ -403,20 +407,34 @@ class CSR extends Module{
 		when(io.w_addr === CSR_MCAUSE){ mcause <= writeData }
 		when(io.w_addr === CSR_MTVAL){ mtval <= writeData }
 		//when(io.w_addr === CSR_MIP){ mipReal := writeData }
-	}.elsewhen((hasExc || hasInt || ((io.isSret || io.isMret) && io.mw_enable)) && !io.stall){
+	}.elsewhen((hasExc || hasInt || ((io.isSret || io.isMret) && io.mw_enable)) && !io.stall){			//之前的hasExc并没有考虑isSret或者isMret的情况
 		when(io.isSret){
-			mstatus.sie := mstatus.spie
-			mstatus.spie := true.B
-			mstatus.spp	:= false.B						//spp只有一位可以直接赋值为false
+			mstatus.sie := mstatus.spie									//
+			mstatus.spie := true.B										//
+			mstatus.spp	:= false.B										//spp只有一位可以直接赋值为false
 		}.elsewhen(io.isMret){
 			mstatus.mie := mstatus.mpie
 			mstatus.mpie := true.B
-			mstatus.mpp := CSR_MODE_U					//mpp有两位
-		}.elsewhen(handIntS || handExcS){
+			mstatus.mpp := CSR_MODE_U									//mpp有两位
+		}.elsewhen(handIntS){
 			sepc 	<= Mux(io.jump_taken, io.jump_addr, io.excPC + 4.U)	//考虑跳转指令时发生中断的情况
 			scause 	<= cause
 			stval 	<= io.excValue
-			mstatus.spie := mstatus.sie					//
+			mstatus.spie := mstatus.sie					
+			mstatus.sie := false.B
+			mstatus.spp := mode(0)
+		}.elsewhen(hasIntM){
+			mepc 	<= Mux(io.jump_taken, io.jump_addr, io.excPC + 4.U)
+			mcause  <= cause
+			mtval 	<= io.excValue
+			mstatus.mpie := mstatus.mie
+			mstatus.mie := false.B
+			mstatus.mpp := mode
+		}.elsewhen(handExcS){
+			sepc	<= io.excPC
+			scause 	<= cause
+			stval 	<= io.excValue
+			mstatus.spie := mstatus.sie
 			mstatus.sie := false.B
 			mstatus.spp := mode(0)
 		}.otherwise{
@@ -427,7 +445,6 @@ class CSR extends Module{
 			mstatus.mie := false.B
 			mstatus.mpp := mode
 		}
-		
 	}
 
 	//io.hasInt := hasInt
@@ -435,7 +452,11 @@ class CSR extends Module{
 	//io.mode := mode
 	//io.sepc := sepc.asUInt
 	//io.mepc := mepc.asUInt
-	io.trapVec := trapVec
+	io.trapVec := Mux(hasInt, trapVec, 
+					Mux(io.isMret, mepc.asUInt, 
+							Mux(io.isSret, sepc.asUInt, trapVec)
+						)
+					)
 //	printf(p"hasExc:${hasExc} hasInt:${hasInt} isSret:${io.isSret} isMret:${io.isMret}\n")
 	io.trap := hasExc || hasInt || ((io.isSret || io.isMret) && io.mw_enable)
 	//io.pageEn   := !mode(1) && satp.mode

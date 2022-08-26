@@ -36,7 +36,7 @@ class CPU_Response extends Bundle{
 }
 
 object CacheState extends ChiselEnum{
-	val sIdle, sUnCacheReadAddr, sUnCacheWriteAddr, sUnCacheReadData, sUnCacheWriteData, sUnCacheWriteAck, sReMatch, sMatch, sWriteback, sRefill, sReadAddr, sWriteAddr, sWriteAck, wait_a_cycle = Value
+	val sIdle, sUnCacheReadAddr, sUnCacheWriteAddr, sUnCacheReadData, sUnCacheWriteData, sUnCacheWriteAck, sReMatch, sMatch, sWriteback, sRefill, sReadAddr, sWriteAddr, sWriteAck, sWait_a_cycle, sFlush, sFlushMatch, sFlushWrite, sFlushAddr,sFlushAck = Value
 }
 
 class tag_cache extends Module{
@@ -81,7 +81,9 @@ class Cache(cache_name: String) extends Module{
 		val cpu_request = Input(new CPU_Request)
 		val cpu_response = Output(new CPU_Response)
 		val mem_io = new Axi
+		val flush = Input(Bool())
 	})
+	val cache_type = if(cache_name == "inst_caches") true.B else false.B
 
 	val bitWidth = 64
 	val addr_len = 32
@@ -173,9 +175,30 @@ class Cache(cache_name: String) extends Module{
 	val max_01_or_23 = WireInit(false.B)
 	//val is_twice = RegInit(false.B)
 
+	//val flush_running = RegInit(false.B)
+	//val (block_transfer_index, block_over) = Counter(flush_running, nSets)
+	//val (flush_loop, flush_last) = Counter(block_over, blockSize / bitWidth)
+	//when(flush_last){
+	//	flush_flush_running := false.B
+	//}
+	val flush_loop_enable = WireInit(false.B)
+	val index_in_line_enable = WireInit(false.B)
+	val (flush_loop, flush_last) = Counter(flush_loop_enable, nSets)
+	val (index_in_line, line_last) = Counter(index_in_line_enable, nWays)
+	val flush_over = RegInit(false.B)
+
+	flush_loop_enable := false.B
+	index_in_line_enable := false.B
+
 	switch(cache_state){
 		is(sIdle){
-			when(io.cpu_request.valid && 
+			when(io.flush && io.cpu_request.valid){
+				next_state := sFlush
+				//flush_running := true.B
+				//for(i <- 0 until nWays){
+				//	data_mem(i).io.cache_req.index 
+				//}
+			}.elsewhen(io.cpu_request.valid && 
 					align_addr >= "h80000000".U && 
 					align_addr <= "h88000000".U){
 				
@@ -189,6 +212,135 @@ class Cache(cache_name: String) extends Module{
 			}.otherwise{
 				next_state := sIdle
 			}
+		}
+		is(sFlush){
+			//将last信号拉到最后一级进行判断
+			//printf("flush\n")
+			when(flush_over){
+				next_state := sIdle
+				flush_loop := 0.U
+				flush_over := false.B
+				io.cpu_response.ready := true.B 
+			}.otherwise{
+				next_state := sFlushMatch
+			}
+		}
+		is(sFlushMatch){
+			//将index加1的操作推迟到最后一个周期
+			when(!cache_type){
+				//printf("dcache flush match\n")
+				for(i <- 0 until nWays){
+					tag_mem(i).io.cache_req.index := flush_loop
+				}
+
+				is_match := tag_mem.map{k => k.io.tag_read.valid}
+
+				//next_state := sFlushMatch
+				for(i <- 0 until nWays){
+					when(i.U === index_in_line){
+						when(is_match(i)){
+							next_state := sFlushAddr
+							writeback_addr := Cat(tag_mem(i).io.tag_read.tag, flush_loop, 0.U(4.W))
+						}.elsewhen(!(index_in_line === (nWays - 1).U)){
+							next_state := sFlushMatch
+							index_in_line_enable := true.B
+						}.otherwise{
+							next_state := sFlush
+							when(flush_loop === (nSets - 1).U){
+								flush_over := true.B
+							}.otherwise{
+								flush_loop_enable := true.B
+								index_in_line := 0.U
+							}
+						}
+					}
+				}
+			}.otherwise{
+				//printf("Icache flush match\n")
+				for(i <- 0 until nWays){
+					tag_mem(i).io.cache_req.index := flush_loop
+				}
+
+				//is_match := tag_mem.map{k => k.io.tag_read.valid}
+				for(i <- 0 until nWays){
+					tag_mem(i).io.cache_req.we := true.B 
+					tag_mem(i).io.tag_write.tag := tag_mem(i).io.tag_read.tag
+					tag_mem(i).io.tag_write.visit := 0.U 
+					tag_mem(i).io.tag_write.dirty := false.B 
+					tag_mem(i).io.tag_write.valid := false.B
+				}
+
+				next_state := sFlush
+				flush_loop_enable := true.B
+				when(flush_loop === (nSets - 1).U){
+					flush_over := true.B
+				}
+			}
+			//printf(p"flush_loop:${flush_loop}\n")
+			//printf(p"index_in_line: ${index_in_line}\n")
+		}
+		is(sFlushAddr){
+			//printf("sFlushAddr\n")
+			for(i <- 0 until nWays){
+				when(i.U === index_in_line){
+					data_mem(i).io.cache_req.index := flush_loop
+					data_mem(i).io.cache_req.we := false.B
+				}
+			}
+
+			io.mem_io.aw.valid := true.B 
+			io.mem_io.aw.bits.len := 1.U 
+			io.mem_io.aw.bits.addr := writeback_addr
+			next_state := sFlushAddr
+			when(io.mem_io.aw.ready){
+				next_state := sFlushWrite
+			}
+		}
+		is(sFlushWrite){
+			//printf("sFlushWrite\n")
+			for(i <- 0 until nWays){
+				when(i.U === index_in_line){
+					data_mem(i).io.cache_req.index := flush_loop
+					data_mem(i).io.cache_req.we := false.B
+				}
+			}
+
+			next_state := sFlushWrite
+			fill_block_en := io.mem_io.w.ready
+			io.mem_io.w.bits.strb := "b11111111".U
+			io.mem_io.w.valid := true.B
+			for(i <- 0 until nWays){
+				when(i.U === index_in_line){
+					cache_data := VecInit.tabulate(2){k => data_mem(i).io.data_read.data((k+1)*word_len - 1, k*word_len)}
+					io.mem_io.w.bits.data := cache_data(index)
+				}
+			}
+			//printf(p"index:${index}; cache_data:${Hexadecimal(cache_data(0))}; cache_data:${Hexadecimal(cache_data(1))}\n")
+
+			when(last){
+				next_state := sFlushAck
+				index := 0.U
+			}
+		}
+		is(sFlushAck){
+			io.mem_io.b.ready := true.B 
+			next_state := sFlushAck
+			when(io.mem_io.b.valid){
+				when(index_in_line =/= (nWays - 1).U){
+					next_state := sFlushMatch
+					index_in_line_enable := true.B
+				}.otherwise{
+					next_state := sFlush
+					index_in_line := 0.U
+					when(flush_loop === (nSets - 1).U){
+						flush_over := true.B
+//						printf("over\n\n\n\n")
+					}.otherwise{
+						flush_loop_enable := true.B
+					}
+				}
+			}
+
 		}
 		is(sUnCacheReadAddr){
 			io.mem_io.ar.valid := true.B 
@@ -305,7 +457,7 @@ class Cache(cache_name: String) extends Module{
 					}
 					
 					//when(!is_twice){
-					next_state := wait_a_cycle
+					next_state := sWait_a_cycle
 					//	is_twice := true.B
 					//}.otherwise{
 					//	is_twice := false.B
@@ -355,7 +507,7 @@ class Cache(cache_name: String) extends Module{
 				}
 			}
 		}
-		is(wait_a_cycle){
+		is(sWait_a_cycle){
 			io.cpu_response.ready := true.B
 			next_state := sIdle
 		}

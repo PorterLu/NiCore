@@ -10,10 +10,11 @@ object Control{
 	val Y = true.B
 	val N = false.B
 
-	val PC_4 = 0.U(2.W)
-	val PC_ALU = 1.U(2.W)
-	val PC_0 = 2.U(2.W)
-	val PC_EPC = 3.U(2.W)
+	val PC_4 = 0.U(3.W)
+	val PC_ALU = 1.U(3.W)
+	val PC_0 = 2.U(3.W)
+	val PC_EPC = 3.U(3.W)
+	val PC_FENCE = 4.U(3.W)
 
 	val A_XXX = 0.U(1.W)
   	val A_PC = 0.U(1.W)
@@ -148,6 +149,7 @@ object Control{
 		SRET	-> 	List(PC_EPC,	A_XXX,	B_XXX,	 W_D,	IMM_X,		ALU_XXX,		BR_XXX,		ST_XXX,		LD_XXX,		WB_CSR,		N,		CSR_MODE_S,	CSR_NOP,		N,		Y),
 		ECALL 	-> 	List(PC_4,		A_XXX,	B_XXX,	 W_D,	IMM_X,		ALU_XXX,		BR_XXX,		ST_XXX,		LD_XXX,		WB_CSR,		N,		CSR_MODE_U,	CSR_NOP,		N,		N),
 		EBREAK 	->	List(PC_4,		A_XXX,	B_XXX,	 W_D,	IMM_X,		ALU_XXX,		BR_XXX,		ST_XXX,		LD_XXX,		WB_CSR,		N,		CSR_MODE_U,	CSR_NOP,		N,		N),
+		FENCE_I	->	List(PC_FENCE,	A_XXX,	B_XXX,	 W_D,	IMM_X,		ALU_XXX,		BR_XXX,		ST_XXX,		LD_XXX,		WB_ALU,		N,		CSR_MODE_U,	CSR_NOP,		N,		Y)
 //		BitPat(NOP)	->	List(PC_4,		A_RS1,	B_IMM,	 W_D,	IMM_X,		ALU_XXX,		BR_XXX,		ST_XXX,		LD_XXX,		WB_CSR,		N,		CSR_MODE_U,	CSR_NOP,		N,		N)
 	)
 
