@@ -1,0 +1,394 @@
+diff --git a/src/main/scala/datapath.scala b/src/main/scala/datapath.scala
+index a50ef4d..0ed6a21 100644
+--- a/src/main/scala/datapath.scala
++++ b/src/main/scala/datapath.scala
+@@ -8,8 +8,7 @@ import Instructions._
+ import chisel3.stage.ChiselStage
+ import chisel3.experimental.BundleLiterals._
+ import cacheArbiter._ 
+-//import cache._
+-import cache_single_port._ 
++import cache._
+ import axi4._ 
+ import mdu._ 
+ import CSR_OP._ 
+@@ -18,7 +17,6 @@ import CSR._
+ class CacheIO extends Bundle{
+ 	val cpu_request = Output(new CPU_Request)
+ 	val cpu_response = Input(new CPU_Response)
+-	val flush = Output(Bool())
+ }
+ 
+ class RegisterFile(readPorts : Int) extends Module{
+@@ -176,8 +174,6 @@ class DatapathIO extends Bundle{
+ 	val stall = Output(Bool())
+ 	val icache = new CacheIO
+ 	val dcache = new CacheIO
+-	val interrupt = Input(Bool())
+-	//val flush = Output(Bool())
+ }
+ 
+ 
+@@ -275,14 +271,12 @@ class Datapath extends Module{
+ 	//val dmem = Module(new Mem)							//数据mem
+ 	//val icache = Module(new Cache)
+ 	//val dcache = Module(new Cache)
+-	val started = RegInit(true.B)
++	val started = RegNext(reset.asBool)
+ 	//val replay = io.dcache.cpu_response.replay
+ 	//val dcache_response_reg = RegInit(false.B)
+-	val icache_flush_tag = RegInit(false.B)
+-	val dcache_flush_tag = RegInit(false.B)
+ 	val mul_stall = WireInit(false.B)//multiplier.io.mul_valid && !mul_result_enable
+ 	val div_stall = WireInit(false.B)//divider.io.div_valid && !div_result_enable
+-	val dcache_stall = (em_pipe_reg.ld_type.orR || em_pipe_reg.st_type.orR || em_pipe_reg.inst === FENCE_I) && em_pipe_reg.enable && (!io.dcache.cpu_response.ready) 
++	val dcache_stall = (em_pipe_reg.ld_type.orR || em_pipe_reg.st_type.orR) && em_pipe_reg.enable && (!io.dcache.cpu_response.ready)
+ 	val stall = !io.icache.cpu_response.ready || ( dcache_stall) ||	mul_stall || div_stall//stall暂时设置为false
+ 	//val cache_abort = !io.icache.cpu_response.ready
+ 	//val load_stall = em_pipe_reg.enable && em_pipe_reg.ld_type.orR && ((de_pipe_reg.src1_addr === em_pipe_reg.dest) || (de_pipe_reg.src2_addr === em_pipe_reg.dest))
+@@ -291,11 +285,7 @@ class Datapath extends Module{
+ 
+ 	val jump_addr = Wire(UInt(64.W))					//要跳转的地址
+ 	val gpr_ptr = Module(new gpr_ptr)					//用于向外输出寄存器信息，用于debug
+-	val clint  = Module(new clint())					//
+ 
+-	csr.io.int_timer := false.B//clint.io.timer_valid
+-	csr.io.int_soft  := false.B//clint.io.soft_valid
+-	csr.io.extern    := false.B//io.interrupt
+ 
+ 	io.stall := stall
+ 	//2号多余，寄存器文件依次读出，输出到gpr_ptr，最后在sim的过程输出寄存器信息用于调试
+@@ -310,6 +300,10 @@ class Datapath extends Module{
+ 	gpr_ptr.io.reset := reset
+ 
+ 	//csr寄存器要处理来自外部的中断，和来自clint的时钟中断和软件中断
++	csr.io.extern := false.B
++	csr.io.int_timer := false.B
++	csr.io.int_soft := false.B
++
+ 	//mem的始终，mem读取的时机这里也依靠时钟
+ 	//imem.io.clock := clock								//input mem clock
+ 	//imem.io.reset := reset								//input reset
+@@ -320,12 +314,10 @@ class Datapath extends Module{
+ 	csr.io.stall := stall
+ 
+ 	//flush信号，由csr得到信息后，进行判断要刷新那些流水寄存器	
+-	//val fence_flush = WireInit(false.B)
++
+ 	val br_flush = WireInit(false.B)
+ 	val jmp_flush = WireInit(false.B)
+ 	val csr_atomic_flush = WireInit(0.U(4.W))
+-	
+-	//这里如果发生了阻塞，会导致指令本身直接被刷新，但是如果保证了csr的原子性，那么就不会出现问题，因为不会出现阻塞，但是是否有可能被中断打断
+ 	csr_atomic_flush := Mux(mw_pipe_reg.enable && mw_pipe_reg.csr_write_op =/= CSR.N, "b1111".U, 
+ 							Mux(em_pipe_reg.enable && em_pipe_reg.csr_write_op =/= CSR.N, "b0111".U,
+ 								Mux(de_pipe_reg.enable && de_pipe_reg.csr_write_op =/= CSR.N, "b0011".U,
+@@ -334,8 +326,8 @@ class Datapath extends Module{
+ 							)
+ 						)
+ 
+-	val flush_fd = csr.io.flush_mask(0) || (br_flush || jmp_flush) || csr_atomic_flush(0) || icache_flush_tag || dcache_flush_tag
+-	val flush_de = csr.io.flush_mask(1)	|| ((br_flush || jmp_flush) && !stall) || csr_atomic_flush(1) || icache_flush_tag || dcache_flush_tag
++	val flush_fd = csr.io.flush_mask(0) || (br_flush || jmp_flush) || csr_atomic_flush(0) 
++	val flush_de = csr.io.flush_mask(1)	|| ((br_flush || jmp_flush) && !stall) || csr_atomic_flush(1)
+ 	val flush_em = csr.io.flush_mask(2)	|| csr_atomic_flush(2)
+ 	val flush_mw = csr.io.flush_mask(3) || csr_atomic_flush(3)
+ 
+@@ -354,17 +346,13 @@ class Datapath extends Module{
+ 	//printf(p"csr.io.trap:${csr.io.trap};  csr_atomic:${csr_atomic};  io.ctrl.pc_sel:${io.ctrl.pc_sel};  brCond_taken:${brCond_taken}")
+ 	val pc = RegInit("h80000000".U(64.W) - 4.U)
+ 	//val next_pc = RegInit("h80000000".U)
+-	when(started){
+-		started := false.B
+-	}
+ 	val next_pc = MuxCase(
+ 		pc + 4.U,
+ 		IndexedSeq(
+ 		csr.io.trap -> csr.io.trapVec,
+ 		csr_atomic -> (de_pipe_reg.pc + 4.U),
+-		(!started && (stall)) -> pc,	
+-		(icache_flush_tag || dcache_flush_tag) -> (em_pipe_reg.pc + 4.U),														//csr需要实现原子性
+-		(((de_pipe_reg.pc_sel === PC_ALU) && de_pipe_reg.enable)|| brCond_taken) ->(jump_addr >> 1.U << 1.U))					//是否jmp和jmp的结果应该和branch一样放在执行阶段
++		(!started && (stall)) -> pc,																								//csr需要实现原子性
++		(((de_pipe_reg.pc_sel === PC_ALU) && de_pipe_reg.enable)|| brCond_taken) ->(jump_addr >> 1.U << 1.U))							//是否jmp和jmp的结果应该和branch一样放在执行阶段
+ 		// || load_stall
+ //		(io.ctrl.pc_sel === PC_EPC) -> csr.io.trapVec,
+ 	)
+@@ -374,7 +362,7 @@ class Datapath extends Module{
+ 	//如果是跳转，异常和还未开始等情况，那么获取的是一条NOP指令，否则是从指令存储器中读取一条指令
+ 	//printf(p"pc(2):${pc(2)} ;rdata: ${Hexadecimal(imem.io.rdata)}\n")
+ 	//val inst = Mux(started || is_kill_inst || brCond_taken || csr.io.trap, Instructions.NOP, Mux(pc(2).asBool, imem.io.rdata(63, 32) ,imem.io.rdata(31, 0)))//这里的br_taken要考虑信号是否有效, 同时kill信号也要判断是否有效
+-	val	inst = Mux(started || is_kill_inst || brCond_taken || csr.io.trap || icache_flush_tag || dcache_flush_tag, Instructions.NOP, Mux(pc(2).asBool, io.icache.cpu_response.data(63, 32), io.icache.cpu_response.data(31, 0))) 
++	val	inst = Mux(started || is_kill_inst || brCond_taken || csr.io.trap, Instructions.NOP, Mux(pc(2).asBool, io.icache.cpu_response.data(63, 32), io.icache.cpu_response.data(31, 0))) 
+ 
+ 	//pc设置为next_pc, 存储的读取地址也设为next_pc
+ 	pc := next_pc 
+@@ -397,7 +385,6 @@ class Datapath extends Module{
+ 	def JALR 	=	BitPat("b?????????????????000?????1100111")
+ 	*/
+ 
+-	io.icache.flush := icache_flush_tag
+ 	io.icache.cpu_request.addr := Mux(stall && !started, pc, next_pc)
+ 	io.icache.cpu_request.valid := true.B   
+ 	io.icache.cpu_request.data := 0.U
+@@ -562,30 +549,9 @@ class Datapath extends Module{
+ 		
+ 	/****** Execute *****/
+ 	csr.io.de_enable := de_pipe_reg.enable
+-	//fence_flush := (em_pipe_reg.inst === FENCE_I) && em_pipe_reg.enable && !io.dcache.cpu_response.ready
+-	//flush的值赋值为
+-	when(flush_em){
+-		icache_flush_tag := false.B 
+-		dcache_flush_tag := false.B
+-	}.elsewhen(de_pipe_reg.inst === FENCE_I && !stall){
+-		icache_flush_tag := true.B 
+-		dcache_flush_tag := true.B
+-	}.otherwise{
+-		when(io.icache.cpu_response.ready){
+-			icache_flush_tag := false.B
+-		}
+-		when(io.dcache.cpu_response.ready){
+-			dcache_flush_tag := false.B
+-		}
+-	}
+-
+-	//printf(p"icache_flush_tag:${icache_flush_tag}; dcache_flush_tag:${dcache_flush_tag}\n")
+-	//icache_flush_tag := (de_pipe_reg.inst === FENCE_I) && de_pipe_reg.enable && !io.icache.cpu_response.ready
+-	//dcache_flush_tag := (de_pipe_reg.inst === FENCE_I) && de_pipe_reg.enable && !io.dcache.cpu_response.ready
+ 	val computation_result = WireInit(0.U(64.W))
+ 	val src1_data = WireInit(0.U(64.W))
+ 	val src2_data = WireInit(0.U(64.W))
+-	//printf(p"src1:${src1_data}; src2:${src2_data}\n")
+ 	//val load_data_hazard = dmem.io.rdata >> ((em_pipe_reg.alu_out& "h07".U) << 3.U)
+ 	val load_data_hazard = io.dcache.cpu_response.data >> ((em_pipe_reg.alu_out & "h07".U) << 3.U)
+ 	val load_data_ext_hazard = Mux(em_pipe_reg.ld_type === LD_LW, Cat(Mux(load_data_hazard(31).asBool, "hffffffff".U, 0.U(32.W)), load_data_hazard(31, 0)),
+@@ -620,7 +586,7 @@ class Datapath extends Module{
+ 																|| (de_pipe_reg.alu_op === Alu.ALU_DIVU)) //divider.io.div_valid//
+ 
+ 
+-	multiplier.io.mul_valid := ((de_pipe_reg.alu_op === Alu.ALU_MUL) && de_pipe_reg.enable) && !src_unready && !mul_result_enable
++	multiplier.io.mul_valid := ((de_pipe_reg.alu_op === Alu.ALU_MUL) && de_pipe_reg.enable) && !src_unready
+ 	multiplier.io.flush := flush_de
+ 	multiplier.io.mulw := Mux(de_pipe_reg.wd_type === W_D, false.B, true.B)
+ 	multiplier.io.mul_op := Mux(de_pipe_reg.inst === MUL || de_pipe_reg.inst === MULW, MulOp.mul.asUInt, 
+@@ -635,7 +601,7 @@ class Datapath extends Module{
+ 	divider.io.div_valid := ((de_pipe_reg.alu_op === Alu.ALU_DIVU) || 
+ 								(de_pipe_reg.alu_op === Alu.ALU_DIV) || 
+ 								(de_pipe_reg.alu_op === Alu.ALU_REM) || 
+-								(de_pipe_reg.alu_op === Alu.ALU_REMU)) && de_pipe_reg.enable && !src_unready && !div_result_enable
++								(de_pipe_reg.alu_op === Alu.ALU_REMU)) && de_pipe_reg.enable && !src_unready
+ 	divider.io.flush := flush_de
+ 	divider.io.divw := Mux(de_pipe_reg.wd_type === W_D, false.B, true.B)
+ 	divider.io.div_signed := (de_pipe_reg.alu_op === Alu.ALU_DIV) || (de_pipe_reg.alu_op === Alu.ALU_REM)
+@@ -651,10 +617,9 @@ class Datapath extends Module{
+ 	}
+ 
+ 	when(flush_de){
+-		div_result_enable := false.B
++		mul_result_enable := false.B
+ 	}.elsewhen(divider.io.out_valid){
+ 		div_result_enable := true.B
+-		//printf(p"quotient:${divider.io.quotient.asUInt}; remainder:${divider.io.remainder.asUInt}\n")
+ 		when(de_pipe_reg.alu_op === Alu.ALU_DIVU || de_pipe_reg.alu_op === Alu.ALU_DIV){
+ 			div_result := divider.io.quotient.asUInt
+ 		}.elsewhen(de_pipe_reg.alu_op === Alu.ALU_REMU || de_pipe_reg.alu_op === Alu.ALU_REM){
+@@ -662,7 +627,6 @@ class Datapath extends Module{
+ 		}
+ 	}
+ 
+-	//printf(p"div_result: ${div_result}; div_result_enable: ${div_result_enable}\n")
+ 	multiplier.io.out_ready := mul_result_enable
+ 	divider.io.out_ready := div_result_enable
+ 
+@@ -812,20 +776,9 @@ class Datapath extends Module{
+ 	//dcache_response_reg := io.dcache.cpu_response.ready
+ 	//printf(p"io.dcache.cpu_request.valid:${io.dcache.cpu_request.valid}; io.dcache.cpu_request.rw: ${io.dcache.cpu_request.rw}\n")
+ 	//printf(p"io.dcache.cpu_request.addr:${Hexadecimal(io.dcache.cpu_request.addr)}; io.dcache.cpu_request.data: ${Hexadecimal(io.dcache.cpu_request.data)}\n")
+-	//printf(p"em_pipe_reg_pc: ${em_pipe_reg.pc}\n")
+-	//val is_clint = Mux(stall, ((em_pipe_reg.alu_out >= "h2000000".U) && (em_pipe_reg.alu_out <= "h200ffff".U)),
+-	//							((alu_out >= "h2000000".U) && (alu_out <= "h200ffff".U))
+-	//					)
+-	val is_clint = false.B
+-	//printf(p"is_clint:${is_clint}; em_pipe_reg.alu_out:${em_pipe_reg.alu_out}; alu_out:${alu_out}\n")					
+-	clint.io.addr := Mux(stall , em_pipe_reg.alu_out, alu_out)
+-	clint.io.w_data := Mux(stall, em_pipe_reg.st_data, src2_data)
+-	clint.io.wen := Mux(stall, em_pipe_reg.st_type.orR && em_pipe_reg.enable, de_pipe_reg.st_type.orR && de_pipe_reg.enable) && is_clint
+ 
+ 	csr.io.em_enable := em_pipe_reg.enable
+-	io.dcache.flush := dcache_flush_tag
+-	io.dcache.cpu_request.valid := (Mux(stall , (em_pipe_reg.ld_type.orR || em_pipe_reg.st_type.orR) && em_pipe_reg.enable, 
+-										(de_pipe_reg.ld_type.orR || de_pipe_reg.st_type.orR) && de_pipe_reg.enable) || dcache_flush_tag) && (!is_clint) 
++	io.dcache.cpu_request.valid := Mux(stall , (em_pipe_reg.ld_type.orR || em_pipe_reg.st_type.orR) && em_pipe_reg.enable, (de_pipe_reg.ld_type.orR || de_pipe_reg.st_type.orR) && de_pipe_reg.enable)
+ 	//io.dcache.cpu_request.valid := (de_pipe_reg.ld_type.orR || de_pipe_reg.st_type.orR) && de_pipe_reg.enable
+ 	//dmem.io.enable := Mux(stall, ((de_pipe_reg.st_type.orR) || (de_pipe_reg.ld_type.orR)) && de_pipe_reg.enable, ((em_pipe_reg.st_type.orR) || (em_pipe_reg.st_type.orR)))
+ 	//dmem.io.enable := Mux(stall, (em_pipe_reg.ld_type.orR || em_pipe_reg.st_type.orR) && em_pipe_reg.enable, (de_pipe_reg.ld_type.orR || de_pipe_reg.st_type.orR) && de_pipe_reg.enable)
+@@ -851,19 +804,7 @@ class Datapath extends Module{
+ 							)
+ 						)
+ 					) 
+-
+-	csr.io.w_op := em_pipe_reg.csr_write_op						//write_op输入，可以写csr寄存器
+-	csr.io.w_addr := em_pipe_reg.csr_write_addr					//csr寄存器地址
+-	csr.io.w_data := em_pipe_reg.csr_write_data					//要写的数据
+-	csr.io.inst := em_pipe_reg.inst								//mw中马上要commit的指令
+-	csr.io.ebreak_addr := em_pipe_reg.pc						//ebreak的地址
+-	csr.io.retired := em_pipe_reg.inst =/= Instructions.NOP		//指令如果不是nop，则指令计数器要进行加1
+-	csr.io.isSret := em_pipe_reg.inst === Instructions.SRET		//sret
+-	csr.io.isMret := em_pipe_reg.inst === Instructions.MRET		//mret
+-	csr.io.excPC := em_pipe_reg.pc								//出现异常的pc地址，这个mw_pipe_reg.pc这个是不一定的，可能是其他的异常在最后进行了提交
+-	csr.io.jump_taken := em_pipe_reg.jump_taken					//可能出现跳转的情况，即中断的下一条地址并不是pc+4，
+-	csr.io.jump_addr := em_pipe_reg.jump_addr
+-
++	
+ 	/*
+ 	val st_mask = Mux(de_pipe_reg.st_type === ST_SW, "b00001111".U, 
+ 							Mux(de_pipe_reg.st_type === ST_SH, "b00000011".U,
+@@ -876,14 +817,12 @@ class Datapath extends Module{
+ 	//dmem.io.mask := Mux(st_mask === "b11111111".U, st_mask(7, 0), Mux(stall, (st_mask << em_pipe_reg.alu_out(2,0))(7, 0), (st_mask << alu_out(2,0))(7, 0)))
+ 	val load_data = io.dcache.cpu_response.data >> ((em_pipe_reg.alu_out & "h07".U) << 3.U)
+ 	//val load_data = dmem.io.rdata >> ((em_pipe_reg.alu_out & "h07".U) << 3.U)
+-	val load_data_ext = Mux(is_clint, clint.io.r_data,
+-							Mux(em_pipe_reg.ld_type === LD_LW, Cat(Mux(load_data(31).asBool, "hffffffff".U, 0.U(32.W)), load_data(31, 0)),
+-								Mux(em_pipe_reg.ld_type === LD_LWU, Cat(Fill(32, 0.U), load_data(31, 0)),
+-									Mux(em_pipe_reg.ld_type === LD_LH, Cat(Mux(load_data(15).asBool, "hffffffffffff".U, 0.U(48.W)), load_data(15, 0)),
+-										Mux(em_pipe_reg.ld_type === LD_LHU, Cat(Fill(48, 0.U), load_data(15, 0)),
+-											Mux(em_pipe_reg.ld_type === LD_LB, Cat(Mux(load_data(7).asBool, "hffffffffffffff".U, 0.U(56.W)), load_data(7, 0)),
+-												Mux(em_pipe_reg.ld_type === LD_LBU, Cat(Fill(56, 0.U), load_data(7,0)), load_data)
+-												)
++	val load_data_ext = Mux(em_pipe_reg.ld_type === LD_LW, Cat(Mux(load_data(31).asBool, "hffffffff".U, 0.U(32.W)), load_data(31, 0)),
++							Mux(em_pipe_reg.ld_type === LD_LWU, Cat(Fill(32, 0.U), load_data(31, 0)),
++								Mux(em_pipe_reg.ld_type === LD_LH, Cat(Mux(load_data(15).asBool, "hffffffffffff".U, 0.U(48.W)), load_data(15, 0)),
++									Mux(em_pipe_reg.ld_type === LD_LHU, Cat(Fill(48, 0.U), load_data(15, 0)),
++										Mux(em_pipe_reg.ld_type === LD_LB, Cat(Mux(load_data(7).asBool, "hffffffffffffff".U, 0.U(56.W)), load_data(7, 0)),
++											Mux(em_pipe_reg.ld_type === LD_LBU, Cat(Fill(56, 0.U), load_data(7,0)), load_data)
+ 											)
+ 										)
+ 									)
+@@ -932,20 +871,18 @@ class Datapath extends Module{
+ 		
+ 
+ 	/****** Writeback ***/
+-	csr.io.mw_enable := mw_pipe_reg.enable						//mw流水线寄存器是否有效输入
+-	/*
+-	csr.io.w_op := mw_pipe_reg.csr_write_op						//write_op输入，可以写csr寄存器
+-	csr.io.w_addr := mw_pipe_reg.csr_write_addr					//csr寄存器地址
+-	csr.io.w_data := mw_pipe_reg.csr_write_data					//要写的数据
+-	csr.io.inst := mw_pipe_reg.inst								//mw中马上要commit的指令
+-	csr.io.ebreak_addr := mw_pipe_reg.pc						//ebreak的地址
+-	csr.io.retired := mw_pipe_reg.inst =/= Instructions.NOP		//指令如果不是nop，则指令计数器要进行加1
+-	csr.io.isSret := mw_pipe_reg.inst === Instructions.SRET		//sret
+-	csr.io.isMret := mw_pipe_reg.inst === Instructions.MRET		//mret
+-	csr.io.excPC := mw_pipe_reg.pc								//出现异常的pc地址，这个mw_pipe_reg.pc这个是不一定的，可能是其他的异常在最后进行了提交
++	csr.io.mw_enable := mw_pipe_reg.enable
++	csr.io.w_op := mw_pipe_reg.csr_write_op
++	csr.io.w_addr := mw_pipe_reg.csr_write_addr
++	csr.io.w_data := mw_pipe_reg.csr_write_data
++	csr.io.inst := mw_pipe_reg.inst
++	csr.io.ebreak_addr := mw_pipe_reg.pc
++	csr.io.retired := mw_pipe_reg.inst =/= Instructions.NOP
++	csr.io.isSret := mw_pipe_reg.inst === Instructions.SRET
++	csr.io.isMret := mw_pipe_reg.inst === Instructions.MRET
++	csr.io.excPC := mw_pipe_reg.pc
+ 	csr.io.jump_taken := mw_pipe_reg.jump_taken
+ 	csr.io.jump_addr := mw_pipe_reg.jump_addr
+-	*/
+ 	//csr.io.stall := stall
+ 
+ 	io.pc := mw_pipe_reg.pc
+@@ -967,8 +904,6 @@ class myCPU extends Module{
+ 		val start = Output(Bool())
+ 		val stall = Output(Bool())
+ 		
+-		val interrupt = Input(Bool())
+-
+ 		//write address channel
+ 		val master_awready = Input(Bool())
+ 		val master_awvalid = Output(Bool())
+@@ -1006,47 +941,7 @@ class myCPU extends Module{
+ 		val master_rresp = Input(UInt(2.W))
+ 		val master_rdata = Input(UInt(64.W))
+ 		val master_rlast = Input(Bool())
+-		val master_rid = Input(UInt(4.W))
+-
+-		//slave signals
+-		//aw channel
+-		val slave_awready = Output(Bool())
+-		val slave_awvalid = Input(Bool())
+-		val slave_awaddr  = Input(UInt(32.W))
+-		val slave_awid 	  = Input(UInt(4.W))
+-		val slave_awlen   = Input(UInt(8.W))
+-		val slave_awsize  = Input(UInt(3.W))
+-		val slave_awburst = Input(UInt(2.W))
+-
+-		//w channel
+-		val slave_wready  = Output(Bool())
+-		val slave_wvalid  = Input(Bool())
+-		val slave_wdata   = Input(UInt(64.W))
+-		val slave_wstrb   = Input(UInt(8.W))
+-		val slave_wlast   = Input(Bool())
+-
+-		//write response channel
+-		val slave_bready  = Input(Bool())
+-		val slave_bvalid  = Output(Bool())
+-		val slave_bresp   = Output(Bool())
+-		val slave_bid 	  = Output(UInt(2.W))
+-		
+-		//ar channel
+-		val slave_arready = Output(Bool())
+-		val slave_arvalid = Input(Bool())
+-		val slave_araddr  = Input(UInt(32.W))
+-		val slave_arid    = Input(UInt(4.W))
+-		val slave_arlen   = Input(UInt(8.W))
+-		val slave_arsize  = Input(UInt(3.W))
+-		val slave_arburst = Input(UInt(2.W))
+-
+-		//r channel
+-		val slave_rready  = Input(Bool())
+-		val slave_rvalid  = Output(Bool())
+-		val slave_rresp   = Output(Bool())
+-		val slave_rdata   = Output(UInt(64.W))
+-		val slave_rlast   = Output(Bool())
+-		val slave_rid     = Output(Bool())
++		val master_rid = Input(UInt(4.W))	
+ 	})
+ 
+ 	val datapath = Module(new Datapath) 
+@@ -1059,9 +954,6 @@ class myCPU extends Module{
+ 	datapath.io.dcache.cpu_request <> dcache.io.cpu_request
+ 	datapath.io.icache.cpu_response <> icache.io.cpu_response
+ 	datapath.io.dcache.cpu_response <> dcache.io.cpu_response
+-	datapath.io.interrupt := io.interrupt
+-	icache.io.flush	:= datapath.io.icache.flush
+-	dcache.io.flush	:= datapath.io.dcache.flush
+ 	icache.io.mem_io <> arb.io.icache
+ 	dcache.io.mem_io <> arb.io.dcache
+ 	
+@@ -1103,27 +995,8 @@ class myCPU extends Module{
+ 	io.pc_debug := datapath.io.pc
+ 	io.start := datapath.io.start
+ 	io.stall := datapath.io.stall
+-
+-	//slave signals suspension
+-	io.slave_awready := false.B 
+-	io.slave_wready  := false.B 
+-	io.slave_bvalid  := false.B 
+-	io.slave_bresp   := 0.U 
+-	io.slave_bid     := 0.U 
+-	io.slave_arready := false.B
+-	io.slave_rvalid  := false.B 
+-	io.slave_rresp   := 0.U 
+-	io.slave_rdata   := 0.U 
+-	io.slave_rlast   := false.B 
+-	io.slave_rid     := 0.U
+ }
+ 
+ object Driver extends App{
+-    
+-	//(new ChiselStage).emitVerilog(new myCPU, args)
+-	(new chisel3.stage.ChiselStage).execute(args, Seq(
+-		chisel3.stage.ChiselGeneratorAnnotation(() => new myCPU()),
+-		firrtl.stage.RunFirrtlTransformAnnotation(new AddModulePrefix()),
+-		ModulePrefixAnnotation("ysyx_22041812_")
+-	))
++    (new ChiselStage).emitVerilog(new myCPU, args)
+ }

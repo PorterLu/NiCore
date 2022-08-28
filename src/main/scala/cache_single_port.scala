@@ -39,6 +39,10 @@ object CacheState extends ChiselEnum{
 	val sIdle, sUnCacheReadAddr, sUnCacheWriteAddr, sUnCacheReadData, sUnCacheWriteData, sUnCacheWriteAck, sReMatch, sMatch, sWriteback, sRefill, sReadAddr, sWriteAddr, sWriteAck, sWait_a_cycle, sFlush, sFlushMatch, sFlushWrite, sFlushAddr,sFlushAck = Value
 }
 
+object AccessType extends ChiselEnum{
+	val byte, half, word, double = Value 
+}
+
 class tag_cache extends Module{
 	val io = IO(new Bundle{
 		val cache_req = Input(new CacheReq)
@@ -82,6 +86,7 @@ class Cache(cache_name: String) extends Module{
 		val cpu_response = Output(new CPU_Response)
 		val mem_io = new Axi
 		val flush = Input(Bool())
+		val accessType = Input(Bool())
 	})
 	val cache_type = if(cache_name == "inst_caches") true.B else false.B
 
@@ -110,18 +115,23 @@ class Cache(cache_name: String) extends Module{
 
 	cache_state := next_state
 
+	val cpu_request_addr_reg_origin = RegInit(0.U(addr_len.W))
 	val cpu_request_addr_reg = RegInit(0.U(addr_len.W))
 	val cpu_request_data = RegInit(0.U(64.W))
 	val cpu_request_mask = RegInit(0.U(8.W))
 	val cpu_request_rw = RegInit(false.B)
 	val cpu_request_valid = RegInit(false.B)
+	val cpu_request_accessType = RegInit(0.U(2.W))
 
+	
 	val align_addr = Cat(io.cpu_request.addr(addr_len - 1, log2Ceil(bitWidth/8)), 0.U((log2Ceil(bitWidth/8)).W))
 	cpu_request_addr_reg := align_addr
+	cpu_request_addr_reg_origin := io.cpu_request.addr
 	cpu_request_data := io.cpu_request.data
 	cpu_request_mask := io.cpu_request.mask
 	cpu_request_rw := io.cpu_request.rw
 	cpu_request_valid := io.cpu_request.valid
+	cpu_request_accessType := io.accessType
 
 	val cpu_request_addr_index = cpu_request_addr_reg(blockSize_len + groupId_len - 1, blockSize_len)
 	val cpu_request_addr_tag = cpu_request_addr_reg(addr_len - 1, blockSize_len + groupId_len)
@@ -147,14 +157,14 @@ class Cache(cache_name: String) extends Module{
 	io.mem_io.aw.valid := false.B 
 	io.mem_io.aw.bits.addr := cpu_request_addr_reg
 	io.mem_io.aw.bits.len := 1.U 
-	io.mem_io.aw.bits.size := 6.U 
+	io.mem_io.aw.bits.size := 3.U 
 	io.mem_io.aw.bits.burst := 1.U 
 	io.mem_io.aw.bits.id := 0.U 
 
 	io.mem_io.ar.valid := false.B 
 	io.mem_io.ar.bits.addr := cpu_request_addr_reg
 	io.mem_io.ar.bits.len := 1.U
-	io.mem_io.ar.bits.size := 6.U 
+	io.mem_io.ar.bits.size := 3.U 
 	io.mem_io.ar.bits.burst := 1.U 
 	io.mem_io.ar.bits.id := 0.U 
 
@@ -345,7 +355,8 @@ class Cache(cache_name: String) extends Module{
 		is(sUnCacheReadAddr){
 			io.mem_io.ar.valid := true.B 
 			io.mem_io.ar.bits.len := 0.U 
-			io.mem_io.ar.bits.addr := cpu_request_addr_reg
+			io.mem_io.ar.bits.size := cpu_request_accessType
+			io.mem_io.ar.bits.addr := cpu_request_addr_reg_origin
 			next_state := sUnCacheReadAddr
 			when(io.mem_io.ar.ready){
 				next_state := sUnCacheReadData
@@ -354,7 +365,8 @@ class Cache(cache_name: String) extends Module{
 		is(sUnCacheWriteAddr){
 			io.mem_io.aw.valid := true.B 
 			io.mem_io.aw.bits.len := 0.U
-			io.mem_io.aw.bits.addr := cpu_request_addr_reg
+			io.mem_io.aw.bits.size := cpu_request_accessType
+			io.mem_io.aw.bits.addr := cpu_request_addr_reg_origin
 			next_state := sUnCacheWriteAddr
 			when(io.mem_io.aw.ready){
 				next_state := sUnCacheWriteData

@@ -86,8 +86,6 @@ object CSR{
 	val CSR_MINSTRET	= 0xb02.U(12.W)
 }
 
-
-
 import ExceptCause._
 import CSR._ 
 
@@ -452,6 +450,7 @@ class CSR extends Module{
 	//io.mode := mode
 	//io.sepc := sepc.asUInt
 	//io.mepc := mepc.asUInt
+	//printf(p"cause:${cause}\n")
 	io.trapVec := Mux(hasInt, trapVec, 
 					Mux(io.isMret, mepc.asUInt, 
 							Mux(io.isSret, sepc.asUInt, trapVec)

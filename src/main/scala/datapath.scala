@@ -19,6 +19,7 @@ class CacheIO extends Bundle{
 	val cpu_request = Output(new CPU_Request)
 	val cpu_response = Input(new CPU_Response)
 	val flush = Output(Bool())
+	val accessType = Output(UInt(2.W))
 }
 
 class RegisterFile(readPorts : Int) extends Module{
@@ -262,6 +263,8 @@ class Datapath extends Module{
 			_.enable -> false.B
 		)
 	)
+
+	import AccessType._ 
 	
 	//必须使得enable信号为false时，对应的流水线寄存器中输出的内容不对CPU状态机的运行产生影响
 
@@ -284,6 +287,7 @@ class Datapath extends Module{
 	val div_stall = WireInit(false.B)//divider.io.div_valid && !div_result_enable
 	val dcache_stall = (em_pipe_reg.ld_type.orR || em_pipe_reg.st_type.orR || em_pipe_reg.inst === FENCE_I) && em_pipe_reg.enable && (!io.dcache.cpu_response.ready) 
 	val stall = !io.icache.cpu_response.ready || ( dcache_stall) ||	mul_stall || div_stall//stall暂时设置为false
+	//printf(p"mul_stall:${mul_stall}; div_stall:${div_stall}; dcache_stall:${dcache_stall}; icache_stall:${!io.icache.cpu_response.ready}\n")
 	//val cache_abort = !io.icache.cpu_response.ready
 	//val load_stall = em_pipe_reg.enable && em_pipe_reg.ld_type.orR && ((de_pipe_reg.src1_addr === em_pipe_reg.dest) || (de_pipe_reg.src2_addr === em_pipe_reg.dest))
 
@@ -293,9 +297,9 @@ class Datapath extends Module{
 	val gpr_ptr = Module(new gpr_ptr)					//用于向外输出寄存器信息，用于debug
 	val clint  = Module(new clint())					//
 
-	csr.io.int_timer := false.B//clint.io.timer_valid
-	csr.io.int_soft  := false.B//clint.io.soft_valid
-	csr.io.extern    := false.B//io.interrupt
+	csr.io.int_timer := clint.io.timer_valid
+	csr.io.int_soft  := clint.io.soft_valid
+	csr.io.extern    := io.interrupt
 
 	io.stall := stall
 	//2号多余，寄存器文件依次读出，输出到gpr_ptr，最后在sim的过程输出寄存器信息用于调试
@@ -306,8 +310,8 @@ class Datapath extends Module{
 	}
 
 	//gpr_ptr向外同步的时机依靠时钟，所以要向外输出时钟
-	gpr_ptr.io.clock := clock
-	gpr_ptr.io.reset := reset
+	//gpr_ptr.io.clock := clock
+	//gpr_ptr.io.reset := reset
 
 	//csr寄存器要处理来自外部的中断，和来自clint的时钟中断和软件中断
 	//mem的始终，mem读取的时机这里也依靠时钟
@@ -379,7 +383,7 @@ class Datapath extends Module{
 	//pc设置为next_pc, 存储的读取地址也设为next_pc
 	pc := next_pc 
 	//printf(p"next_pc:${Hexadecimal(next_pc)};  is_trap:${csr.io.trap};  pc_sel:${io.ctrl.pc_sel}\n")
-
+	//printf(p"csr: ${csr.io.trap}\n")
 	/*
 	imem.io.addr := next_pc
 	imem.io.enable := !stall
@@ -397,6 +401,7 @@ class Datapath extends Module{
 	def JALR 	=	BitPat("b?????????????????000?????1100111")
 	*/
 
+	io.icache.accessType := word.asUInt
 	io.icache.flush := icache_flush_tag
 	io.icache.cpu_request.addr := Mux(stall && !started, pc, next_pc)
 	io.icache.cpu_request.valid := true.B   
@@ -432,7 +437,7 @@ class Datapath extends Module{
 
 	//printf(p"pc:${Hexadecimal(fd_pipe_reg.pc)}; inst:${Hexadecimal(fd_pipe_reg.inst)}\n\n")
 
-	//printf(p"fetch-decode:\n pc: ${Hexadecimal(fd_pipe_reg.pc)}; fd_pipe_reg.inst: ${Hexadecimal(fd_pipe_reg.inst)}; fd_pipe_reg.enable: ${Hexadecimal(fd_pipe_reg.enable)}\n\n")
+	printf(p"fetch-decode:\n pc: ${Hexadecimal(fd_pipe_reg.pc)}; fd_pipe_reg.inst: ${Hexadecimal(fd_pipe_reg.inst)}; fd_pipe_reg.enable: ${Hexadecimal(fd_pipe_reg.enable)}\n\n")
 	/***** Decode ******/
 	//control模块输入指令
 	io.ctrl.inst := fd_pipe_reg.inst
@@ -553,13 +558,12 @@ class Datapath extends Module{
 		de_pipe_reg.enable := fd_pipe_reg.enable
 	}
 
+	printf(p"decode-execute: \ninst:${Hexadecimal(de_pipe_reg.inst)}; alu_op:${de_pipe_reg.alu_op}; A_sel:${de_pipe_reg.A_sel}; B_sel:${de_pipe_reg.B_sel}; csr_read_data: ${de_pipe_reg.csr_read_data}\n" +
+  			p"write_op:${de_pipe_reg.csr_write_op}; write_data: ${Hexadecimal(de_pipe_reg.csr_write_data)} write_addr: ${Hexadecimal(de_pipe_reg.csr_write_addr)}; pc:${Hexadecimal(de_pipe_reg.pc)}\n" +
+			p"imm: ${Hexadecimal(de_pipe_reg.imm)}; rs1: ${Hexadecimal(de_pipe_reg.rs1)}; rs2:${Hexadecimal(de_pipe_reg.rs2)}; src1_addr:${Hexadecimal(de_pipe_reg.src1_addr)}; src2_addr:${Hexadecimal(de_pipe_reg.src2_addr)};" + 
+			p"dest: ${Hexadecimal(de_pipe_reg.dest)}; pc_sel: ${de_pipe_reg.pc_sel};  br_type:${de_pipe_reg.br_type}; st_type:${de_pipe_reg.st_type}; ld_type:${de_pipe_reg.ld_type}\n" + 
+			p"wd_type: ${de_pipe_reg.wd_type}; wb_sel: ${de_pipe_reg.wb_sel}; wb_en:${de_pipe_reg.wb_en}; is_kill:${de_pipe_reg.is_kill}; enable:${de_pipe_reg.enable}\n\n")
 	
-	//printf(p"decode-execute: \ninst:${Hexadecimal(de_pipe_reg.inst)}; alu_op:${de_pipe_reg.alu_op}; A_sel:${de_pipe_reg.A_sel}; B_sel:${de_pipe_reg.B_sel}; csr_read_data: ${de_pipe_reg.csr_read_data}\n" +
-  	//		p"write_op:${de_pipe_reg.csr_write_op}; write_data: ${Hexadecimal(de_pipe_reg.csr_write_data)} write_addr: ${Hexadecimal(de_pipe_reg.csr_write_addr)}; pc:${Hexadecimal(de_pipe_reg.pc)}\n" +
-	//		p"imm: ${Hexadecimal(de_pipe_reg.imm)}; rs1: ${Hexadecimal(de_pipe_reg.rs1)}; rs2:${Hexadecimal(de_pipe_reg.rs2)}; src1_addr:${Hexadecimal(de_pipe_reg.src1_addr)}; src2_addr:${Hexadecimal(de_pipe_reg.src2_addr)};" + 
-	//		p"dest: ${Hexadecimal(de_pipe_reg.dest)}; pc_sel: ${de_pipe_reg.pc_sel};  br_type:${de_pipe_reg.br_type}; st_type:${de_pipe_reg.st_type}; ld_type:${de_pipe_reg.ld_type}\n" + 
-	//		p"wd_type: ${de_pipe_reg.wd_type}; wb_sel: ${de_pipe_reg.wb_sel}; wb_en:${de_pipe_reg.wb_en}; is_kill:${de_pipe_reg.is_kill}; enable:${de_pipe_reg.enable}\n\n")
-		
 	/****** Execute *****/
 	csr.io.de_enable := de_pipe_reg.enable
 	//fence_flush := (em_pipe_reg.inst === FENCE_I) && em_pipe_reg.enable && !io.dcache.cpu_response.ready
@@ -800,12 +804,10 @@ class Datapath extends Module{
 		em_pipe_reg.enable := de_pipe_reg.enable
 	}
 
-	
-	//printf(p"execute_memory:\ninst: ${Hexadecimal(em_pipe_reg.inst)}; dest:${em_pipe_reg.dest}; alu_out:${Hexadecimal(em_pipe_reg.alu_out)} alu_sum:${Hexadecimal(em_pipe_reg.alu_sum)}\n" +
-  	//		p"csr_read_data: ${Hexadecimal(em_pipe_reg.csr_read_data)}; csr_write_op: ${Hexadecimal(em_pipe_reg.csr_write_op)}; csr_write_addr: ${Hexadecimal(em_pipe_reg.csr_write_addr)}; csr_write_data: ${Hexadecimal(em_pipe_reg.csr_write_data)};\n " +
-  	//		p"st_data: ${Hexadecimal(em_pipe_reg.st_data)}; st_type: ${em_pipe_reg.st_type}; ld_type: ${em_pipe_reg.ld_type}\n " +
-  	//		p"wb_sel: ${em_pipe_reg.wb_sel}; wb_en:${em_pipe_reg.wb_en}; pc:${Hexadecimal(em_pipe_reg.pc)}; is_kill: ${em_pipe_reg.is_kill}; enable:${em_pipe_reg.enable}\n\n")
-	
+	printf(p"execute_memory:\ninst: ${Hexadecimal(em_pipe_reg.inst)}; dest:${em_pipe_reg.dest}; alu_out:${Hexadecimal(em_pipe_reg.alu_out)} alu_sum:${Hexadecimal(em_pipe_reg.alu_sum)}\n" +
+  			p"csr_read_data: ${Hexadecimal(em_pipe_reg.csr_read_data)}; csr_write_op: ${Hexadecimal(em_pipe_reg.csr_write_op)}; csr_write_addr: ${Hexadecimal(em_pipe_reg.csr_write_addr)}; csr_write_data: ${Hexadecimal(em_pipe_reg.csr_write_data)};\n " +
+  			p"st_data: ${Hexadecimal(em_pipe_reg.st_data)}; st_type: ${em_pipe_reg.st_type}; ld_type: ${em_pipe_reg.ld_type}\n " +
+  			p"wb_sel: ${em_pipe_reg.wb_sel}; wb_en:${em_pipe_reg.wb_en}; pc:${Hexadecimal(em_pipe_reg.pc)}; is_kill: ${em_pipe_reg.is_kill}; enable:${em_pipe_reg.enable}\n\n")	
 
 	//printf(p"execute-mem:\n ")
 	/****** Mem *********/
@@ -813,10 +815,10 @@ class Datapath extends Module{
 	//printf(p"io.dcache.cpu_request.valid:${io.dcache.cpu_request.valid}; io.dcache.cpu_request.rw: ${io.dcache.cpu_request.rw}\n")
 	//printf(p"io.dcache.cpu_request.addr:${Hexadecimal(io.dcache.cpu_request.addr)}; io.dcache.cpu_request.data: ${Hexadecimal(io.dcache.cpu_request.data)}\n")
 	//printf(p"em_pipe_reg_pc: ${em_pipe_reg.pc}\n")
-	//val is_clint = Mux(stall, ((em_pipe_reg.alu_out >= "h2000000".U) && (em_pipe_reg.alu_out <= "h200ffff".U)),
-	//							((alu_out >= "h2000000".U) && (alu_out <= "h200ffff".U))
-	//					)
-	val is_clint = false.B
+	val is_clint = Mux(stall, ((em_pipe_reg.alu_out >= "h2000000".U) && (em_pipe_reg.alu_out <= "h200ffff".U)),
+								((alu_out >= "h2000000".U) && (alu_out <= "h200ffff".U))
+						)
+	//val is_clint = false.B
 	//printf(p"is_clint:${is_clint}; em_pipe_reg.alu_out:${em_pipe_reg.alu_out}; alu_out:${alu_out}\n")					
 	clint.io.addr := Mux(stall , em_pipe_reg.alu_out, alu_out)
 	clint.io.w_data := Mux(stall, em_pipe_reg.st_data, src2_data)
@@ -840,6 +842,17 @@ class Datapath extends Module{
 	//dmem.io.wdata := (de_pipe_reg.rs2 << (alu_out(2, 0) << 3.U))(63, 0)
 	//io.dcache.cpu_request.data := (src2_data << (alu_out(2, 0) << 3.U))(63, 0)
 	io.dcache.cpu_request.data := Mux(stall , em_pipe_reg.st_data << (em_pipe_reg.alu_out(2, 0) << 3.U), src2_data << (alu_out(2, 0) << 3.U))(63, 0)
+	val accessType_stall = Mux(em_pipe_reg.ld_type === 7.U || em_pipe_reg.st_type === 4.U, double.asUInt, 
+								Mux(em_pipe_reg.ld_type === 1.U || em_pipe_reg.ld_type === 6.U || em_pipe_reg.st_type === 1.U, word.asUInt, 
+									Mux(em_pipe_reg.ld_type === 4.U || em_pipe_reg.ld_type === 2.U || em_pipe_reg.st_type === 2.U, half.asUInt, byte.asUInt)
+								)
+							)
+	val accessType_direct = Mux(de_pipe_reg.ld_type === 7.U || de_pipe_reg.st_type === 4.U, double.asUInt,
+								Mux(de_pipe_reg.ld_type === 1.U || de_pipe_reg.ld_type === 6.U || de_pipe_reg.st_type === 1.U, word.asUInt,
+									Mux(de_pipe_reg.ld_type === 4.U || de_pipe_reg.ld_type === 2.U || de_pipe_reg.st_type === 2.U, half.asUInt, byte.asUInt)
+								)
+							)
+	io.dcache.accessType := Mux(stall, accessType_stall, accessType_direct)
 	//dmem.io.wdata := Mux(stall, em_pipe_reg.st_data << (em_pipe_reg.alu_out(2, 0) << 3.U), src2_data << (alu_out(2, 0) << 3.U))(63, 0)
 	val st_mask = Mux(stall, Mux(em_pipe_reg.st_type === ST_SW, "b00001111".U, 
 								Mux(em_pipe_reg.st_type === ST_SH, "b00000011".U,
@@ -874,16 +887,14 @@ class Datapath extends Module{
 		
 	io.dcache.cpu_request.mask := Mux(st_mask === "b11111111".U, st_mask(7, 0), Mux(stall, (st_mask << em_pipe_reg.alu_out(2,0))(7, 0), (st_mask << alu_out(2,0))(7, 0)))
 	//dmem.io.mask := Mux(st_mask === "b11111111".U, st_mask(7, 0), Mux(stall, (st_mask << em_pipe_reg.alu_out(2,0))(7, 0), (st_mask << alu_out(2,0))(7, 0)))
-	val load_data = io.dcache.cpu_response.data >> ((em_pipe_reg.alu_out & "h07".U) << 3.U)
+	val load_data = Mux(is_clint, clint.io.r_data, io.dcache.cpu_response.data >> ((em_pipe_reg.alu_out & "h07".U) << 3.U))
 	//val load_data = dmem.io.rdata >> ((em_pipe_reg.alu_out & "h07".U) << 3.U)
-	val load_data_ext = Mux(is_clint, clint.io.r_data,
-							Mux(em_pipe_reg.ld_type === LD_LW, Cat(Mux(load_data(31).asBool, "hffffffff".U, 0.U(32.W)), load_data(31, 0)),
-								Mux(em_pipe_reg.ld_type === LD_LWU, Cat(Fill(32, 0.U), load_data(31, 0)),
-									Mux(em_pipe_reg.ld_type === LD_LH, Cat(Mux(load_data(15).asBool, "hffffffffffff".U, 0.U(48.W)), load_data(15, 0)),
-										Mux(em_pipe_reg.ld_type === LD_LHU, Cat(Fill(48, 0.U), load_data(15, 0)),
-											Mux(em_pipe_reg.ld_type === LD_LB, Cat(Mux(load_data(7).asBool, "hffffffffffffff".U, 0.U(56.W)), load_data(7, 0)),
-												Mux(em_pipe_reg.ld_type === LD_LBU, Cat(Fill(56, 0.U), load_data(7,0)), load_data)
-												)
+	val load_data_ext = Mux(em_pipe_reg.ld_type === LD_LW, Cat(Mux(load_data(31).asBool, "hffffffff".U, 0.U(32.W)), load_data(31, 0)),
+							Mux(em_pipe_reg.ld_type === LD_LWU, Cat(Fill(32, 0.U), load_data(31, 0)),
+								Mux(em_pipe_reg.ld_type === LD_LH, Cat(Mux(load_data(15).asBool, "hffffffffffff".U, 0.U(48.W)), load_data(15, 0)),
+									Mux(em_pipe_reg.ld_type === LD_LHU, Cat(Fill(48, 0.U), load_data(15, 0)),
+										Mux(em_pipe_reg.ld_type === LD_LB, Cat(Mux(load_data(7).asBool, "hffffffffffffff".U, 0.U(56.W)), load_data(7, 0)),
+											Mux(em_pipe_reg.ld_type === LD_LBU, Cat(Fill(56, 0.U), load_data(7,0)), load_data)
 											)
 										)
 									)
@@ -925,10 +936,10 @@ class Datapath extends Module{
 	}
 
 	
-	//printf(p"memory_writeback:\nload_data: ${Hexadecimal(mw_pipe_reg.load_data)}; alu_out: ${Hexadecimal(mw_pipe_reg.alu_out)}; dest: ${mw_pipe_reg.dest}; wb_sel: ${mw_pipe_reg.wb_sel}; wb_en:${mw_pipe_reg.wb_en}\n " +
-  	//		p"pc:${Hexadecimal(mw_pipe_reg.pc)}; inst:${Hexadecimal(mw_pipe_reg.inst)}; \ncsr_read_data: ${Hexadecimal(mw_pipe_reg.csr_read_data)}; csr_write_op:${mw_pipe_reg.csr_write_op};" +
-	//		p" csr_write_data: ${Hexadecimal(mw_pipe_reg.csr_write_data)}; csr_write_addr:${Hexadecimal(mw_pipe_reg.csr_write_addr)}\n " +
-  	//		p"enable: ${mw_pipe_reg.enable}\n\n\n\n")
+	printf(p"memory_writeback:\nload_data: ${Hexadecimal(mw_pipe_reg.load_data)}; alu_out: ${Hexadecimal(mw_pipe_reg.alu_out)}; dest: ${mw_pipe_reg.dest}; wb_sel: ${mw_pipe_reg.wb_sel}; wb_en:${mw_pipe_reg.wb_en}\n " +
+  			p"pc:${Hexadecimal(mw_pipe_reg.pc)}; inst:${Hexadecimal(mw_pipe_reg.inst)}; \ncsr_read_data: ${Hexadecimal(mw_pipe_reg.csr_read_data)}; csr_write_op:${mw_pipe_reg.csr_write_op};" +
+			p" csr_write_data: ${Hexadecimal(mw_pipe_reg.csr_write_data)}; csr_write_addr:${Hexadecimal(mw_pipe_reg.csr_write_addr)}\n " +
+  			p"enable: ${mw_pipe_reg.enable}\n\n\n\n")
 		
 
 	/****** Writeback ***/
@@ -1028,8 +1039,8 @@ class myCPU extends Module{
 		//write response channel
 		val slave_bready  = Input(Bool())
 		val slave_bvalid  = Output(Bool())
-		val slave_bresp   = Output(Bool())
-		val slave_bid 	  = Output(UInt(2.W))
+		val slave_bresp   = Output(UInt(2.W))
+		val slave_bid 	  = Output(UInt(4.W))
 		
 		//ar channel
 		val slave_arready = Output(Bool())
@@ -1043,10 +1054,10 @@ class myCPU extends Module{
 		//r channel
 		val slave_rready  = Input(Bool())
 		val slave_rvalid  = Output(Bool())
-		val slave_rresp   = Output(Bool())
+		val slave_rresp   = Output(UInt(2.W))
 		val slave_rdata   = Output(UInt(64.W))
 		val slave_rlast   = Output(Bool())
-		val slave_rid     = Output(Bool())
+		val slave_rid     = Output(UInt(4.W))
 	})
 
 	val datapath = Module(new Datapath) 
@@ -1062,6 +1073,8 @@ class myCPU extends Module{
 	datapath.io.interrupt := io.interrupt
 	icache.io.flush	:= datapath.io.icache.flush
 	dcache.io.flush	:= datapath.io.dcache.flush
+	icache.io.accessType := datapath.io.icache.accessType
+	dcache.io.accessType := datapath.io.dcache.accessType
 	icache.io.mem_io <> arb.io.icache
 	dcache.io.mem_io <> arb.io.dcache
 	
