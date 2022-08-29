@@ -3,109 +3,109 @@
     "class":"firrtl.transforms.DedupedResult",
     "original":"~myCPU|tag_cache",
     "duplicate":"~myCPU|ysyx_22041812_myCPU/icache:ysyx_22041812_Cache/tag_mem_0:ysyx_22041812_tag_cache",
-    "index":0.3448275862068966
+    "index":0.36666666666666664
   },
   {
     "class":"firrtl.transforms.DedupedResult",
     "original":"~myCPU|tag_cache_1",
     "duplicate":"~myCPU|ysyx_22041812_myCPU/icache:ysyx_22041812_Cache/tag_mem_1:ysyx_22041812_tag_cache",
-    "index":0.3793103448275862
+    "index":0.4
   },
   {
     "class":"firrtl.transforms.DedupedResult",
     "original":"~myCPU|tag_cache_2",
     "duplicate":"~myCPU|ysyx_22041812_myCPU/icache:ysyx_22041812_Cache/tag_mem_2:ysyx_22041812_tag_cache",
-    "index":0.41379310344827586
+    "index":0.43333333333333335
   },
   {
     "class":"firrtl.transforms.DedupedResult",
     "original":"~myCPU|tag_cache_3",
     "duplicate":"~myCPU|ysyx_22041812_myCPU/icache:ysyx_22041812_Cache/tag_mem_3:ysyx_22041812_tag_cache",
-    "index":0.4482758620689655
+    "index":0.4666666666666667
   },
   {
     "class":"firrtl.transforms.DedupedResult",
     "original":"~myCPU|data_cache",
     "duplicate":"~myCPU|ysyx_22041812_myCPU/icache:ysyx_22041812_Cache/data_mem_0:ysyx_22041812_data_cache",
-    "index":0.4827586206896552
+    "index":0.5
   },
   {
     "class":"firrtl.transforms.DedupedResult",
     "original":"~myCPU|data_cache_1",
     "duplicate":"~myCPU|ysyx_22041812_myCPU/icache:ysyx_22041812_Cache/data_mem_1:ysyx_22041812_data_cache",
-    "index":0.5172413793103449
+    "index":0.5333333333333333
   },
   {
     "class":"firrtl.transforms.DedupedResult",
     "original":"~myCPU|data_cache_2",
     "duplicate":"~myCPU|ysyx_22041812_myCPU/icache:ysyx_22041812_Cache/data_mem_2:ysyx_22041812_data_cache",
-    "index":0.5517241379310345
+    "index":0.5666666666666667
   },
   {
     "class":"firrtl.transforms.DedupedResult",
     "original":"~myCPU|data_cache_3",
     "duplicate":"~myCPU|ysyx_22041812_myCPU/icache:ysyx_22041812_Cache/data_mem_3:ysyx_22041812_data_cache",
-    "index":0.5862068965517241
+    "index":0.6
   },
   {
     "class":"firrtl.transforms.DedupedResult",
     "original":"~myCPU|Cache",
     "duplicate":"~myCPU|ysyx_22041812_myCPU/icache:ysyx_22041812_Cache",
-    "index":0.6206896551724138
+    "index":0.6333333333333333
   },
   {
     "class":"firrtl.transforms.DedupedResult",
     "original":"~myCPU|tag_cache_4",
     "duplicate":"~myCPU|ysyx_22041812_myCPU/dcache:ysyx_22041812_Cache/tag_mem_0:ysyx_22041812_tag_cache",
-    "index":0.6551724137931034
+    "index":0.6666666666666666
   },
   {
     "class":"firrtl.transforms.DedupedResult",
     "original":"~myCPU|tag_cache_5",
     "duplicate":"~myCPU|ysyx_22041812_myCPU/dcache:ysyx_22041812_Cache/tag_mem_1:ysyx_22041812_tag_cache",
-    "index":0.6896551724137931
+    "index":0.7
   },
   {
     "class":"firrtl.transforms.DedupedResult",
     "original":"~myCPU|tag_cache_6",
     "duplicate":"~myCPU|ysyx_22041812_myCPU/dcache:ysyx_22041812_Cache/tag_mem_2:ysyx_22041812_tag_cache",
-    "index":0.7241379310344828
+    "index":0.7333333333333333
   },
   {
     "class":"firrtl.transforms.DedupedResult",
     "original":"~myCPU|tag_cache_7",
     "duplicate":"~myCPU|ysyx_22041812_myCPU/dcache:ysyx_22041812_Cache/tag_mem_3:ysyx_22041812_tag_cache",
-    "index":0.7586206896551724
+    "index":0.7666666666666667
   },
   {
     "class":"firrtl.transforms.DedupedResult",
     "original":"~myCPU|data_cache_4",
     "duplicate":"~myCPU|ysyx_22041812_myCPU/dcache:ysyx_22041812_Cache/data_mem_0:ysyx_22041812_data_cache",
-    "index":0.7931034482758621
+    "index":0.8
   },
   {
     "class":"firrtl.transforms.DedupedResult",
     "original":"~myCPU|data_cache_5",
     "duplicate":"~myCPU|ysyx_22041812_myCPU/dcache:ysyx_22041812_Cache/data_mem_1:ysyx_22041812_data_cache",
-    "index":0.8275862068965517
+    "index":0.8333333333333334
   },
   {
     "class":"firrtl.transforms.DedupedResult",
     "original":"~myCPU|data_cache_6",
     "duplicate":"~myCPU|ysyx_22041812_myCPU/dcache:ysyx_22041812_Cache/data_mem_2:ysyx_22041812_data_cache",
-    "index":0.8620689655172413
+    "index":0.8666666666666667
   },
   {
     "class":"firrtl.transforms.DedupedResult",
     "original":"~myCPU|data_cache_7",
     "duplicate":"~myCPU|ysyx_22041812_myCPU/dcache:ysyx_22041812_Cache/data_mem_3:ysyx_22041812_data_cache",
-    "index":0.896551724137931
+    "index":0.9
   },
   {
     "class":"firrtl.transforms.DedupedResult",
     "original":"~myCPU|Cache_1",
     "duplicate":"~myCPU|ysyx_22041812_myCPU/dcache:ysyx_22041812_Cache",
-    "index":0.9310344827586207
+    "index":0.9333333333333333
   },
   {
     "class":"myCPU.ModulePrefixAnnotation",
@@ -216,6 +216,13 @@
     "sink":"~myCPU|ysyx_22041812_myCPU>io_master_wlast",
     "sources":[
       "~myCPU|ysyx_22041812_myCPU>io_master_wready"
+    ]
+  },
+  {
+    "class":"firrtl.transforms.CombinationalPath",
+    "sink":"~myCPU|ysyx_22041812_myCPU>io_stall",
+    "sources":[
+      "~myCPU|ysyx_22041812_myCPU>io_master_rvalid"
     ]
   },
   {

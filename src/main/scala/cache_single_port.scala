@@ -86,7 +86,7 @@ class Cache(cache_name: String) extends Module{
 		val cpu_response = Output(new CPU_Response)
 		val mem_io = new Axi
 		val flush = Input(Bool())
-		val accessType = Input(Bool())
+		val accessType = Input(UInt(2.W))
 	})
 	val cache_type = if(cache_name == "inst_caches") true.B else false.B
 
@@ -122,7 +122,6 @@ class Cache(cache_name: String) extends Module{
 	val cpu_request_rw = RegInit(false.B)
 	val cpu_request_valid = RegInit(false.B)
 	val cpu_request_accessType = RegInit(0.U(2.W))
-
 	
 	val align_addr = Cat(io.cpu_request.addr(addr_len - 1, log2Ceil(bitWidth/8)), 0.U((log2Ceil(bitWidth/8)).W))
 	cpu_request_addr_reg := align_addr
@@ -132,6 +131,10 @@ class Cache(cache_name: String) extends Module{
 	cpu_request_rw := io.cpu_request.rw
 	cpu_request_valid := io.cpu_request.valid
 	cpu_request_accessType := io.accessType
+	//if(cache_name == "data_cache"){
+	//	printf(p"cpu_request_accessType: ${cpu_request_accessType}; io.accessType: ${io.accessType}\n")
+	//	printf(p"state: ${cache_state.asUInt}\n\n")
+	//}
 
 	val cpu_request_addr_index = cpu_request_addr_reg(blockSize_len + groupId_len - 1, blockSize_len)
 	val cpu_request_addr_tag = cpu_request_addr_reg(addr_len - 1, blockSize_len + groupId_len)
@@ -359,6 +362,7 @@ class Cache(cache_name: String) extends Module{
 			io.mem_io.ar.valid := true.B 
 			io.mem_io.ar.bits.len := 0.U 
 			io.mem_io.ar.bits.size := cpu_request_accessType
+			//printf(p"cpu_request_accessType${cpu_request_accessType}\n")
 			io.mem_io.ar.bits.addr := cpu_request_addr_reg_origin
 			next_state := sUnCacheReadAddr
 			when(io.mem_io.ar.ready){
