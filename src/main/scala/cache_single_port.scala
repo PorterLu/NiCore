@@ -353,6 +353,9 @@ class Cache(cache_name: String) extends Module{
 
 		}
 		is(sUnCacheReadAddr){
+			//if(cache_name == "data_cache"){
+			//printf("unCacheReadAddr\n")
+			//}
 			io.mem_io.ar.valid := true.B 
 			io.mem_io.ar.bits.len := 0.U 
 			io.mem_io.ar.bits.size := cpu_request_accessType
@@ -363,6 +366,9 @@ class Cache(cache_name: String) extends Module{
 			}
 		}
 		is(sUnCacheWriteAddr){
+		//if(cache_name == "data_cache"){
+			//printf("unCacheWriteAddr\n")
+		//}
 			io.mem_io.aw.valid := true.B 
 			io.mem_io.aw.bits.len := 0.U
 			io.mem_io.aw.bits.size := cpu_request_accessType
@@ -373,6 +379,12 @@ class Cache(cache_name: String) extends Module{
 			}
 		}
 		is(sUnCacheReadData){
+		//if(cache_name == "data_cache"){
+			//printf("UnCacheReadData\n")
+		//}
+			//if(cache_name == "data_cache"){
+			//	printf(p"addr: ${Hexadecimal(cpu_request_addr_reg_origin)}; read_data:${Hexadecimal(io.mem_io.r.bits.data)}\n")
+			//}
 			io.cpu_response.data := io.mem_io.r.bits.data
 			io.mem_io.r.ready := true.B 
 			when(io.mem_io.r.valid){
@@ -383,6 +395,10 @@ class Cache(cache_name: String) extends Module{
 			}
 		}
 		is(sUnCacheWriteData){
+		//if(cache_name == "data_cache"){
+			//printf("UnCacheWriteData\n")
+		//}
+			//printf(p"cpu_request_data:${cpu_request_data}\n")
 			io.mem_io.w.valid := true.B 
 			io.mem_io.w.bits.last := true.B 
 			io.mem_io.w.bits.data := cpu_request_data
@@ -394,6 +410,9 @@ class Cache(cache_name: String) extends Module{
 			}
 		}
 		is(sUnCacheWriteAck){
+		//if(cache_name == "data_cache"){
+			//printf("UnCacheWriteAck\n")
+		//}
 			io.mem_io.b.ready := true.B 
 			when(io.mem_io.b.valid){
 				io.cpu_response.ready := true.B 
