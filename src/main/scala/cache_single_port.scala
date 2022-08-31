@@ -36,6 +36,7 @@ class CPU_Response extends Bundle{
 }
 
 object CacheState extends ChiselEnum{
+	//	0		1				 2					3				  4					 5				   6		 7		 8 			 9 		  10		 11			 12			13			   14	   15			16			 17			18								
 	val sIdle, sUnCacheReadAddr, sUnCacheWriteAddr, sUnCacheReadData, sUnCacheWriteData, sUnCacheWriteAck, sReMatch, sMatch, sWriteback, sRefill, sReadAddr, sWriteAddr, sWriteAck, sWait_a_cycle, sFlush, sFlushMatch, sFlushWrite, sFlushAddr,sFlushAck = Value
 }
 
@@ -88,7 +89,7 @@ class Cache(cache_name: String) extends Module{
 		val flush = Input(Bool())
 		val accessType = Input(UInt(2.W))
 	})
-	val cache_type = if(cache_name == "inst_caches") true.B else false.B
+	val cache_type = if(cache_name == "inst_cache") true.B else false.B
 
 	val bitWidth = 64
 	val addr_len = 32
@@ -202,7 +203,14 @@ class Cache(cache_name: String) extends Module{
 
 	flush_loop_enable := false.B
 	index_in_line_enable := false.B
+	
+	//if(cache_name == "inst_cache"){
+	//	printf(p"icache_state:${cache_state.asUInt}\n")
+	//}
 
+	//if(cache_name == "data_cache"){
+	//	printf(p"dcache_state:${cache_state.asUInt}\n")
+	//}
 	switch(cache_state){
 		is(sIdle){
 			when(io.flush && io.cpu_request.valid){
@@ -228,7 +236,7 @@ class Cache(cache_name: String) extends Module{
 		}
 		is(sFlush){
 			//将last信号拉到最后一级进行判断
-			//printf("flush\n")
+			//printf(p"flush_loop:${flush_loop}\n")
 			when(flush_over){
 				next_state := sIdle
 				flush_loop := 0.U
@@ -439,7 +447,9 @@ class Cache(cache_name: String) extends Module{
 			//}
 
 			when(is_match.reduce(_|_)){
-				//printf("match\n")
+//				if(cache_name == "inst_cache"){
+//					printf("match\n")
+//				}
 				when(!cpu_request_rw){
 					//printf("read\n\n")
 					io.cpu_response.ready := true.B
@@ -450,8 +460,13 @@ class Cache(cache_name: String) extends Module{
 											is_match(2) -> VecInit.tabulate(2){k => data_mem(2).io.data_read.data((k+1)*word_len - 1, k*word_len)}(cpu_request_addr_reg(blockSize_len-1, log2Ceil(word_len/8))),
 										)
 									)
-					when(io.cpu_request.valid && align_addr >= "h80000000".U && align_addr <= "h88000000".U){
-						next_state := sMatch
+																	
+					when(cache_type){
+						when(io.cpu_request.valid && align_addr >= "h80000000".U && align_addr <= "h88000000".U){
+							next_state := sMatch
+						}.otherwise{
+							next_state := sIdle
+						}
 					}.otherwise{
 						next_state := sIdle
 					}
@@ -499,7 +514,9 @@ class Cache(cache_name: String) extends Module{
 					//}
 				}
 			}.otherwise{
-				//printf("unMatch\n")
+//				if(cache_name == "inst_cache"){
+//					printf("unMatch\n")
+//				}
 				when(tag_mem.map{k => k.io.tag_read.valid}.reduceLeft(_&_)){
 					visit := tag_mem.map{k => k.io.tag_read.visit}
 					compare_1_0 := visit(1) > visit(0)
@@ -551,6 +568,7 @@ class Cache(cache_name: String) extends Module{
 			io.mem_io.ar.bits.len := 1.U
 			next_state := sReadAddr
 			io.mem_io.ar.bits.addr := refill_addr
+//			printf(p"refill_addr:${Hexadecimal(io.mem_io.ar.bits.addr)}\n")
 			when(io.mem_io.ar.ready){
 				next_state := sRefill
 			} 

@@ -49,63 +49,51 @@
   },
   {
     "class":"firrtl.transforms.DedupedResult",
-    "original":"~myCPU|Cache",
-    "duplicate":"~myCPU|ysyx_22041812_myCPU/icache:ysyx_22041812_Cache",
-    "index":0.6333333333333333
-  },
-  {
-    "class":"firrtl.transforms.DedupedResult",
     "original":"~myCPU|tag_cache_4",
-    "duplicate":"~myCPU|ysyx_22041812_myCPU/dcache:ysyx_22041812_Cache/tag_mem_0:ysyx_22041812_tag_cache",
+    "duplicate":"~myCPU|ysyx_22041812_myCPU/dcache:ysyx_22041812_Cache_1/tag_mem_0:ysyx_22041812_tag_cache",
     "index":0.6666666666666666
   },
   {
     "class":"firrtl.transforms.DedupedResult",
     "original":"~myCPU|tag_cache_5",
-    "duplicate":"~myCPU|ysyx_22041812_myCPU/dcache:ysyx_22041812_Cache/tag_mem_1:ysyx_22041812_tag_cache",
+    "duplicate":"~myCPU|ysyx_22041812_myCPU/dcache:ysyx_22041812_Cache_1/tag_mem_1:ysyx_22041812_tag_cache",
     "index":0.7
   },
   {
     "class":"firrtl.transforms.DedupedResult",
     "original":"~myCPU|tag_cache_6",
-    "duplicate":"~myCPU|ysyx_22041812_myCPU/dcache:ysyx_22041812_Cache/tag_mem_2:ysyx_22041812_tag_cache",
+    "duplicate":"~myCPU|ysyx_22041812_myCPU/dcache:ysyx_22041812_Cache_1/tag_mem_2:ysyx_22041812_tag_cache",
     "index":0.7333333333333333
   },
   {
     "class":"firrtl.transforms.DedupedResult",
     "original":"~myCPU|tag_cache_7",
-    "duplicate":"~myCPU|ysyx_22041812_myCPU/dcache:ysyx_22041812_Cache/tag_mem_3:ysyx_22041812_tag_cache",
+    "duplicate":"~myCPU|ysyx_22041812_myCPU/dcache:ysyx_22041812_Cache_1/tag_mem_3:ysyx_22041812_tag_cache",
     "index":0.7666666666666667
   },
   {
     "class":"firrtl.transforms.DedupedResult",
     "original":"~myCPU|data_cache_4",
-    "duplicate":"~myCPU|ysyx_22041812_myCPU/dcache:ysyx_22041812_Cache/data_mem_0:ysyx_22041812_data_cache",
+    "duplicate":"~myCPU|ysyx_22041812_myCPU/dcache:ysyx_22041812_Cache_1/data_mem_0:ysyx_22041812_data_cache",
     "index":0.8
   },
   {
     "class":"firrtl.transforms.DedupedResult",
     "original":"~myCPU|data_cache_5",
-    "duplicate":"~myCPU|ysyx_22041812_myCPU/dcache:ysyx_22041812_Cache/data_mem_1:ysyx_22041812_data_cache",
+    "duplicate":"~myCPU|ysyx_22041812_myCPU/dcache:ysyx_22041812_Cache_1/data_mem_1:ysyx_22041812_data_cache",
     "index":0.8333333333333334
   },
   {
     "class":"firrtl.transforms.DedupedResult",
     "original":"~myCPU|data_cache_6",
-    "duplicate":"~myCPU|ysyx_22041812_myCPU/dcache:ysyx_22041812_Cache/data_mem_2:ysyx_22041812_data_cache",
+    "duplicate":"~myCPU|ysyx_22041812_myCPU/dcache:ysyx_22041812_Cache_1/data_mem_2:ysyx_22041812_data_cache",
     "index":0.8666666666666667
   },
   {
     "class":"firrtl.transforms.DedupedResult",
     "original":"~myCPU|data_cache_7",
-    "duplicate":"~myCPU|ysyx_22041812_myCPU/dcache:ysyx_22041812_Cache/data_mem_3:ysyx_22041812_data_cache",
+    "duplicate":"~myCPU|ysyx_22041812_myCPU/dcache:ysyx_22041812_Cache_1/data_mem_3:ysyx_22041812_data_cache",
     "index":0.9
-  },
-  {
-    "class":"firrtl.transforms.DedupedResult",
-    "original":"~myCPU|Cache_1",
-    "duplicate":"~myCPU|ysyx_22041812_myCPU/dcache:ysyx_22041812_Cache",
-    "index":0.9333333333333333
   },
   {
     "class":"myCPU.ModulePrefixAnnotation",
@@ -132,12 +120,17 @@
   },
   {
     "class":"chisel3.experimental.EnumAnnotations$EnumComponentAnnotation",
-    "target":"myCPU.ysyx_22041812_Cache.next_state",
+    "target":"myCPU.ysyx_22041812_Cache_1.next_state",
     "enumTypeName":"cache_single_port.CacheState"
   },
   {
     "class":"chisel3.experimental.EnumAnnotations$EnumComponentAnnotation",
-    "target":"myCPU.ysyx_22041812_Cache.cache_state",
+    "target":"myCPU.ysyx_22041812_Cache_1.cache_state",
+    "enumTypeName":"cache_single_port.CacheState"
+  },
+  {
+    "class":"chisel3.experimental.EnumAnnotations$EnumComponentAnnotation",
+    "target":"myCPU.ysyx_22041812_Cache.next_state",
     "enumTypeName":"cache_single_port.CacheState"
   },
   {
@@ -164,6 +157,11 @@
       "sWriteback":8,
       "sWait_a_cycle":13
     }
+  },
+  {
+    "class":"chisel3.experimental.EnumAnnotations$EnumComponentAnnotation",
+    "target":"myCPU.ysyx_22041812_Cache.cache_state",
+    "enumTypeName":"cache_single_port.CacheState"
   },
   {
     "class":"chisel3.experimental.EnumAnnotations$EnumComponentAnnotation",
