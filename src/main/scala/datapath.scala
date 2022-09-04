@@ -271,7 +271,7 @@ class Datapath extends Module{
 	val alu = Module(new AluSimple(64))					
 	val immGen = Module(new ImmGenWire)
 	val brCond = Module(new BrCondSimple(64))			//专门用于跳转判断
-	val regFile = Module(new RegisterFile(35))			//有35个读口的寄存器文件
+	val regFile = Module(new RegisterFile(2))			//有35个读口的寄存器文件
 	val multiplier = Module(new Multiplier)
 	val divider = Module(new Divider)
 	val started = RegInit(true.B)
@@ -289,7 +289,7 @@ class Datapath extends Module{
 	//printf(p"icache_stall:${!io.icache.cpu_response.ready}; dcache_stall:${dcache_stall}; mul_stall:${mul_stall}; div_stall:${div_stall}; trap:${csr.io.trap}\n")
 
 	val jump_addr = Wire(UInt(64.W))					//要跳转的地址
-	val gpr_ptr = Module(new gpr_ptr)					//用于向外输出寄存器信息，用于debug
+	//val gpr_ptr = Module(new gpr_ptr)					//用于向外输出寄存器信息，用于debug
 	val clint  = Module(new clint())					//
 
 	csr.io.int_timer := clint.io.timer_valid
@@ -298,15 +298,15 @@ class Datapath extends Module{
 
 	io.stall := stall
 	//2号多余，寄存器文件依次读出，输出到gpr_ptr，最后在sim的过程输出寄存器信息用于调试
-	regFile.io.raddr(2) := 0.U
-	for(i <- 3 until 35){
-		regFile.io.raddr(i) := (i-3).U
-		gpr_ptr.io.regfile(i-3) := regFile.io.rdata(i)
-	}
+	//regFile.io.raddr(2) := 0.U
+	//for(i <- 3 until 35){
+	//	regFile.io.raddr(i) := (i-3).U
+	//	gpr_ptr.io.regfile(i-3) := regFile.io.rdata(i)
+	//}
 
 	//gpr_ptr向外同步的时机依靠时钟，所以要向外输出时钟
-	gpr_ptr.io.clock := clock
-	gpr_ptr.io.reset := reset
+	//gpr_ptr.io.clock := clock
+	//gpr_ptr.io.reset := reset
 	 
 	//向csr寄存器输入是否阻塞，阻塞的过程中无法处理中断异常，并且无法写入csr寄存器
 	csr.io.stall := stall
@@ -350,7 +350,7 @@ class Datapath extends Module{
 	//下面next_pc默认是pc+4
 	//printf(p"${flush_fd}; ${flush_de}; ${flush_em}; ${flush_mw}\n")
 	//printf(p"csr.io.trap:${csr.io.trap};  csr_atomic:${csr_atomic};  io.ctrl.pc_sel:${io.ctrl.pc_sel};  brCond_taken:${brCond_taken}")
-	val pc = RegInit("h80000000".U(64.W) - 4.U)
+	val pc = RegInit("h30000000".U(32.W) - 4.U)
 	when(started){
 		started := false.B
 	}
@@ -365,7 +365,8 @@ class Datapath extends Module{
 		// || load_stall
 //		(io.ctrl.pc_sel === PC_EPC) -> csr.io.trapVec,
 	)
-	//printf(p"pc:${pc}; next_pc:${next_pc}\n")
+	
+	//printf(p"pc:${Hexadecimal(pc)}; next_pc:${Hexadecimal(next_pc)}\n")
 	//printf(p"trap:${csr.io.trap}; csr_atomic:${csr_atomic}; stall:${!started && (stall)}; flush:${icache_flush_tag || dcache_flush_tag}; jump:${((de_pipe_reg.pc_sel === PC_ALU) && de_pipe_reg.enable)|| brCond_taken}\n")
 //		(io.ctrl.pc_sel === PC_0) -> pc)
 
@@ -895,11 +896,11 @@ class Datapath extends Module{
 
 class myCPU extends Module{
 	val io = IO(new Bundle{
-		val pc_debug = Output(UInt(64.W))
-		val inst = Output(UInt(32.W))
-		val commit_inst = Output(UInt(32.W))
-		val start = Output(Bool())
-		val stall = Output(Bool())
+		//val pc_debug = Output(UInt(64.W))
+		//val inst = Output(UInt(32.W))
+		//val commit_inst = Output(UInt(32.W))
+		//val start = Output(Bool())
+		//val stall = Output(Bool())
 		
 		val interrupt = Input(Bool())
 
@@ -1035,11 +1036,11 @@ class myCPU extends Module{
 	arb.io.axi_out.r.bits.last := io.master_rlast
 	arb.io.axi_out.r.bits.id := io.master_rid 
 
-	io.inst := datapath.io.inst
-	io.commit_inst := datapath.io.commit_inst
-	io.pc_debug := datapath.io.pc
-	io.start := datapath.io.start
-	io.stall := datapath.io.stall
+	//io.inst := datapath.io.inst
+	//io.commit_inst := datapath.io.commit_inst
+	//io.pc_debug := datapath.io.pc
+	//io.start := datapath.io.start
+	//io.stall := datapath.io.stall
 
 	//slave signals suspension
 	io.slave_awready := false.B 

@@ -36,12 +36,7 @@ class CPU_Response extends Bundle{
 }
 
 object CacheState extends ChiselEnum{
-	//	0		1				 2					3				  4					 5				   6		 7		 8 			 9 		  10		 11			 12			13			   14	   15			16			 17			18								
-	val sIdle, sUnCacheReadAddr, sUnCacheWriteAddr, sUnCacheReadData, sUnCacheWriteData, sUnCacheWriteAck, sReMatch, sMatch, sWriteback, sRefill, sReadAddr, sWriteAddr, sWriteAck, sWait_a_cycle, sFlush, sFlushMatch, sFlushWrite, sFlushAddr,sFlushAck = Value
-}
-
-object AccessType extends ChiselEnum{
-	val byte, half, word, double = Value 
+	val sIdle, sUnCacheReadAddr, sUnCacheWriteAddr, sUnCacheReadData, sUnCacheWriteData, sUnCacheWriteAck, sReMatch, sMatch, sWriteback, sRefill, sReadAddr, sWriteAddr, sWriteAck, wait_a_cycle = Value
 }
 
 class tag_cache extends Module{
@@ -344,6 +339,7 @@ class Cache(cache_name: String) extends Module{
 			}
 		}
 		is(sFlushAck){
+			//printf("sFlushAck\n")
 			io.mem_io.b.ready := true.B 
 			next_state := sFlushAck
 			when(io.mem_io.b.valid){
@@ -366,6 +362,8 @@ class Cache(cache_name: String) extends Module{
 		is(sUnCacheReadAddr){
 			//if(cache_name == "data_cache"){
 			//printf("unCacheReadAddr\n")
+			//printf(p"cpu_request_addr: ${Hexadecimal(cpu_request_addr_reg_origin)}\n")
+
 			//}
 			io.mem_io.ar.valid := true.B 
 			io.mem_io.ar.bits.len := 0.U 
@@ -380,6 +378,7 @@ class Cache(cache_name: String) extends Module{
 		is(sUnCacheWriteAddr){
 		//if(cache_name == "data_cache"){
 			//printf("unCacheWriteAddr\n")
+			//printf(p"cpu_request_addr: ${Hexadecimal(cpu_request_addr_reg_origin)}\n")
 		//}
 			io.mem_io.aw.valid := true.B 
 			io.mem_io.aw.bits.len := 0.U
@@ -395,7 +394,7 @@ class Cache(cache_name: String) extends Module{
 			//printf("UnCacheReadData\n")
 		//}
 			//if(cache_name == "data_cache"){
-			//	printf(p"addr: ${Hexadecimal(cpu_request_addr_reg_origin)}; read_data:${Hexadecimal(io.mem_io.r.bits.data)}\n")
+			//printf(p"addr: ${Hexadecimal(cpu_request_addr_reg_origin)}; read_data:${Hexadecimal(io.mem_io.r.bits.data)}\n")
 			//}
 			io.cpu_response.data := io.mem_io.r.bits.data
 			io.mem_io.r.ready := true.B 
@@ -439,17 +438,11 @@ class Cache(cache_name: String) extends Module{
 			}
 
 			is_match := tag_mem.map{k => (k.io.tag_read.tag === cpu_request_addr_tag) && (k.io.tag_read.valid)}
-
-			//printf(p"index:${Hexadecimal(cpu_request_addr_index)}\n")
-			//for(i <- 0 until nWays){
-			//	printf(p"tag:${Hexadecimal(tag_mem(i).io.tag_read.tag)}; valid:${tag_mem(i).io.tag_read.valid}\n")
-			//	printf(p"is_match:${is_match(i)}\n\n")
-			//}
-
 			when(is_match.reduce(_|_)){
 //				if(cache_name == "inst_cache"){
 //					printf("match\n")
 //				}
+				printf("match\n")
 				when(!cpu_request_rw){
 					//printf("read\n\n")
 					io.cpu_response.ready := true.B
@@ -460,7 +453,7 @@ class Cache(cache_name: String) extends Module{
 											is_match(2) -> VecInit.tabulate(2){k => data_mem(2).io.data_read.data((k+1)*word_len - 1, k*word_len)}(cpu_request_addr_reg(blockSize_len-1, log2Ceil(word_len/8))),
 										)
 									)
-																	
+
 					when(cache_type){
 						when(io.cpu_request.valid && align_addr >= "h80000000".U && align_addr <= "h88000000".U){
 							next_state := sMatch
@@ -502,6 +495,7 @@ class Cache(cache_name: String) extends Module{
 							result := part.reduce(_|_)
 							cache_data := VecInit.tabulate(2){k => data_mem(i).io.data_read.data((k+1)*word_len - 1, k*word_len)}
 							cache_data(cpu_request_addr_reg(blockSize_len - 1, log2Ceil(word_len/8))) := result
+							printf(p"cache_write_data:${Hexadecimal(cache_data.asUInt)}\n")
 							data_mem(i).io.data_write.data := cache_data.asUInt
 						}
 					}
@@ -515,7 +509,7 @@ class Cache(cache_name: String) extends Module{
 				}
 			}.otherwise{
 //				if(cache_name == "inst_cache"){
-//					printf("unMatch\n")
+					printf("unMatch\n")
 //				}
 				when(tag_mem.map{k => k.io.tag_read.valid}.reduceLeft(_&_)){
 					visit := tag_mem.map{k => k.io.tag_read.visit}
@@ -560,20 +554,23 @@ class Cache(cache_name: String) extends Module{
 			}
 		}
 		is(sWait_a_cycle){
+			printf("sWait a cycle\n")
 			io.cpu_response.ready := true.B
 			next_state := sIdle
 		}
 		is(sReadAddr){
+			//printf("readAddr\n")
 			io.mem_io.ar.valid := true.B 
 			io.mem_io.ar.bits.len := 1.U
 			next_state := sReadAddr
 			io.mem_io.ar.bits.addr := refill_addr
-//			printf(p"refill_addr:${Hexadecimal(io.mem_io.ar.bits.addr)}\n")
+			//printf(p"refill_addr:${Hexadecimal(io.mem_io.ar.bits.addr)}\n")
 			when(io.mem_io.ar.ready){
 				next_state := sRefill
 			} 
 		}
 		is(sRefill){
+			//printf("refill\n")
 			io.mem_io.r.ready := true.B 
 			next_state := sRefill
 			when(io.mem_io.r.valid){
@@ -581,7 +578,7 @@ class Cache(cache_name: String) extends Module{
 					when(i.U === replace){
 						cache_data := VecInit.tabulate(2){k => data_mem(i).io.data_read.data((k+1)*word_len - 1, k*word_len)}
 						cache_data(index) := io.mem_io.r.bits.data
-						//printf(p"cache_data: ${cache_data}\n")
+			//			printf(p"cache_data: ${Hexadecimal(io.mem_io.r.bits.data.asUInt)}\n")
 						data_mem(i).io.data_write.data := cache_data.asUInt
 						data_mem(i).io.cache_req.we := true.B
 					}
@@ -596,6 +593,8 @@ class Cache(cache_name: String) extends Module{
 			}
 		}
 		is(sWriteAddr){
+			//printf("writeAddr\n")
+			//printf(p"writeAddr:${Hexadecimal(writeback_addr)}\n")
 			io.mem_io.aw.valid := true.B 
 			io.mem_io.aw.bits.len := 1.U 
 			io.mem_io.aw.bits.addr := writeback_addr
@@ -605,6 +604,7 @@ class Cache(cache_name: String) extends Module{
 			}
 		}
 		is(sWriteback){
+			//printf("writeback\n")
 			next_state := sWriteback
 			fill_block_en := io.mem_io.w.ready
 			io.mem_io.w.valid := true.B 
@@ -613,6 +613,7 @@ class Cache(cache_name: String) extends Module{
 				when(i.U === replace){
 					cache_data := VecInit.tabulate(2){k => data_mem(i).io.data_read.data((k+1)*word_len - 1, k*word_len)}
 					io.mem_io.w.bits.data := cache_data(index)
+			//		printf(p"cache_data: ${Hexadecimal(io.mem_io.w.bits.data.asUInt)}\n")
 				}
 			}
 			when(last){
@@ -621,6 +622,7 @@ class Cache(cache_name: String) extends Module{
 			}
 		}
 		is(sWriteAck){
+			//printf("writeAck\n")
 			io.mem_io.b.ready := true.B 
 			next_state := sWriteAck
 			when(io.mem_io.b.valid){
