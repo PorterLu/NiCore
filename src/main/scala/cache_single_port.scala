@@ -370,7 +370,7 @@ class Cache(cache_name: String) extends Module{
 			io.mem_io.ar.valid := true.B 
 			io.mem_io.ar.bits.len := 0.U 
 			io.mem_io.ar.bits.size := cpu_request_accessType
-			//printf(p"cpu_request_accessType${cpu_request_accessType}\n")
+			//printf(p"cpu_read_request_accessType${cpu_request_accessType}\n")
 			io.mem_io.ar.bits.addr := cpu_request_addr_reg_origin
 			next_state := sUnCacheReadAddr
 			when(io.mem_io.ar.ready){
@@ -384,6 +384,7 @@ class Cache(cache_name: String) extends Module{
 			io.mem_io.aw.valid := true.B 
 			io.mem_io.aw.bits.len := 0.U
 			io.mem_io.aw.bits.size := cpu_request_accessType
+			//printf(p"cpu_write_request_accessType:${cpu_request_accessType}\n")
 			io.mem_io.aw.bits.addr := cpu_request_addr_reg_origin
 			next_state := sUnCacheWriteAddr
 			when(io.mem_io.aw.ready){
@@ -460,6 +461,12 @@ class Cache(cache_name: String) extends Module{
 											is_match(2) -> VecInit.tabulate(2){k => data_mem(2).io.data_read.data((k+1)*word_len - 1, k*word_len)}(cpu_request_addr_reg(blockSize_len-1, log2Ceil(word_len/8))),
 										)
 									)
+					//printf(p"read_addr:${Hexadecimal(cpu_request_addr_reg)}")
+					//printf(p"read_data0:${Hexadecimal(data_mem(0).io.data_read.data.asUInt)}\n")
+					//printf(p"read_data1:${Hexadecimal(data_mem(1).io.data_read.data.asUInt)}\n")
+					//printf(p"read_data2:${Hexadecimal(data_mem(2).io.data_read.data.asUInt)}\n")
+					//printf(p"read_data3:${Hexadecimal(data_mem(3).io.data_read.data.asUInt)}\n")
+
 																	
 					when(cache_type){
 						when(io.cpu_request.valid && align_addr >= "h80000000".U && align_addr <= "h88000000".U){
@@ -503,15 +510,11 @@ class Cache(cache_name: String) extends Module{
 							cache_data := VecInit.tabulate(2){k => data_mem(i).io.data_read.data((k+1)*word_len - 1, k*word_len)}
 							cache_data(cpu_request_addr_reg(blockSize_len - 1, log2Ceil(word_len/8))) := result
 							data_mem(i).io.data_write.data := cache_data.asUInt
+							//printf(p"cache_data:${Hexadecimal(cache_data.asUInt)}\n")
 						}
 					}
 					
-					//when(!is_twice){
 					next_state := sWait_a_cycle
-					//	is_twice := true.B
-					//}.otherwise{
-					//	is_twice := false.B
-					//}
 				}
 			}.otherwise{
 //				if(cache_name == "inst_cache"){
@@ -581,14 +584,14 @@ class Cache(cache_name: String) extends Module{
 					when(i.U === replace){
 						cache_data := VecInit.tabulate(2){k => data_mem(i).io.data_read.data((k+1)*word_len - 1, k*word_len)}
 						cache_data(index) := io.mem_io.r.bits.data
-						//printf(p"cache_data: ${cache_data}\n")
+						//printf(p"refill_cache_data: ${cache_data}\n")
 						data_mem(i).io.data_write.data := cache_data.asUInt
 						data_mem(i).io.cache_req.we := true.B
 					}
 				}
 			}
 
-			fill_block_en := io.mem_io.r.ready
+			fill_block_en := io.mem_io.r.valid
 			
 			when(io.mem_io.r.bits.last){
 				next_state := sMatch
@@ -615,6 +618,7 @@ class Cache(cache_name: String) extends Module{
 					io.mem_io.w.bits.data := cache_data(index)
 				}
 			}
+			//printf(p"io.mem_io.w.bits.data:${io.mem_io.w.bits.data}\n")
 			when(last){
 				next_state := sWriteAck
 				index := 0.U

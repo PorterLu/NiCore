@@ -445,18 +445,13 @@ class CSR extends Module{
 		}
 	}
 
-	//io.hasInt := hasInt
-	//io.busy := writeEn
-	//io.mode := mode
-	//io.sepc := sepc.asUInt
-	//io.mepc := mepc.asUInt
-	//printf(p"cause:${cause}\n")
+
 	io.trapVec := Mux(hasInt, trapVec, 
 					Mux(io.isMret, mepc.asUInt, 
 							Mux(io.isSret, sepc.asUInt, trapVec)
 						)
 					)
-//	printf(p"hasExc:${hasExc} hasInt:${hasInt} isSret:${io.isSret} isMret:${io.isMret}\n")
+
 	io.trap := hasExc || hasInt || ((io.isSret || io.isMret) && io.mw_enable)
 	//io.pageEn   := !mode(1) && satp.mode
 	//io.basePpn  := satp.ppn
