@@ -285,7 +285,7 @@ class Datapath extends Module{
 	//printf(p"icache_stall:${!io.icache.cpu_response.ready}; dcache_stall:${dcache_stall}; mul_stall:${mul_stall}; div_stall:${div_stall}; trap:${csr.io.trap}\n")
 
 	val jump_addr = Wire(UInt(64.W))					//要跳转的地址
-	//val gpr_ptr = Module(new gpr_ptr)					//用于向外输出寄存器信息，用于debug
+	val gpr_ptr = Module(new gpr_ptr)					//用于向外输出寄存器信息，用于debug
 	val clint  = Module(new clint())					//
 
 	csr.io.int_timer := clint.io.timer_valid
@@ -297,13 +297,13 @@ class Datapath extends Module{
 	regFile.io.raddr(2) := 0.U
 	for(i <- 3 until 35){
 		regFile.io.raddr(i) := (i-3).U
-	//	printf(p"${(i-3).U}: ${Hexadecimal(regFile.io.rdata(i))} ;\n")
+		gpr_ptr.io.regfile(i-3) := regFile.io.rdata(i);
 	}
 	//printf("\n")
 
 	//gpr_ptr向外同步的时机依靠时钟，所以要向外输出时钟
-	//gpr_ptr.io.clock := clock
-	//gpr_ptr.io.reset := reset
+	gpr_ptr.io.clock := clock
+	gpr_ptr.io.reset := reset
 	 
 	//向csr寄存器输入是否阻塞，阻塞的过程中无法处理中断异常，并且无法写入csr寄存器
 	csr.io.stall := stall
@@ -347,7 +347,7 @@ class Datapath extends Module{
 	//下面next_pc默认是pc+4
 	//printf(p"${flush_fd}; ${flush_de}; ${flush_em}; ${flush_mw}\n")
 	//printf(p"csr.io.trap:${csr.io.trap};  csr_atomic:${csr_atomic};  io.ctrl.pc_sel:${io.ctrl.pc_sel};  brCond_taken:${brCond_taken}")
-	val pc = RegInit("h30000000".U(64.W) - 4.U)
+	val pc = RegInit("h80000000".U(64.W) - 4.U)
 	when(started){
 		started := false.B
 	}
@@ -504,13 +504,11 @@ class Datapath extends Module{
 		de_pipe_reg.enable := fd_pipe_reg.enable
 	}
 
-	/*when(pc >= "h80000040".U){
-		printf(p"decode-execute: \ninst:${Hexadecimal(de_pipe_reg.inst)}; alu_op:${de_pipe_reg.alu_op}; A_sel:${de_pipe_reg.A_sel}; B_sel:${de_pipe_reg.B_sel}; csr_read_data: ${de_pipe_reg.csr_read_data}\n" +
-  			p"write_op:${de_pipe_reg.csr_write_op}; write_data: ${Hexadecimal(de_pipe_reg.csr_write_data)} write_addr: ${Hexadecimal(de_pipe_reg.csr_write_addr)}; pc:${Hexadecimal(de_pipe_reg.pc)}\n" +
-			p"imm: ${Hexadecimal(de_pipe_reg.imm)}; rs1: ${Hexadecimal(de_pipe_reg.rs1)}; rs2:${Hexadecimal(de_pipe_reg.rs2)}; src1_addr:${Hexadecimal(de_pipe_reg.src1_addr)}; src2_addr:${Hexadecimal(de_pipe_reg.src2_addr)};" + 
-			p"dest: ${Hexadecimal(de_pipe_reg.dest)}; pc_sel: ${de_pipe_reg.pc_sel};  br_type:${de_pipe_reg.br_type}; st_type:${de_pipe_reg.st_type}; ld_type:${de_pipe_reg.ld_type}\n" + 
-			p"wd_type: ${de_pipe_reg.wd_type}; wb_sel: ${de_pipe_reg.wb_sel}; wb_en:${de_pipe_reg.wb_en}; is_kill:${de_pipe_reg.is_kill}; enable:${de_pipe_reg.enable}\n\n")
-	}*/
+	/*printf(p"decode-execute: \ninst:${Hexadecimal(de_pipe_reg.inst)}; alu_op:${de_pipe_reg.alu_op}; A_sel:${de_pipe_reg.A_sel}; B_sel:${de_pipe_reg.B_sel}; csr_read_data: ${de_pipe_reg.csr_read_data}\n" +
+		p"write_op:${de_pipe_reg.csr_write_op}; write_data: ${Hexadecimal(de_pipe_reg.csr_write_data)} write_addr: ${Hexadecimal(de_pipe_reg.csr_write_addr)}; pc:${Hexadecimal(de_pipe_reg.pc)}\n" +
+		p"imm: ${Hexadecimal(de_pipe_reg.imm)}; rs1: ${Hexadecimal(de_pipe_reg.rs1)}; rs2:${Hexadecimal(de_pipe_reg.rs2)}; src1_addr:${Hexadecimal(de_pipe_reg.src1_addr)}; src2_addr:${Hexadecimal(de_pipe_reg.src2_addr)};" + 
+		p"dest: ${Hexadecimal(de_pipe_reg.dest)}; pc_sel: ${de_pipe_reg.pc_sel};  br_type:${de_pipe_reg.br_type}; st_type:${de_pipe_reg.st_type}; ld_type:${de_pipe_reg.ld_type}\n" + 
+		p"wd_type: ${de_pipe_reg.wd_type}; wb_sel: ${de_pipe_reg.wb_sel}; wb_en:${de_pipe_reg.wb_en}; is_kill:${de_pipe_reg.is_kill}; enable:${de_pipe_reg.enable}\n\n")*/
 
 	/****** Execute *****/
 	csr.io.de_enable := de_pipe_reg.enable
@@ -536,12 +534,7 @@ class Datapath extends Module{
 	val src2_data = WireInit(0.U(64.W))
 	val alu_out = WireInit(0.U(64.W))
 	val alu_sum = WireInit(0.U(64.W))
-	val is_clint = Mux(stall, ((em_pipe_reg.alu_out >= "h2000000".U) && (em_pipe_reg.alu_out <= "h200ffff".U)),
-								((alu_out >= "h2000000".U) && (alu_out <= "h200ffff".U)) 
-						)
-
-	val is_memory = Mux(stall, (em_pipe_reg.alu_out >= "h80000000".U) && (em_pipe_reg.alu_out <= "h88000000".U),
-								(alu_out >= "h80000000".U) && (alu_out <= "h88000000".U))
+	val is_clint =  (em_pipe_reg.alu_out >= "h2000000".U) && (em_pipe_reg.alu_out <= "h200ffff".U)
 
 	val load_data_hazard = data_cache_response_data >> ((em_pipe_reg.alu_out & "h07".U) << 3.U)
 	val load_data_ext_hazard = Mux(em_pipe_reg.ld_type === LD_LW, Cat(Mux(load_data_hazard(31).asBool, "hffffffff".U, 0.U(32.W)), load_data_hazard(31, 0)),
@@ -742,13 +735,12 @@ class Datapath extends Module{
 		em_pipe_reg.enable := de_pipe_reg.enable
 	}
 
-	/*when(pc >= "h80000040".U){
-		printf(p"execute_memory:\ninst: ${Hexadecimal(em_pipe_reg.inst)}; dest:${em_pipe_reg.dest}; alu_out:${Hexadecimal(em_pipe_reg.alu_out)} alu_sum:${Hexadecimal(em_pipe_reg.alu_sum)}\n" +
+	/*
+	printf(p"execute_memory:\ninst: ${Hexadecimal(em_pipe_reg.inst)}; dest:${em_pipe_reg.dest}; alu_out:${Hexadecimal(em_pipe_reg.alu_out)} alu_sum:${Hexadecimal(em_pipe_reg.alu_sum)}\n" +
   			p"csr_read_data: ${Hexadecimal(em_pipe_reg.csr_read_data)}; csr_write_op: ${Hexadecimal(em_pipe_reg.csr_write_op)}; csr_write_addr: ${Hexadecimal(em_pipe_reg.csr_write_addr)}; csr_write_data: ${Hexadecimal(em_pipe_reg.csr_write_data)};\n " +
   			p"st_data: ${Hexadecimal(em_pipe_reg.st_data)}; st_type: ${em_pipe_reg.st_type}; ld_type: ${em_pipe_reg.ld_type}\n " +
   			p"wb_sel: ${em_pipe_reg.wb_sel}; wb_en:${em_pipe_reg.wb_en}; pc:${Hexadecimal(em_pipe_reg.pc)}; is_kill: ${em_pipe_reg.is_kill}; enable:${em_pipe_reg.enable}\n")
-	}*/
-
+*/
 	//printf(p"execute-mem:\n ")
 	/****** Mem *********/
 	//dcache_response_reg := io.dcache.cpu_response.ready
@@ -757,9 +749,11 @@ class Datapath extends Module{
 	}.elsewhen(io.dcache.cpu_request.valid && io.dcache.cpu_response.ready){
 		data_cache_tag := true.B
 		data_cache_response_data := io.dcache.cpu_response.data
-		//printf(p"data_cache_response_data:${data_cache_response_data}\n")
 	} 
 
+	//printf(p"data_cache_tag:${data_cache_tag}\n")
+	//printf(p"data_cache_response_data:${data_cache_response_data}\n")
+	//printf(p"em wb_sel:${em_pipe_reg.wb_sel}\n")
 	//val is_clint = false.B
 	//printf(p"is_clint:${is_clint}; em_pipe_reg.alu_out:${em_pipe_reg.alu_out}; alu_out:${alu_out}\n")					
 	clint.io.addr := Mux(stall , em_pipe_reg.alu_out, alu_out)
@@ -846,6 +840,12 @@ class Datapath extends Module{
 		mw_pipe_reg.csr_write_addr := 0.U
 		mw_pipe_reg.enable := false.B
 	}.elsewhen(!stall){
+		//printf(p"is_clint:${is_clint}\n")
+		//printf(p"load_data_ext:${load_data_ext}\n")
+		//printf(p"wb_sel:${em_pipe_reg.wb_sel}\n")
+		//printf(p"wb_en:${em_pipe_reg.wb_en}\n")
+		//printf(p"dest:${em_pipe_reg.dest}\n")
+		//printf(p"inst:${em_pipe_reg.inst}\n\n")
 		mw_pipe_reg.load_data := load_data_ext
 		mw_pipe_reg.alu_out := em_pipe_reg.alu_out
 		mw_pipe_reg.dest := em_pipe_reg.dest
@@ -862,12 +862,10 @@ class Datapath extends Module{
 		mw_pipe_reg.enable := em_pipe_reg.enable
 	}
 
-	/*when(pc >= "h80000040".U){
-		printf(p"memory_writeback:\nload_data: ${Hexadecimal(mw_pipe_reg.load_data)}; alu_out: ${Hexadecimal(mw_pipe_reg.alu_out)}; dest: ${mw_pipe_reg.dest}; wb_sel: ${mw_pipe_reg.wb_sel}; wb_en:${mw_pipe_reg.wb_en}\n " +
-  			p"pc:${Hexadecimal(mw_pipe_reg.pc)}; inst:${Hexadecimal(mw_pipe_reg.inst)}; \ncsr_read_data: ${Hexadecimal(mw_pipe_reg.csr_read_data)}; csr_write_op:${mw_pipe_reg.csr_write_op};" +
-			p" csr_write_data: ${Hexadecimal(mw_pipe_reg.csr_write_data)}; csr_write_addr:${Hexadecimal(mw_pipe_reg.csr_write_addr)}\n " +
-  			p"enable: ${mw_pipe_reg.enable}\n")
-	}*/
+	/*printf(p"memory_writeback:\nload_data: ${Hexadecimal(mw_pipe_reg.load_data)}; alu_out: ${Hexadecimal(mw_pipe_reg.alu_out)}; dest: ${mw_pipe_reg.dest}; wb_sel: ${mw_pipe_reg.wb_sel}; wb_en:${mw_pipe_reg.wb_en}\n " +
+		p"pc:${Hexadecimal(mw_pipe_reg.pc)}; inst:${Hexadecimal(mw_pipe_reg.inst)}; \ncsr_read_data: ${Hexadecimal(mw_pipe_reg.csr_read_data)}; csr_write_op:${mw_pipe_reg.csr_write_op};" +
+		p" csr_write_data: ${Hexadecimal(mw_pipe_reg.csr_write_data)}; csr_write_addr:${Hexadecimal(mw_pipe_reg.csr_write_addr)}\n " +
+		p"enable: ${mw_pipe_reg.enable}\n")*/
 
 	/****** Writeback ***/
 	csr.io.mw_enable := mw_pipe_reg.enable						//mw流水线寄存器是否有效输入
@@ -896,17 +894,22 @@ class Datapath extends Module{
 						mw_pipe_reg.wb_sel === WB_MEM || mw_pipe_reg.wb_sel === WB_CSR) && (mw_pipe_reg.wb_en)) && mw_pipe_reg.enable && !stall
 	regFile.io.waddr := mw_pipe_reg.dest
 	regFile.io.wdata := Mux(mw_pipe_reg.wb_sel === WB_ALU, mw_pipe_reg.alu_out,
-						Mux(mw_pipe_reg.wb_sel === WB_PC4, mw_pipe_reg.pc + 4.U, 
-							Mux(mw_pipe_reg.wb_sel === WB_CSR, mw_pipe_reg.csr_read_data, mw_pipe_reg.load_data)))
+							Mux(mw_pipe_reg.wb_sel === WB_PC4, mw_pipe_reg.pc + 4.U, 
+								Mux(mw_pipe_reg.wb_sel === WB_CSR, mw_pipe_reg.csr_read_data, mw_pipe_reg.load_data)
+							)
+						)
+	//printf(p"WB_TYPE:${mw_pipe_reg.wb_sel}\n")
+	//printf(p"mw_pipe_reg.load_data:${mw_pipe_reg.load_data}\n")
+	//printf(p"regFile writeData:${regFile.io.wdata}\n")
 }
 
 class myCPU extends Module{
 	val io = IO(new Bundle{
-		//val pc_debug = Output(UInt(64.W))
-		//val inst = Output(UInt(32.W))
-		//val commit_inst = Output(UInt(32.W))
-		//val start = Output(Bool())
-		//val stall = Output(Bool())
+		val pc_debug = Output(UInt(64.W))
+		val inst = Output(UInt(32.W))
+		val commit_inst = Output(UInt(32.W))
+		val start = Output(Bool())
+		val stall = Output(Bool())
 		
 		val interrupt = Input(Bool())
 
@@ -1042,11 +1045,11 @@ class myCPU extends Module{
 	arb.io.axi_out.r.bits.last := io.master_rlast
 	arb.io.axi_out.r.bits.id := io.master_rid 
 
-	//io.inst := datapath.io.inst
-	//io.commit_inst := datapath.io.commit_inst
-	//io.pc_debug := datapath.io.pc
-	//io.start := datapath.io.start
-	//io.stall := datapath.io.stall
+	io.inst := datapath.io.inst
+	io.commit_inst := datapath.io.commit_inst
+	io.pc_debug := datapath.io.pc
+	io.start := datapath.io.start
+	io.stall := datapath.io.stall
 
 	//slave signals suspension
 	io.slave_awready := false.B 

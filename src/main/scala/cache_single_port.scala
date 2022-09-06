@@ -461,11 +461,12 @@ class Cache(cache_name: String) extends Module{
 											is_match(2) -> VecInit.tabulate(2){k => data_mem(2).io.data_read.data((k+1)*word_len - 1, k*word_len)}(cpu_request_addr_reg(blockSize_len-1, log2Ceil(word_len/8))),
 										)
 									)
-					//printf(p"read_addr:${Hexadecimal(cpu_request_addr_reg)}")
-					//printf(p"read_data0:${Hexadecimal(data_mem(0).io.data_read.data.asUInt)}\n")
-					//printf(p"read_data1:${Hexadecimal(data_mem(1).io.data_read.data.asUInt)}\n")
-					//printf(p"read_data2:${Hexadecimal(data_mem(2).io.data_read.data.asUInt)}\n")
-					//printf(p"read_data3:${Hexadecimal(data_mem(3).io.data_read.data.asUInt)}\n")
+//					printf(p"response_data:${io.cpu_response.data}\n")
+//					printf(p"read_addr:${Hexadecimal(cpu_request_addr_reg)}\n")
+//					printf(p"read_data0:${Hexadecimal(data_mem(0).io.data_read.data.asUInt)}\n")
+//					printf(p"read_data1:${Hexadecimal(data_mem(1).io.data_read.data.asUInt)}\n")
+//					printf(p"read_data2:${Hexadecimal(data_mem(2).io.data_read.data.asUInt)}\n")
+//					printf(p"read_data3:${Hexadecimal(data_mem(3).io.data_read.data.asUInt)}\n")
 
 																	
 					when(cache_type){
