@@ -168,7 +168,7 @@ class ControlSignals extends Bundle{
 	val ld_type = Output(UInt(3.W))
 	val wb_sel = Output(UInt(2.W))
 	val wb_en = Output(Bool())
-	val alu_op = Output(UInt(4.W))
+	val alu_op = Output(UInt(5.W))
 	val prv = Output(UInt(1.W))
 	val csr_cmd = Output(UInt(3.W))
 	val is_illegal = Output(Bool())

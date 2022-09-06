@@ -98,7 +98,7 @@ class fetch_decode_pipeline_reg extends Bundle{
 }
 
 class decode_execute_pipeline_reg extends Bundle{
-	val alu_op = UInt(4.W)
+	val alu_op = UInt(5.W)
 	val pc = UInt(64.W)
 	val inst = chiselTypeOf(Instructions.NOP)
 	val imm = UInt(64.W)
@@ -363,8 +363,10 @@ class Datapath extends Module{
 	)
 	//printf(p"trap:${csr.io.trap}; csr_atomic:${csr_atomic}; stall:${!started && (stall)}; flush:${icache_flush_tag || dcache_flush_tag}; jump:${((de_pipe_reg.pc_sel === PC_ALU) && de_pipe_reg.enable)|| brCond_taken}\n")
 //		(io.ctrl.pc_sel === PC_0) -> pc)
-	//when(pc === "h30000040".U){
-	//	printf("Hit bp\n")
+	//when(pc <= "h80001000".U){
+		//printf(p"is_trap:${csr.io.trap}; csr_atomic:${csr_atomic}; stall:${(!started && (stall))}; flush:${icache_flush_tag || dcache_flush_tag}; jump:${((de_pipe_reg.pc_sel === PC_ALU) && de_pipe_reg.enable)|| brCond_taken}\n")
+		//printf(p"pc:${pc}; next_pc:${next_pc}; jump_addr:${jump_addr}\n")
+	//	printf(p"fetch-decode:\n pc: ${Hexadecimal(fd_pipe_reg.pc)}; fd_pipe_reg.inst: ${Hexadecimal(fd_pipe_reg.inst)}; fd_pipe_reg.enable: ${Hexadecimal(fd_pipe_reg.enable)}\n\n")
 	//}
 
 	//如果是跳转，异常和还未开始等情况，那么获取的是一条NOP指令，否则是从指令存储器中读取一条指令
@@ -508,7 +510,7 @@ class Datapath extends Module{
 		p"write_op:${de_pipe_reg.csr_write_op}; write_data: ${Hexadecimal(de_pipe_reg.csr_write_data)} write_addr: ${Hexadecimal(de_pipe_reg.csr_write_addr)}; pc:${Hexadecimal(de_pipe_reg.pc)}\n" +
 		p"imm: ${Hexadecimal(de_pipe_reg.imm)}; rs1: ${Hexadecimal(de_pipe_reg.rs1)}; rs2:${Hexadecimal(de_pipe_reg.rs2)}; src1_addr:${Hexadecimal(de_pipe_reg.src1_addr)}; src2_addr:${Hexadecimal(de_pipe_reg.src2_addr)};" + 
 		p"dest: ${Hexadecimal(de_pipe_reg.dest)}; pc_sel: ${de_pipe_reg.pc_sel};  br_type:${de_pipe_reg.br_type}; st_type:${de_pipe_reg.st_type}; ld_type:${de_pipe_reg.ld_type}\n" + 
-		p"wd_type: ${de_pipe_reg.wd_type}; wb_sel: ${de_pipe_reg.wb_sel}; wb_en:${de_pipe_reg.wb_en}; is_kill:${de_pipe_reg.is_kill}; enable:${de_pipe_reg.enable}\n\n")*/
+		p"wd_type: ${de_pipe_reg.wd_type}; wb_sel: ${de_pipe_reg.wb_sel}; wb_en:${de_pipe_reg.wb_en}; is_kill:${de_pipe_reg.is_kill}; enable:${de_pipe_reg.enable}\n")*/
 
 	/****** Execute *****/
 	csr.io.de_enable := de_pipe_reg.enable
@@ -588,6 +590,14 @@ class Datapath extends Module{
 	divider.io.div_signed := (de_pipe_reg.alu_op === Alu.ALU_DIV) || (de_pipe_reg.alu_op === Alu.ALU_REM)
 	divider.io.dividend := src1_data.asSInt
 	divider.io.divisor := src2_data.asSInt
+
+	//when(de_pipe_reg.alu_op === Alu.ALU_REMU || de_pipe_reg.alu_op === Alu.ALU_REM){
+	//	printf(p"div_stall:${div_stall}; src_unready:${src_unready}; div_result_enable:${div_result_enable}\n")
+	//}
+
+	//when(divider.io.div_valid){
+	//	printf(p"src1:${src1_data.asUInt}; src2:${src2_data.asUInt}\n")
+	//}
 	//rem_div_select_reg := de_pipe_reg.alu_op === Alu.ALU_REM || de_pipe_reg.alu_op === Alu.ALU_REMU
 
 	when(flush_de){
@@ -607,6 +617,7 @@ class Datapath extends Module{
 		}.elsewhen(de_pipe_reg.alu_op === Alu.ALU_REMU || de_pipe_reg.alu_op === Alu.ALU_REM){
 			div_result := divider.io.remainder.asUInt
 		}
+	//	printf(p"div_result-remainder:${divider.io.remainder.asUInt};  div_result-quotient:${divider.io.quotient.asUInt}\n")
 	}
 
 	//printf(p"div_result: ${div_result}; div_result_enable: ${div_result_enable}\n")
@@ -735,12 +746,11 @@ class Datapath extends Module{
 		em_pipe_reg.enable := de_pipe_reg.enable
 	}
 
-	/*
-	printf(p"execute_memory:\ninst: ${Hexadecimal(em_pipe_reg.inst)}; dest:${em_pipe_reg.dest}; alu_out:${Hexadecimal(em_pipe_reg.alu_out)} alu_sum:${Hexadecimal(em_pipe_reg.alu_sum)}\n" +
+	/*printf(p"execute_memory:\ninst: ${Hexadecimal(em_pipe_reg.inst)}; dest:${em_pipe_reg.dest}; alu_out:${Hexadecimal(em_pipe_reg.alu_out)} alu_sum:${Hexadecimal(em_pipe_reg.alu_sum)}\n" +
   			p"csr_read_data: ${Hexadecimal(em_pipe_reg.csr_read_data)}; csr_write_op: ${Hexadecimal(em_pipe_reg.csr_write_op)}; csr_write_addr: ${Hexadecimal(em_pipe_reg.csr_write_addr)}; csr_write_data: ${Hexadecimal(em_pipe_reg.csr_write_data)};\n " +
   			p"st_data: ${Hexadecimal(em_pipe_reg.st_data)}; st_type: ${em_pipe_reg.st_type}; ld_type: ${em_pipe_reg.ld_type}\n " +
-  			p"wb_sel: ${em_pipe_reg.wb_sel}; wb_en:${em_pipe_reg.wb_en}; pc:${Hexadecimal(em_pipe_reg.pc)}; is_kill: ${em_pipe_reg.is_kill}; enable:${em_pipe_reg.enable}\n")
-*/
+  			p"wb_sel: ${em_pipe_reg.wb_sel}; wb_en:${em_pipe_reg.wb_en}; pc:${Hexadecimal(em_pipe_reg.pc)}; is_kill: ${em_pipe_reg.is_kill}; enable:${em_pipe_reg.enable}\n")*/
+
 	//printf(p"execute-mem:\n ")
 	/****** Mem *********/
 	//dcache_response_reg := io.dcache.cpu_response.ready
@@ -865,7 +875,7 @@ class Datapath extends Module{
 	/*printf(p"memory_writeback:\nload_data: ${Hexadecimal(mw_pipe_reg.load_data)}; alu_out: ${Hexadecimal(mw_pipe_reg.alu_out)}; dest: ${mw_pipe_reg.dest}; wb_sel: ${mw_pipe_reg.wb_sel}; wb_en:${mw_pipe_reg.wb_en}\n " +
 		p"pc:${Hexadecimal(mw_pipe_reg.pc)}; inst:${Hexadecimal(mw_pipe_reg.inst)}; \ncsr_read_data: ${Hexadecimal(mw_pipe_reg.csr_read_data)}; csr_write_op:${mw_pipe_reg.csr_write_op};" +
 		p" csr_write_data: ${Hexadecimal(mw_pipe_reg.csr_write_data)}; csr_write_addr:${Hexadecimal(mw_pipe_reg.csr_write_addr)}\n " +
-		p"enable: ${mw_pipe_reg.enable}\n")*/
+		p"enable: ${mw_pipe_reg.enable}\n\n\n")*/
 
 	/****** Writeback ***/
 	csr.io.mw_enable := mw_pipe_reg.enable						//mw流水线寄存器是否有效输入
