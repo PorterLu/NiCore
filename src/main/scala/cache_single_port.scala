@@ -37,7 +37,9 @@ class CPU_Response extends Bundle{
 
 object CacheState extends ChiselEnum{
 	//	0		1				 2					3				  4					 5				   6		 7		 8 			 9 		  10		 11			 12			13			   14	   15			16			 17			18								
-	val sIdle, sUnCacheReadAddr, sUnCacheWriteAddr, sUnCacheReadData, sUnCacheWriteData, sUnCacheWriteAck, sReMatch, sMatch, sWriteback, sRefill, sReadAddr, sWriteAddr, sWriteAck, sWait_a_cycle, sFlush, sFlushMatch, sFlushWrite, sFlushAddr,sFlushAck = Value
+	val sIdle, sUnCacheReadAddr, sUnCacheWriteAddr, sUnCacheReadData, sUnCacheWriteData, sUnCacheWriteAck, 
+	sReMatch, sMatch, sWriteback, sRefill, sReadAddr, sWriteAddr, sWriteAck, sWait_a_cycle, 
+	sFlush, sFlushMatch, sFlushWrite, sFlushAddr,sFlushAck = Value
 }
 
 object AccessType extends ChiselEnum{
@@ -53,12 +55,7 @@ class tag_cache extends Module{
 
 	val tag_mem = Reg(Vec(64, new CacheTag))
 	io.tag_read := tag_mem(io.cache_req.index)
-/*
-	printf("tag\n")
-	for(i <- 0 until 64){
-		printf(p"${tag_mem(i).tag}; ")
-	}
-	printf("\n")*/
+
 	when(io.cache_req.we){
 		tag_mem(io.cache_req.index) := io.tag_write
 	}
@@ -109,7 +106,7 @@ class Cache(cache_name: String) extends Module{
 	val fill_block_en = WireInit(false.B)
 	val (index, last) = Counter(fill_block_en, data_beats)
 
-	val next_state =WireInit(sIdle)
+	val next_state = WireInit(sIdle)
 	val replace = RegInit(0.U(2.W))
 	val refill_addr = RegInit(0.U(32.W))
 	val writeback_addr = RegInit(0.U(32.W)) 
@@ -132,10 +129,6 @@ class Cache(cache_name: String) extends Module{
 	cpu_request_rw := io.cpu_request.rw
 	cpu_request_valid := io.cpu_request.valid
 	cpu_request_accessType := io.accessType
-	//if(cache_name == "data_cache"){
-	//	printf(p"cpu_request_accessType: ${cpu_request_accessType}; io.accessType: ${io.accessType}\n")
-	//	printf(p"state: ${cache_state.asUInt}\n\n")
-	//}
 
 	val cpu_request_addr_index = cpu_request_addr_reg(blockSize_len + groupId_len - 1, blockSize_len)
 	val cpu_request_addr_tag = cpu_request_addr_reg(addr_len - 1, blockSize_len + groupId_len)
@@ -211,14 +204,11 @@ class Cache(cache_name: String) extends Module{
 	//if(cache_name == "data_cache"){
 	//	printf(p"dcache_state:${cache_state.asUInt}\n")
 	//}
+
 	switch(cache_state){
 		is(sIdle){
 			when(io.flush && io.cpu_request.valid){
 				next_state := sFlush
-				//flush_running := true.B
-				//for(i <- 0 until nWays){
-				//	data_mem(i).io.cache_req.index 
-				//}
 			}.elsewhen(io.cpu_request.valid && 
 					align_addr >= "h80000000".U && 
 					align_addr <= "h88000000".U){
@@ -237,13 +227,17 @@ class Cache(cache_name: String) extends Module{
 		is(sFlush){
 			//将last信号拉到最后一级进行判断
 			//printf(p"flush_loop:${flush_loop}\n")
-			when(flush_over){
+			when(!cpu_request_valid){
 				next_state := sIdle
-				flush_loop := 0.U
-				flush_over := false.B
-				io.cpu_response.ready := true.B 
 			}.otherwise{
-				next_state := sFlushMatch
+				when(flush_over){
+					next_state := sIdle
+					flush_loop := 0.U
+					flush_over := false.B
+					io.cpu_response.ready := true.B 
+				}.otherwise{
+					next_state := sFlushMatch
+				}
 			}
 		}
 		is(sFlushMatch){
@@ -364,10 +358,7 @@ class Cache(cache_name: String) extends Module{
 
 		}
 		is(sUnCacheReadAddr){
-			//if(cache_name == "data_cache"){
-			//printf("unCacheReadAddr\n")
-			//}
-			io.mem_io.ar.valid := true.B 
+			io.mem_io.ar.valid := true.B && cpu_request_valid
 			io.mem_io.ar.bits.len := 0.U 
 			io.mem_io.ar.bits.size := cpu_request_accessType
 			//printf(p"cpu_read_request_accessType${cpu_request_accessType}\n")
@@ -375,13 +366,12 @@ class Cache(cache_name: String) extends Module{
 			next_state := sUnCacheReadAddr
 			when(io.mem_io.ar.ready){
 				next_state := sUnCacheReadData
+			}.elsewhen(!cpu_request_valid){
+				next_state := sIdle
 			}
 		}
 		is(sUnCacheWriteAddr){
-		//if(cache_name == "data_cache"){
-			//printf("unCacheWriteAddr\n")
-		//}
-			io.mem_io.aw.valid := true.B 
+			io.mem_io.aw.valid := true.B && cpu_request_valid
 			io.mem_io.aw.bits.len := 0.U
 			io.mem_io.aw.bits.size := cpu_request_accessType
 			//printf(p"cpu_write_request_accessType:${cpu_request_accessType}\n")
@@ -389,15 +379,12 @@ class Cache(cache_name: String) extends Module{
 			next_state := sUnCacheWriteAddr
 			when(io.mem_io.aw.ready){
 				next_state := sUnCacheWriteData
+			}.elsewhen(!cpu_request_valid){
+				next_state := sIdle
 			}
 		}
 		is(sUnCacheReadData){
-		//if(cache_name == "data_cache"){
-			//printf("UnCacheReadData\n")
-		//}
-			//if(cache_name == "data_cache"){
-			//	printf(p"addr: ${Hexadecimal(cpu_request_addr_reg_origin)}; read_data:${Hexadecimal(io.mem_io.r.bits.data)}\n")
-			//}
+
 			io.cpu_response.data := io.mem_io.r.bits.data
 			io.mem_io.r.ready := true.B 
 			when(io.mem_io.r.valid){
@@ -568,14 +555,16 @@ class Cache(cache_name: String) extends Module{
 			next_state := sIdle
 		}
 		is(sReadAddr){
-			io.mem_io.ar.valid := true.B 
+			io.mem_io.ar.valid := true.B && cpu_request_valid
 			io.mem_io.ar.bits.len := 1.U
 			next_state := sReadAddr
 			io.mem_io.ar.bits.addr := refill_addr
 //			printf(p"refill_addr:${Hexadecimal(io.mem_io.ar.bits.addr)}\n")
 			when(io.mem_io.ar.ready){
 				next_state := sRefill
-			} 
+			}.elsewhen(!cpu_request_valid){
+				next_state := sIdle
+			}
 		}
 		is(sRefill){
 			io.mem_io.r.ready := true.B 
@@ -600,18 +589,20 @@ class Cache(cache_name: String) extends Module{
 			}
 		}
 		is(sWriteAddr){
-			io.mem_io.aw.valid := true.B 
+			io.mem_io.aw.valid := true.B && cpu_request_valid 
 			io.mem_io.aw.bits.len := 1.U 
 			io.mem_io.aw.bits.addr := writeback_addr
 			next_state := sWriteAddr
 			when(io.mem_io.aw.ready){
 				next_state := sWriteback
+			}.elsewhen(!cpu_request_valid){
+				next_state := sIdle
 			}
 		}
 		is(sWriteback){
 			next_state := sWriteback
 			fill_block_en := io.mem_io.w.ready
-			io.mem_io.w.valid := true.B 
+			io.mem_io.w.valid := true.B  
 			io.mem_io.w.bits.strb := "b11111111".U
 			for(i <- 0 until nWays){
 				when(i.U === replace){

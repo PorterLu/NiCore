@@ -23,7 +23,7 @@ class ImmGenWire extends ImmGen{
 	val Bimm = Cat(Fill(32, sign), Cat(io.inst(31), io.inst(7), io.inst(30, 25), io.inst(11, 8), 0.U(1.W)).asSInt).asSInt
 	val Uimm = Cat(Fill(32, sign), Cat(io.inst(31, 12), 0.U(12.W)).asSInt).asSInt
 	val Jimm = Cat(Fill(32, sign), Cat(io.inst(31), io.inst(19, 12), io.inst(20), io.inst(30, 25), io.inst(24, 21), 0.U(1.W)).asSInt).asSInt
-	val Zimm = Cat(Fill(32, 0.U), io.inst(19, 15).zext).asSInt
+	val Zimm = Cat(Fill(59, 0.U), io.inst(19, 15)).asSInt
 
 	//(-2).S意味着，默认是取I型立即数的除最低位外的11位
 	io.out := MuxLookup(

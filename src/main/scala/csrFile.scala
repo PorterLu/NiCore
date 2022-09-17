@@ -60,9 +60,12 @@ class SieCsr extends CSR_Bundle{
 
 	override def <=(data: UInt) = {					//只考虑我们想要的值
 		requireWidth(data)
-		seie := data(9)
-		stie := data(5)
-		ssie := data(1)
+		wpri0	:= 0.U(54.W)
+		seie 	:= data(9)
+		wpri1 	:= 0.U(3.W)
+		stie 	:= data(5)
+		wpri2 	:= 0.U(3.W)
+		ssie 	:= data(1)
 	}
 }
 
@@ -93,10 +96,23 @@ class SstatusCsr extends CSR_Bundle{	//继承了Csr_Bundle会有自动检查宽�
 
 	override def <=(data: UInt) = {		//重写<=，只将我们需要的部分赋值
 		requireWidth(data)
-		sum  := data(18)
-		spp	 := data(8)
-		spie := data(5)
-		sie  := data(1)
+		sd   	:= data(63)
+		wpri0 	:= 0.U(29.W)
+		uxl		:= 0.U(1.W)
+		wpri1	:= 0.U(12.W)
+		mxr 	:= 0.U(1.W)
+		sum  	:= data(18)
+		wpri2	:= 0.U(1.W)
+		xs		:= 0.U(2.W)
+		fs		:= 0.U(2.W)
+		wpri3	:= 0.U(4.W)
+		spp	 	:= data(8)
+		wpri4	:= 0.U(1.W)
+		ube 	:= 0.U(1.W)
+		spie 	:= data(5)
+		wpri5 	:= 0.U(3.W)
+		sie  	:= data(1)
+		wpri6	:= 0.U(1.W)
 	}
 }
 
@@ -116,7 +132,13 @@ class SipCsr extends CSR_Bundle{
 
 	override def <= (data: UInt) = {				//除了sip使用machine mode的对应位
 		requireWidth(data)
-		ssip := data(1)
+		wpri0	:= 0.U(54.W)
+		seip 	:= data(9)
+		wpri1	:= 0.U(3.W)
+		stip 	:= data(5)
+		wpri2 	:= 0.U(3.W)
+		ssip 	:= data(1)
+		wpri3 	:= 0.U(1.W)
 	}
 }
 
@@ -125,8 +147,8 @@ object SipCsr extends CSR_Object[SipCsr]{
 }
 
 class StvecCsr extends CSR_Bundle{
-	val base = UInt(62.W)
-	val mode = UInt(2.W)
+	val base 	= UInt(62.W)
+	val mode 	= UInt(2.W)
 
 	override def <= (data: UInt) = {
 		requireWidth(data)
@@ -141,6 +163,10 @@ object StvecCsr extends CSR_Object[StvecCsr]{
 
 class SscratchCsr extends CSR_Bundle{
 	val data = UInt(64.W)
+
+	override def <= (d: UInt) = {
+		data := d
+	}
 }
 
 object SscratchCsr extends CSR_Object[SscratchCsr]{
@@ -167,7 +193,7 @@ class ScauseCsr extends CSR_Bundle {
   override def <=(data: UInt) = {
     requireWidth(data)
     int   := data(63)
-    code  := data(3, 0)
+    code  := Cat(0.U(59.W), data(3, 0))
   }
 }
 
@@ -178,6 +204,10 @@ object ScauseCsr extends CSR_Object[ScauseCsr] {
 // supervisor trap value register
 class StvalCsr extends CSR_Bundle {
   val data  = UInt(64.W)
+
+  override def <=(d: UInt) = {
+	data := d
+  }
 }
 
 object StvalCsr extends CSR_Object[StvalCsr] {
@@ -193,6 +223,7 @@ class SatpCsr extends CSR_Bundle {
   override def <=(data: UInt) = {
     requireWidth(data)
     mode  := data(63, 60)
+	asid  := 0.U
     ppn   := data(43, 0)
   }
 }
@@ -232,13 +263,32 @@ class MstatusCsr extends CSR_Bundle {
 
   override def <=(data: UInt) = {
     requireWidth(data)
+	sd	  := 0.U(1.W)
+	wpri0 := 0.U(25.W)
+	mbe   := 0.U(1.W)
+	sbe   := 0.U(1.W)
+	sxl	  := 0.U(2.W)
+	uxl   := 0.U(2.W)
+	wpri1 := 0.U(9.W)
+	tsr   := 0.U(1.W)
+	tw 	  := 0.U(1.W)
+	tvm   := 0.U(1.W)
+	mxr   := 0.U(1.W)
     sum   := data(18)
+	mprv  := 0.U(1.W)
+	xs	  := 0.U(2.W)
+	fs	  := 0.U(2.W)
     mpp   := data(12, 11)
+	wpri2 := 0.U(2.W)
     spp   := data(8)
     mpie  := data(7)
+	ube   := 0.U(1.W)
     spie  := data(5)
+	wpri3 := 0.U(1.W)
     mie   := data(3)
+	wpri4 := 0.U(1.W)
     sie   := data(1)
+	wpri5 := 0.U(1.W)
   }
 }
 
@@ -249,7 +299,7 @@ object MstatusCsr extends CSR_Object[MstatusCsr] {
 // machine ISA register
 class MisaCsr extends CSR_Bundle {
   val mxl   = UInt(2.W)
-  val wlrl  = UInt(28.W)
+  val wlrl  = UInt(36.W)
   val ext   = UInt(26.W)
 
   override def <=(data: UInt) = {}
@@ -267,7 +317,7 @@ class MedelegCsr extends CSR_Bundle {
   //instruction misaligned; illegal inst; breakpoint,; load misaligned; store misaligned; ecall from u; ecall from s, ecall from m;
   override def <=(d: UInt) = {
     requireWidth(d)
-    data  := Cat(0.U(1.W), 0.U(1.W), 0.U(1.W), d(12), 0.U(2.W), d(9, 8),
+    data  := Cat(0.U(52.W), d(11), 0.U(1.W), d(9, 8),
                  0.U(1.W), d(6), 0.U(1.W), d(4, 2), 0.U(1.W), d(0))
   }
 }
@@ -282,7 +332,7 @@ class MidelegCsr extends CSR_Bundle {
 
   override def <=(d: UInt) = {
     requireWidth(d)
-    data  := Cat(0.U(1.W), d(11), 0.U(11.W), d(9), 0.U(1.W), d(7), 0.U(1.W), d(5), 0.U(1.W), d(3), 0.U(1.W), d(1), 0.U(1.W))
+    data  := Cat(0.U(52.W), d(11), 0.U(1.W), d(9), 0.U(1.W), d(7), 0.U(1.W), d(5), 0.U(1.W), d(3), 0.U(1.W), d(1), 0.U(1.W))
   }
 }
 
@@ -308,12 +358,19 @@ class MieCsr extends CSR_Bundle {
 
   override def <=(data: UInt) = {
     requireWidth(data)
+	wpri0 := 0.U(52.W)
     meie  := data(11)
+	wpri1 := 0.U(1.W)
     seie  := data(9)
+	wpri2 := 0.U(1.W)
     mtie  := data(7)
+	wpri3 := 0.U(1.W)
     stie  := data(5)
+	wpri4 := 0.U(1.W)
     msie  := data(3)
+	wpri5 := 0.U(1.W)
     ssie  := data(1)
+	wpri6 := 0.U(1.W)
   }
 }
 
@@ -339,12 +396,19 @@ class MipCsr extends CSR_Bundle {
 
   override def <=(data: UInt) = {
     requireWidth(data)
+	wpri0 := 0.U(52.W)
 	meip  := data(11) 
+	wpri1 := 0.U(1.W)
     seip  := data(9)
-	meip  := data(7)
+	wpri2 := 0.U(1.W)
+	mtip  := data(7)
+	wpri3 := 0.U(1.W)
     stip  := data(5)
+	wpri4 := 0.U(1.W)
 	msip  := data(3)
+	wpri5 := 0.U(1.W)
     ssip  := data(1)
+	wpri6 := 0.U(1.W)
   }
 }
 
@@ -371,6 +435,10 @@ object MtvecCsr extends CSR_Object[MtvecCsr] {
 // machine scratch register
 class MscratchCsr extends CSR_Bundle {
   val data  = UInt(64.W)
+
+  override def <=(d:UInt) = {
+	data := d
+  }
 }
 
 object MscratchCsr extends CSR_Object[MscratchCsr] {
@@ -399,7 +467,7 @@ class McauseCsr extends CSR_Bundle {
   override def <=(data: UInt) = {
     requireWidth(data)
     int   := data(63)
-    code  := data(3, 0)
+    code  := Cat(0.U(59.W), data(3, 0))
   }
 }
 
@@ -410,6 +478,9 @@ object McauseCsr extends CSR_Object[McauseCsr] {
 // machine trap value register
 class MtvalCsr extends CSR_Bundle {
   val data  = UInt(64.W)
+  override def <=(d: UInt) = {
+	data := d
+  }
 }
 
 object MtvalCsr extends CSR_Object[MtvalCsr] {
@@ -419,6 +490,9 @@ object MtvalCsr extends CSR_Object[MtvalCsr] {
 // machine cycle counter (64-bit)
 class McycleCsr extends CSR_Bundle {
   val data  = UInt(64.W)
+  override def <=(d:UInt) = {
+	data := d
+  }
 }
 
 object McycleCsr extends CSR_Object[McycleCsr] {
@@ -428,6 +502,10 @@ object McycleCsr extends CSR_Object[McycleCsr] {
 // machine instructions-retired counter (64-bit)
 class MinstretCsr extends CSR_Bundle {
   val data  = UInt(64.W)
+  override def <=(d:UInt) = {
+	data := d
+  }
+
 }
 
 object MinstretCsr extends CSR_Object[MinstretCsr] {

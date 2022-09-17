@@ -79,8 +79,8 @@ object Control{
 	val map = Array(
 		LUI 	-> 	List(PC_4, 		A_PC,	B_IMM,	 W_D,	IMM_U,	 	ALU_COPY_B,	 	BR_XXX,		ST_XXX, 	LD_XXX,		WB_ALU,		Y,		CSR_MODE_U,	CSR_NOP,		N,		N),
 		AUIPC	->	List(PC_4,		A_PC,	B_IMM,	 W_D,	IMM_U,	 	ALU_ADD,		BR_XXX,		ST_XXX,		LD_XXX,		WB_ALU,		Y,		CSR_MODE_U,	CSR_NOP,		N,		N),
-		JAL 	->	List(PC_ALU,	A_PC,	B_IMM,	 W_D,	IMM_J,	 	ALU_ADD,		BR_XXX,		ST_XXX,		LD_XXX,		WB_PC4,		Y,		CSR_MODE_U,	CSR_NOP,		N,		Y),
-		JALR 	->	List(PC_ALU,	A_RS1,	B_IMM,	 W_D,	IMM_I,		ALU_ADD,		BR_XXX,		ST_XXX,		LD_XXX,		WB_PC4,		Y,		CSR_MODE_U,	CSR_NOP,		N,		Y),
+		JAL 	->	List(PC_ALU,	A_PC,	B_IMM,	 W_D,	IMM_J,	 	ALU_ADD,		BR_XXX,		ST_XXX,		LD_XXX,		WB_PC4,		Y,		CSR_MODE_U,	CSR_NOP,		N,		N),	//Y
+		JALR 	->	List(PC_ALU,	A_RS1,	B_IMM,	 W_D,	IMM_I,		ALU_ADD,		BR_XXX,		ST_XXX,		LD_XXX,		WB_PC4,		Y,		CSR_MODE_U,	CSR_NOP,		N,		N), //Y 
 		BEQ 	->	List(PC_4,		A_PC,	B_IMM,	 W_D,	IMM_B,		ALU_ADD,		BR_EQ,		ST_XXX,		LD_XXX,		WB_ALU,		N,		CSR_MODE_U,	CSR_NOP,		N,		N),
 		BNE 	->	List(PC_4,		A_PC,	B_IMM,	 W_D,	IMM_B,		ALU_ADD,		BR_NE,		ST_XXX,		LD_XXX,		WB_ALU,		N,		CSR_MODE_U,	CSR_NOP,		N,		N),
 		BLT 	->	List(PC_4,		A_PC,	B_IMM,	 W_D,	IMM_B,		ALU_ADD,		BR_LT,		ST_XXX,		LD_XXX,		WB_ALU,		N,		CSR_MODE_U,	CSR_NOP,		N,		N),
@@ -139,17 +139,17 @@ object Control{
 		REMU	->	List(PC_4,		A_RS1,	B_RS2,	 W_D,	IMM_X,		ALU_REMU,		BR_XXX,		ST_XXX,		LD_XXX,		WB_ALU,		Y,		CSR_MODE_U,	CSR_NOP,		N,		N),
 		REMW	->	List(PC_4,		A_RS1,	B_RS2,	 W_W,	IMM_X,		ALU_REM,		BR_XXX,		ST_XXX,		LD_XXX,		WB_ALU,		Y,		CSR_MODE_U,	CSR_NOP,		N,		N),
 		REMUW	->  List(PC_4,		A_RS1,	B_RS2,	 W_W,	IMM_X,		ALU_REMU,		BR_XXX,		ST_XXX,		LD_XXX,		WB_ALU,		Y,		CSR_MODE_U,	CSR_NOP,		N,		N),
-		CSRRW	-> 	List(PC_0,		A_RS1,	B_XXX,	 W_D,	IMM_X,		ALU_COPY_A,		BR_XXX,		ST_XXX,		LD_XXX,		WB_CSR,		Y,		CSR_MODE_U,	CSR_RW,			N,		Y),
-		CSRRS	->	List(PC_0,		A_RS1,	B_XXX,	 W_D,	IMM_X,		ALU_COPY_A,		BR_XXX,		ST_XXX,		LD_XXX,		WB_CSR,		Y,		CSR_MODE_U,	CSR.RS,			N,		Y),
-		CSRRC	->	List(PC_0,		A_RS1,	B_XXX,	 W_D,	IMM_X,		ALU_COPY_A,		BR_XXX,		ST_XXX,		LD_XXX,		WB_CSR,		Y,		CSR_MODE_U,	CSR.RC,			N,		Y),
-		CSRRWI	->	List(PC_0,		A_XXX,	B_XXX,	 W_D,	IMM_Z,		ALU_XXX,		BR_XXX,		ST_XXX,		LD_XXX,		WB_CSR,		Y,		CSR_MODE_U,	CSR.RW,			N,		Y),
-		CSRRSI	->	List(PC_0,		A_XXX,	B_XXX,	 W_D,	IMM_Z,		ALU_XXX,		BR_XXX,		ST_XXX,		LD_XXX,		WB_CSR,		Y,		CSR_MODE_U,	CSR.RS,			N,		Y),
-		CSRRCI	->	List(PC_0,		A_XXX,	B_XXX,	 W_D,	IMM_Z,		ALU_XXX,		BR_XXX,		ST_XXX,		LD_XXX,		WB_CSR,		Y,		CSR_MODE_U,	CSR.RC,			N,		Y),
-		MRET 	-> 	List(PC_EPC,	A_XXX,	B_XXX,	 W_D,	IMM_X,		ALU_XXX,		BR_XXX,		ST_XXX,		LD_XXX,		WB_CSR,		N,		CSR_MODE_M,	CSR_NOP,		N,		Y),
-		SRET	-> 	List(PC_EPC,	A_XXX,	B_XXX,	 W_D,	IMM_X,		ALU_XXX,		BR_XXX,		ST_XXX,		LD_XXX,		WB_CSR,		N,		CSR_MODE_S,	CSR_NOP,		N,		Y),
+		CSRRW	-> 	List(PC_0,		A_RS1,	B_XXX,	 W_D,	IMM_X,		ALU_COPY_A,		BR_XXX,		ST_XXX,		LD_XXX,		WB_CSR,		Y,		CSR_MODE_U,	CSR_RW,			N,		N),	//Y
+		CSRRS	->	List(PC_0,		A_RS1,	B_XXX,	 W_D,	IMM_X,		ALU_COPY_A,		BR_XXX,		ST_XXX,		LD_XXX,		WB_CSR,		Y,		CSR_MODE_U,	CSR_RS,			N,		N),	//Y
+		CSRRC	->	List(PC_0,		A_RS1,	B_XXX,	 W_D,	IMM_X,		ALU_COPY_A,		BR_XXX,		ST_XXX,		LD_XXX,		WB_CSR,		Y,		CSR_MODE_U,	CSR_RC,			N,		N),	//Y
+		CSRRWI	->	List(PC_0,		A_XXX,	B_XXX,	 W_D,	IMM_Z,		ALU_XXX,		BR_XXX,		ST_XXX,		LD_XXX,		WB_CSR,		Y,		CSR_MODE_U,	CSR_RW,			N,		N), //Y
+		CSRRSI	->	List(PC_0,		A_XXX,	B_XXX,	 W_D,	IMM_Z,		ALU_XXX,		BR_XXX,		ST_XXX,		LD_XXX,		WB_CSR,		Y,		CSR_MODE_U,	CSR_RS,			N,		N), //Y
+		CSRRCI	->	List(PC_0,		A_XXX,	B_XXX,	 W_D,	IMM_Z,		ALU_XXX,		BR_XXX,		ST_XXX,		LD_XXX,		WB_CSR,		Y,		CSR_MODE_U,	CSR_RC,			N,		N), //Y
+		MRET 	-> 	List(PC_EPC,	A_XXX,	B_XXX,	 W_D,	IMM_X,		ALU_XXX,		BR_XXX,		ST_XXX,		LD_XXX,		WB_CSR,		N,		CSR_MODE_M,	CSR_NOP,		N,		N), //Y
+		SRET	-> 	List(PC_EPC,	A_XXX,	B_XXX,	 W_D,	IMM_X,		ALU_XXX,		BR_XXX,		ST_XXX,		LD_XXX,		WB_CSR,		N,		CSR_MODE_S,	CSR_NOP,		N,		N), //Y
 		ECALL 	-> 	List(PC_4,		A_XXX,	B_XXX,	 W_D,	IMM_X,		ALU_XXX,		BR_XXX,		ST_XXX,		LD_XXX,		WB_CSR,		N,		CSR_MODE_U,	CSR_NOP,		N,		N),
 		EBREAK 	->	List(PC_4,		A_XXX,	B_XXX,	 W_D,	IMM_X,		ALU_XXX,		BR_XXX,		ST_XXX,		LD_XXX,		WB_CSR,		N,		CSR_MODE_U,	CSR_NOP,		N,		N),
-		FENCE_I	->	List(PC_FENCE,	A_XXX,	B_XXX,	 W_D,	IMM_X,		ALU_XXX,		BR_XXX,		ST_XXX,		LD_XXX,		WB_ALU,		N,		CSR_MODE_U,	CSR_NOP,		N,		Y)
+		FENCE_I	->	List(PC_FENCE,	A_XXX,	B_XXX,	 W_D,	IMM_X,		ALU_XXX,		BR_XXX,		ST_XXX,		LD_XXX,		WB_ALU,		N,		CSR_MODE_U,	CSR_NOP,		N,		N)
 //		BitPat(NOP)	->	List(PC_4,		A_RS1,	B_IMM,	 W_D,	IMM_X,		ALU_XXX,		BR_XXX,		ST_XXX,		LD_XXX,		WB_CSR,		N,		CSR_MODE_U,	CSR_NOP,		N,		N)
 	)
 

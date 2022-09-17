@@ -19,6 +19,8 @@ object ExceptCause{
 	val EXC_LOAD_ADDR = 4.U(63.W)		//load非对齐
 	val EXC_STORE_ADDR = 6.U(63.W)		//store非对齐
 	val EXC_U_ECALL = 8.U(63.W)			//ecall异常
+	val EXC_S_ECALL	= 9.U(63.W)
+	val EXC_M_ECALL = 11.U(63.W)
 }
 
 object CSR{
@@ -112,6 +114,7 @@ class CSR extends Module{
 		val illegal_inst = Input(UInt(32.W))
 		val inst_mode = Input(UInt(2.W))
 
+		val int_timer_clear = Input(Bool())
 		val int_timer = Input(Bool())		//时钟中断信号
 		val int_soft = Input(Bool())		//软件中断信号
 		val extern = Input(Bool())			//外部中断信号
@@ -153,6 +156,7 @@ class CSR extends Module{
 	})
 
 	val mode = RegInit(CSR_MODE_M)				//模式寄存器
+//	printf(p"mode:${mode}")
 
 //	val csr_addr = io.inst(31, 20)			//csr寄存器访问地址
 //	val rs1_addr = io.inst(19, 15)			//源寄存器操作数
@@ -237,20 +241,25 @@ class CSR extends Module{
 	//这个是illegal指令的判断
 //	printf(p"csr_mode:${io.r_addr(9, 8)}  inst_mode:${io.inst_mode}\n")
 	val modeValid = (((io.r_addr(9,8) <= mode) || (io.r_op === CSR.N)) && (io.inst_mode <= mode)) || (~io.fd_enable) //模式判断，总共12位地址8，9两位是特权位
-	val valid = instValid && (modeValid)								//访问方式和权限两重判断
+	val valid = instValid && modeValid																				//访问方式和权限两重判断
 	io.r_data := data
 
+//	when(io.r_op =/=CSR.N){
+//		printf(p"r_addr:${Hexadecimal(io.r_addr)}; r_data:${Hexadecimal(io.r_data)}\n")
+//	}.elsewhen(io.w_op =/= CSR.N){
+//		printf(p"w_addr:${Hexadecimal(io.w_addr)}; w_data:${Hexadecimal(io.w_data)}\n")
+//	}
 	//准备要写入csr的数据
 	val csrData :: _ :: _ :: Nil = ListLookup(io.w_addr, default, csrTable)
-	val writeEn = (io.w_op === W || io.w_op === RW || io.w_op === RC || io.w_op === RS) && io.mw_enable
-	val writeData = MuxLookup(io.w_op, 0.U, Seq(
+	val writeEn = (io.w_op === W || io.w_op === RW || io.w_op === RC || io.w_op === RS) && io.em_enable//io.mw_enable
+	val writeData = MuxLookup(io.w_op, csrData, Seq(
 		W 	-> io.w_data,
 		RW 	-> io.w_data,
 		RS	-> (csrData | io.w_data),
 		RC 	-> (csrData & ~io.w_data)
 	))
 
-
+	//printf(p"writeData:${Hexadecimal(io.w_data)}\n")
 	//中断的判断
 	val flagIntS = sip.asUInt & sie.asUInt 					//s模式中断判断，对应的中断使能并且sip中该位已经挂起
 	val flagIntM = mip.asUInt & mie.asUInt 					//M模式中断判断
@@ -263,8 +272,8 @@ class CSR extends Module{
 
 	//判断中断的flag位是否能生效
 	val hasIntS  = Mux(mode < CSR_MODE_S || (mode === CSR_MODE_S && mstatus.sie), (flagIntS & mideleg.asUInt).orR, false.B)
-	val hasIntM	 = Mux(mode <= CSR_MODE_S || mstatus.mie, (flagIntS & ~mideleg.asUInt).orR, false.B)
-	val hasInt = hasIntM || hasIntS
+	val hasIntM	 = Mux(mode <= CSR_MODE_S || mstatus.mie, (flagIntM & ~mideleg.asUInt).orR, false.B)
+	val hasInt = (hasIntM || hasIntS) && io.em_enable && !writeEn
 	//是否是S模式的中断
 	val handIntS = hasInt && !hasIntM
 
@@ -273,6 +282,7 @@ class CSR extends Module{
 	*	如果异常被委托，那么意味着，低权限在S模式下进行处理
 	*	最后作一个判断，现在如果是M模式那么仍然是在M模式下处理
 	*/
+	//printf(p"writeEn:${writeEn}; stall:${io.stall}; em_enable:${io.em_enable}; timer:${io.int_timer}; extern:${io.extern}\n")
 
 	//异常具体判断
 //	printf(p"valid:${valid} illegal_inst:${(io.illegal_inst.orR || io.fetch_misalign) && io.fd_enable} ls_misalign:${(io.load_misalign || io.store_misalign) && io.de_enable}\n")
@@ -281,17 +291,21 @@ class CSR extends Module{
 							|| ((io.inst === Instructions.ECALL || io.inst === Instructions.EBREAK) && io.em_enable))
 
 
-	val excCause = 	Mux(io.inst === Instructions.ECALL, EXC_U_ECALL, 
-						Mux(io.inst === Instructions.EBREAK, EXC_BRK_POINT,
-							Mux(io.load_misalign, EXC_LOAD_ADDR,  
-								Mux(io.store_misalign, EXC_STORE_ADDR,
-						 			Mux((!valid) || (io.illegal_inst =/= 0.U), EXC_ILL_INST, io.fetch_misalign)
+	val excCause = 	Mux((io.inst === Instructions.ECALL) && (mode === 0.U), EXC_U_ECALL,
+						Mux((io.inst === Instructions.ECALL) && (mode === 1.U), EXC_S_ECALL, 
+							Mux((io.inst === Instructions.ECALL) && (mode === 3.U), EXC_M_ECALL,
+								Mux(io.inst === Instructions.EBREAK, EXC_BRK_POINT,
+									Mux(io.load_misalign, EXC_LOAD_ADDR,  
+										Mux(io.store_misalign, EXC_STORE_ADDR,
+											Mux((!valid) || (io.illegal_inst =/= 0.U), EXC_ILL_INST, EXC_INST_ADDR)//io.fetch_misalign
+										)
+									)
 								)
 							)
 						)
 					)
 
-	val hasExcS = hasExc && medeleg.asUInt(excCause(4,0))
+	val hasExcS = hasExc && medeleg.asUInt(excCause(3,0))
 	val handExcS = !mode(1) && hasExcS		//这里是想说明M模式下是无论如何都不会到S模式进行处理的
 
 	/*
@@ -315,13 +329,17 @@ class CSR extends Module{
 
 	//根据情况刷新不同阶段的流水线
 	when(!io.stall){						
-		when(hasInt || ((io.isMret || io.isSret) && io.em_enable)){		//防止处理异常前已经对内存进行了写
-			io.flush_mask := "b0111".U
+		when((hasInt || (io.isMret || io.isSret)) && io.em_enable){																			//防止处理异常前已经对内存进行了写
+			when(hasInt && (io.isMret || io.isSret || excCause === EXC_U_ECALL || excCause === EXC_S_ECALL || excCause === EXC_M_ECALL || excCause === EXC_BRK_POINT)){
+				io.flush_mask := "b1111".U
+			}.otherwise{
+				io.flush_mask := "b0111".U
+			}
 		}.elsewhen(hasExc){
-			io.flush_mask := Mux((excCause === EXC_U_ECALL) || (excCause === EXC_BRK_POINT), "b0111".U,
-								Mux((excCause === EXC_LOAD_ADDR) || (excCause === EXC_STORE_ADDR), "b0011".U,
-									Mux(excCause === EXC_ILL_INST, "b0001".U, 
-										Mux(excCause === EXC_INST_ADDR, "b0001".U, "b0".U)
+			io.flush_mask := Mux((excCause === EXC_U_ECALL || excCause === EXC_S_ECALL || excCause === EXC_M_ECALL || excCause === EXC_BRK_POINT) && io.em_enable, "b0111".U,
+								Mux((excCause === EXC_LOAD_ADDR || excCause === EXC_STORE_ADDR) && io.de_enable, "b0111".U,
+									Mux(excCause === EXC_ILL_INST && io.fd_enable, "b0011".U, 
+										Mux(excCause === EXC_INST_ADDR && io.fd_enable, "b0011".U, "b0".U)
 									)
 								)		
 							)
@@ -341,10 +359,9 @@ class CSR extends Module{
 						)
 					) 
 
-
 	//陷入的地址判断，只有一种情况会有偏移，那就是在在向量模式并且是终端，在direct模式下永远是直接进入stvec或者mtvec的地址
-	val trapVecS = Mux(stvec.mode(0) && hasInt, (stvec.base + cause(29, 0)), stvec.base) << 2
-	val trapVecM = Mux(mtvec.mode(0) && hasInt, (mtvec.base + cause(29, 0)), mtvec.base) << 2
+	val trapVecS = Mux(stvec.mode(0) && hasInt, (stvec.base + cause(63, 0)), stvec.base) << 2
+	val trapVecM = Mux(mtvec.mode(0) && hasInt, (mtvec.base + cause(63, 0)), mtvec.base) << 2
 	val trapVec = Mux(handIntS || handExcS, trapVecS, trapVecM)
 
 	/*
@@ -360,14 +377,14 @@ class CSR extends Module{
 	val trapMode = Mux(hasInt, intMode, 
 					Mux(io.isSret, sretMode,
 					Mux(io.isMret, mretMode, excMode)))
-	val nextMode = Mux((hasInt || hasExc) & !writeEn, trapMode, mode)		//冲刷之前的所有寄存器，所以不会存在异常和写同时存在的情况
+	val nextMode = Mux((hasInt || hasExc) & !writeEn && !io.stall, trapMode, mode)		//冲刷之前的所有寄存器，所以不会存在异常和写同时存在的情况
 	mode := nextMode
 
 	//如果有中断，会将相应的位置高, 这里由于sip是线网所以会同步更新				
 	mip.meip := mip.meip | io.extern		
 	mip.seip := mip.seip | io.extern
-	mip.mtip := mip.mtip | io.int_timer
-	mip.stip := mip.mtip | io.int_timer
+	mip.mtip := (mip.mtip | io.int_timer) && !io.int_timer_clear
+	mip.stip := (mip.mtip | io.int_timer) && !io.int_timer_clear
 	mip.msip := mip.msip | io.int_soft
 	mip.ssip := mip.ssip | io.int_soft
 	sip.seip := mip.seip
@@ -382,8 +399,10 @@ class CSR extends Module{
 	}
 
 
+	//printf(p"mstatus data:${mstatus}\n")
 	//exceptions and interrupts handling
 	when(writeEn && !io.stall){
+		//printf(p"addr:${io.w_addr}\n")
 		when(io.w_addr === CSR_SSTATUS){ mstatus.castAssign(SstatusCsr(), writeData)}
 		when(io.w_addr === CSR_SIE){ mie.castAssign(SieCsr(), writeData) }
 		when(io.w_addr === CSR_SIP){ mip.castAssign(SipCsr(), writeData) }
@@ -395,39 +414,55 @@ class CSR extends Module{
 		when(io.w_addr === CSR_SCAUSE){ scause <= writeData }
 		when(io.w_addr === CSR_STVAL){ stval <= writeData }
 		//when(io.w_addr === CSR_SATP){ stap := writeData }
-		when(io.w_addr === CSR_MSTATUS){ mstatus <= writeData }
+		when(io.w_addr === CSR_MSTATUS){ 
+			mstatus <= writeData 
+			//printf(p"write mstatus:${Hexadecimal(writeData)}\n")
+		}
 		when(io.w_addr === CSR_MEDELEG){ medeleg <= writeData }
 		when(io.w_addr === CSR_MIDELEG){ mideleg <= writeData }
 		when(io.w_addr === CSR_MIE){ mie <= writeData }
+		when(io.w_addr === CSR_MIP){ mip <= writeData }
 		when(io.w_addr === CSR_MTVEC){ mtvec <= writeData }
 		when(io.w_addr === CSR_MSCRATCH){ mscratch <= writeData }
-		when(io.w_addr === CSR_MEPC){ mepc <= writeData }
+		when(io.w_addr === CSR_MEPC){ 
+			mepc <= writeData 
+			//printf(p"write mepc:${Hexadecimal(writeData)}\n")
+		}
 		when(io.w_addr === CSR_MCAUSE){ mcause <= writeData }
 		when(io.w_addr === CSR_MTVAL){ mtval <= writeData }
+		//when(io.w_addr === CSR_MSTATUS){
+		//	printf(p"mstatus:${writeData}\n")
+		//}
 		//when(io.w_addr === CSR_MIP){ mipReal := writeData }
-	}.elsewhen((hasExc || hasInt || ((io.isSret || io.isMret) && io.mw_enable)) && !io.stall){			//之前的hasExc并没有考虑isSret或者isMret的情况
-		when(io.isSret){
-			mstatus.sie := mstatus.spie									//
-			mstatus.spie := true.B										//
-			mstatus.spp	:= false.B										//spp只有一位可以直接赋值为false
-		}.elsewhen(io.isMret){
-			mstatus.mie := mstatus.mpie
-			mstatus.mpie := true.B
-			mstatus.mpp := CSR_MODE_U									//mpp有两位
-		}.elsewhen(handIntS){
-			sepc 	<= Mux(io.jump_taken, io.jump_addr, io.excPC + 4.U)	//考虑跳转指令时发生中断的情况
+	}.elsewhen((hasExc || hasInt || ((io.isSret || io.isMret) && io.em_enable)) && !io.stall){			//之前的hasExc并没有考虑isSret或者isMret的情况
+		when(handIntS){
+			sepc 	<= Mux(io.isSret || io.isMret || excCause === EXC_U_ECALL || excCause === EXC_S_ECALL || excCause === EXC_M_ECALL || excCause === EXC_BRK_POINT, io.excPC, Mux(io.jump_taken, io.jump_addr, io.excPC + 4.U))	//考虑跳转指令时发生中断的情况
 			scause 	<= cause
 			stval 	<= io.excValue
 			mstatus.spie := mstatus.sie					
 			mstatus.sie := false.B
 			mstatus.spp := mode(0)
 		}.elsewhen(hasIntM){
-			mepc 	<= Mux(io.jump_taken, io.jump_addr, io.excPC + 4.U)
+			when(cause === Cat(true.B, EXC_M_TIMER_INT)){
+				//printf("timer interrupt occur\n")
+				//printf(p"next_pc:${Hexadecimal(Mux(io.isSret || io.isMret || excCause === EXC_U_ECALL || excCause === EXC_S_ECALL || excCause === EXC_M_ECALL || excCause === EXC_BRK_POINT, io.excPC, Mux(io.jump_taken, io.jump_addr, io.excPC + 4.U)))}\n")
+			}
+			mepc 	<=  Mux(io.isSret || io.isMret || excCause === EXC_U_ECALL || excCause === EXC_S_ECALL || excCause === EXC_M_ECALL || excCause === EXC_BRK_POINT, io.excPC, Mux(io.jump_taken, io.jump_addr, io.excPC + 4.U))
+	//		printf(p"\njump_taken:${io.jump_taken}; expPC:${io.excPC + 4.U}\n")
 			mcause  <= cause
 			mtval 	<= io.excValue
 			mstatus.mpie := mstatus.mie
 			mstatus.mie := false.B
 			mstatus.mpp := mode
+		}.elsewhen(io.isSret){
+			mstatus.sie := mstatus.spie									//
+			mstatus.spie := true.B										//
+			mstatus.spp	:= false.B										//spp只有一位可以直接赋值为false
+		}.elsewhen(io.isMret){
+			//printf(p"mret_addr:${Hexadecimal(mepc.asUInt)}\n")
+			mstatus.mie := mstatus.mpie
+			mstatus.mpie := true.B
+			mstatus.mpp := CSR_MODE_U									//mpp有两位
 		}.elsewhen(handExcS){
 			sepc	<= io.excPC
 			scause 	<= cause
@@ -436,6 +471,10 @@ class CSR extends Module{
 			mstatus.sie := false.B
 			mstatus.spp := mode(0)
 		}.otherwise{
+			printf(p"exception occurs: ${cause}\n")
+			printf(p"mepc:${Hexadecimal(io.excPC)};\n")
+			printf(p"mtval:${Hexadecimal(io.excValue)};\n")
+			printf(p"mstatus:${mstatus}\n")
 			mepc <= io.excPC
 			mcause <= cause
 			mtval <= io.excValue
@@ -445,14 +484,21 @@ class CSR extends Module{
 		}
 	}
 
-
 	io.trapVec := Mux(hasInt, trapVec, 
 					Mux(io.isMret, mepc.asUInt, 
 							Mux(io.isSret, sepc.asUInt, trapVec)
 						)
 					)
 
-	io.trap := hasExc || hasInt || ((io.isSret || io.isMret) && io.mw_enable)
+	//when(io.trap){
+	//	printf(p"trapVec:${io.trapVec}\n")
+	//}		
+	//printf(p"hasExc:${hasExc}; hasInt:${hasInt}; xret:${(io.isSret || io.isMret) && io.em_enable}\n")
+	io.trap := (hasExc || hasInt || ((io.isSret || io.isMret) && io.em_enable)) && !writeEn && !io.stall
+	//printf(p"mstatus:${Hexadecimal(mstatus.asUInt)}; mip:${Hexadecimal(mip.asUInt)}; mie:${Hexadecimal(mie.asUInt)}; inst_num:${instret.asUInt}\n")
+//	when(io.trap){
+//		printf(p"hasExc:${hasExc}; hasInt:${hasInt}; isSret:${io.isSret}; isMret:${io.isMret}\n")
+//	}
 	//io.pageEn   := !mode(1) && satp.mode
 	//io.basePpn  := satp.ppn
 	//io.sum      := mstatus.sum
