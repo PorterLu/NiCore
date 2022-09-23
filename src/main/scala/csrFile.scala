@@ -5,7 +5,6 @@ import chisel3.util._
 
 //mtime, msip, mtimecmp 在clint里单独实现
 
-
 //const for base csr command
 object CSR_OP{
 	val CSR_OP_WIDTH = log2Ceil(4)
@@ -17,8 +16,6 @@ object CSR_OP{
 	val CSR_RS 	= 2.U(CSR_OP_WIDTH.W)	//read and set
 	val CSR_RC 	= 3.U(CSR_OP_WIDTH.W)	//read and clear
 }
-
-
 
 abstract class CSR_Bundle extends Bundle{
 	//this的getWidth会获取Bundle宽度的和
@@ -72,7 +69,6 @@ class SieCsr extends CSR_Bundle{
 object SieCsr extends CSR_Object[SieCsr]{
 	def apply() = new SieCsr						//重写了apply方法
 }
-
 
 // supervisor status register
 class SstatusCsr extends CSR_Bundle{	//继承了Csr_Bundle会有自动检查宽度的函数requireWidth，在初始化时进行宽度检查

@@ -105,16 +105,13 @@ class CSR extends Module{
 		val w_addr = Input(UInt(12.W))		//要写的地址
 		val w_data = Input(UInt(64.W))		//要些的数据
 		val retired = Input(Bool()) 		
-
-//		val hasTrap = Input(Bool())
-//		val stall = Input(Bool())			//流水线暂停
-//		val csr_cmd = Input(UInt(3.W))			
 		val inst = Input(UInt(32.W))		//指令本身
 
 		val illegal_inst = Input(UInt(32.W))
 		val inst_mode = Input(UInt(2.W))
 
 		val int_timer_clear = Input(Bool())
+		val int_soft_clear = Input(Bool())
 		val int_timer = Input(Bool())		//时钟中断信号
 		val int_soft = Input(Bool())		//软件中断信号
 		val extern = Input(Bool())			//外部中断信号
@@ -149,17 +146,9 @@ class CSR extends Module{
 		val de_enable = Input(Bool())
 		val em_enable = Input(Bool())
 		val mw_enable = Input(Bool())
-		//val hasInt = Output(Bool())		//输出是否中断
-		//val sepc = Output(Bool())			//输出s模式的exception pc
-		//val mepc = Output(Bool())			//输出m模式的exception pc
-		//val trapVec = Output(UInt(64.W))	//陷入的向量
 	})
 
 	val mode = RegInit(CSR_MODE_M)				//模式寄存器
-//	printf(p"mode:${mode}")
-
-//	val csr_addr = io.inst(31, 20)			//csr寄存器访问地址
-//	val rs1_addr = io.inst(19, 15)			//源寄存器操作数
 
 	val mstatus = RegInit(MstatusCsr.default)
 	val misa 	= MisaCsr.default				//misa只用进行读
@@ -172,7 +161,6 @@ class CSR extends Module{
 	val mcause 	= RegInit(McauseCsr.default)
 	val mtval 	= RegInit(MtvalCsr.default)
 	val mip		= RegInit(MipCsr.default)
-	//val mip 	= MipCsr.default				//mip只是wire
 	val mcycle	= RegInit(McycleCsr.default)
 	val minstret= RegInit(MinstretCsr.default)
 	val sstatus = SstatusCsr(mstatus)
@@ -225,7 +213,6 @@ class CSR extends Module{
 	)
 
 	//csr这里要处理enable信号用于提示哪些流水寄存器中的信息不可用，下面每一个从io中得到的信息都要进行有效性判断
-
 	//从csrTable获取，寄存器中存储的信息，并且得知是否可读可写
 	val data :: (readable: Bool)  :: (writable: Bool) :: Nil = ListLookup(io.r_addr, default, csrTable)		//读这里不判断有效性，因为不影响之后运行流的处理
 
@@ -238,17 +225,21 @@ class CSR extends Module{
 		RC	->	(readable && writable)
 	)) || (~io.fd_enable)
 
+	/*when(io.r_op =/= CSR.N && io.r_op =/= W){
+		printf(p"mstatus:${mstatus}\n")
+		printf(p"mie:${mie}\n")
+		printf(p"mip:${mip}\n")
+		printf(p"mtvec:${Hexadecimal(mtvec.asUInt)}\n")
+		printf(p"mscratch:${Hexadecimal(mscratch.asUInt)}\n")
+		printf(p"mepc:${Hexadecimal(mepc.asUInt)}\n")
+		printf(p"mcause:${mcause.asUInt}\n\n")
+	}*/
+
 	//这个是illegal指令的判断
-//	printf(p"csr_mode:${io.r_addr(9, 8)}  inst_mode:${io.inst_mode}\n")
 	val modeValid = (((io.r_addr(9,8) <= mode) || (io.r_op === CSR.N)) && (io.inst_mode <= mode)) || (~io.fd_enable) //模式判断，总共12位地址8，9两位是特权位
 	val valid = instValid && modeValid																				//访问方式和权限两重判断
 	io.r_data := data
 
-//	when(io.r_op =/=CSR.N){
-//		printf(p"r_addr:${Hexadecimal(io.r_addr)}; r_data:${Hexadecimal(io.r_data)}\n")
-//	}.elsewhen(io.w_op =/= CSR.N){
-//		printf(p"w_addr:${Hexadecimal(io.w_addr)}; w_data:${Hexadecimal(io.w_data)}\n")
-//	}
 	//准备要写入csr的数据
 	val csrData :: _ :: _ :: Nil = ListLookup(io.w_addr, default, csrTable)
 	val writeEn = (io.w_op === W || io.w_op === RW || io.w_op === RC || io.w_op === RS) && io.em_enable//io.mw_enable
@@ -259,7 +250,6 @@ class CSR extends Module{
 		RC 	-> (csrData & ~io.w_data)
 	))
 
-	//printf(p"writeData:${Hexadecimal(io.w_data)}\n")
 	//中断的判断
 	val flagIntS = sip.asUInt & sie.asUInt 					//s模式中断判断，对应的中断使能并且sip中该位已经挂起
 	val flagIntM = mip.asUInt & mie.asUInt 					//M模式中断判断
@@ -273,19 +263,17 @@ class CSR extends Module{
 	//判断中断的flag位是否能生效
 	val hasIntS  = Mux(mode < CSR_MODE_S || (mode === CSR_MODE_S && mstatus.sie), (flagIntS & mideleg.asUInt).orR, false.B)
 	val hasIntM	 = Mux(mode <= CSR_MODE_S || mstatus.mie, (flagIntM & ~mideleg.asUInt).orR, false.B)
-	val hasInt = (hasIntM || hasIntS) && io.em_enable && !writeEn
+	val hasInt = (hasIntM || hasIntS) && io.em_enable && !writeEn && !(io.jump_taken) && io.de_enable
 	//是否是S模式的中断
-	val handIntS = hasInt && !hasIntM
+	val handIntS = hasInt && !hasIntM 
 
 	/*
 	*	异常判断，流水线中会将异常信息前递，在非中断的情况触发异常。
 	*	如果异常被委托，那么意味着，低权限在S模式下进行处理
 	*	最后作一个判断，现在如果是M模式那么仍然是在M模式下处理
 	*/
-	//printf(p"writeEn:${writeEn}; stall:${io.stall}; em_enable:${io.em_enable}; timer:${io.int_timer}; extern:${io.extern}\n")
 
 	//异常具体判断
-//	printf(p"valid:${valid} illegal_inst:${(io.illegal_inst.orR || io.fetch_misalign) && io.fd_enable} ls_misalign:${(io.load_misalign || io.store_misalign) && io.de_enable}\n")
 	val hasExc 	= !hasInt && ((!valid) || ((io.illegal_inst.orR || io.fetch_misalign) && io.fd_enable)
 							|| ((io.load_misalign || io.store_misalign) && io.de_enable) 
 							|| ((io.inst === Instructions.ECALL || io.inst === Instructions.EBREAK) && io.em_enable))
@@ -385,8 +373,8 @@ class CSR extends Module{
 	mip.seip := mip.seip | io.extern
 	mip.mtip := (mip.mtip | io.int_timer) && !io.int_timer_clear
 	mip.stip := (mip.mtip | io.int_timer) && !io.int_timer_clear
-	mip.msip := mip.msip | io.int_soft
-	mip.ssip := mip.ssip | io.int_soft
+	mip.msip := (mip.msip | io.int_soft) && !io.int_soft_clear 
+	mip.ssip := (mip.ssip | io.int_soft) && !io.int_soft_clear
 	sip.seip := mip.seip
 	sip.stip := mip.stip
 	sip.ssip := mip.ssip
@@ -398,11 +386,8 @@ class CSR extends Module{
 		minstret.data := minstret.data + 1.U
 	}
 
-
-	//printf(p"mstatus data:${mstatus}\n")
 	//exceptions and interrupts handling
 	when(writeEn && !io.stall){
-		//printf(p"addr:${io.w_addr}\n")
 		when(io.w_addr === CSR_SSTATUS){ mstatus.castAssign(SstatusCsr(), writeData)}
 		when(io.w_addr === CSR_SIE){ mie.castAssign(SieCsr(), writeData) }
 		when(io.w_addr === CSR_SIP){ mip.castAssign(SipCsr(), writeData) }
@@ -414,55 +399,50 @@ class CSR extends Module{
 		when(io.w_addr === CSR_SCAUSE){ scause <= writeData }
 		when(io.w_addr === CSR_STVAL){ stval <= writeData }
 		//when(io.w_addr === CSR_SATP){ stap := writeData }
-		when(io.w_addr === CSR_MSTATUS){ 
-			mstatus <= writeData 
-			//printf(p"write mstatus:${Hexadecimal(writeData)}\n")
-		}
+		when(io.w_addr === CSR_MSTATUS){ mstatus <= writeData }
 		when(io.w_addr === CSR_MEDELEG){ medeleg <= writeData }
 		when(io.w_addr === CSR_MIDELEG){ mideleg <= writeData }
 		when(io.w_addr === CSR_MIE){ mie <= writeData }
 		when(io.w_addr === CSR_MIP){ mip <= writeData }
 		when(io.w_addr === CSR_MTVEC){ mtvec <= writeData }
 		when(io.w_addr === CSR_MSCRATCH){ mscratch <= writeData }
-		when(io.w_addr === CSR_MEPC){ 
-			mepc <= writeData 
-			//printf(p"write mepc:${Hexadecimal(writeData)}\n")
-		}
+		when(io.w_addr === CSR_MEPC){ mepc <= writeData }
 		when(io.w_addr === CSR_MCAUSE){ mcause <= writeData }
 		when(io.w_addr === CSR_MTVAL){ mtval <= writeData }
-		//when(io.w_addr === CSR_MSTATUS){
-		//	printf(p"mstatus:${writeData}\n")
-		//}
-		//when(io.w_addr === CSR_MIP){ mipReal := writeData }
+		//printf(p"waddr:${Hexadecimal(io.w_addr)}\n")
+		//printf(p"writeCSR:${Hexadecimal(writeData)}\n")
 	}.elsewhen((hasExc || hasInt || ((io.isSret || io.isMret) && io.em_enable)) && !io.stall){			//之前的hasExc并没有考虑isSret或者isMret的情况
 		when(handIntS){
-			sepc 	<= Mux(io.isSret || io.isMret || excCause === EXC_U_ECALL || excCause === EXC_S_ECALL || excCause === EXC_M_ECALL || excCause === EXC_BRK_POINT, io.excPC, Mux(io.jump_taken, io.jump_addr, io.excPC + 4.U))	//考虑跳转指令时发生中断的情况
+			sepc 	<= Mux(io.isSret || io.isMret || excCause === EXC_U_ECALL || excCause === EXC_S_ECALL || excCause === EXC_M_ECALL || excCause === EXC_BRK_POINT, io.excPC,  io.excPC + 4.U)	//考虑跳转指令时发生中断的情况
 			scause 	<= cause
 			stval 	<= io.excValue
 			mstatus.spie := mstatus.sie					
 			mstatus.sie := false.B
 			mstatus.spp := mode(0)
+			printf("Sinterrupt occur\n")
+			printf(p"cause:${Hexadecimal(cause)}\n")
+			printf(p"mtval:${Hexadecimal(io.excValue)}\n")
+
 		}.elsewhen(hasIntM){
-			when(cause === Cat(true.B, EXC_M_TIMER_INT)){
-				//printf("timer interrupt occur\n")
-				//printf(p"next_pc:${Hexadecimal(Mux(io.isSret || io.isMret || excCause === EXC_U_ECALL || excCause === EXC_S_ECALL || excCause === EXC_M_ECALL || excCause === EXC_BRK_POINT, io.excPC, Mux(io.jump_taken, io.jump_addr, io.excPC + 4.U)))}\n")
-			}
-			mepc 	<=  Mux(io.isSret || io.isMret || excCause === EXC_U_ECALL || excCause === EXC_S_ECALL || excCause === EXC_M_ECALL || excCause === EXC_BRK_POINT, io.excPC, Mux(io.jump_taken, io.jump_addr, io.excPC + 4.U))
-	//		printf(p"\njump_taken:${io.jump_taken}; expPC:${io.excPC + 4.U}\n")
+			mepc 	<=  Mux(io.isSret || io.isMret || excCause === EXC_U_ECALL || excCause === EXC_S_ECALL || excCause === EXC_M_ECALL || excCause === EXC_BRK_POINT, io.excPC,  io.excPC + 4.U)
 			mcause  <= cause
 			mtval 	<= io.excValue
 			mstatus.mpie := mstatus.mie
 			mstatus.mie := false.B
 			mstatus.mpp := mode
+			printf("Minterrupt occur\n")
+			printf(p"cause:${Hexadecimal(cause)}\n")
+			printf(p"excPC:${Hexadecimal(io.excPC)}\n")
+			printf(p"mtval:${Hexadecimal(io.excValue)}\n")
 		}.elsewhen(io.isSret){
 			mstatus.sie := mstatus.spie									//
 			mstatus.spie := true.B										//
 			mstatus.spp	:= false.B										//spp只有一位可以直接赋值为false
 		}.elsewhen(io.isMret){
-			//printf(p"mret_addr:${Hexadecimal(mepc.asUInt)}\n")
 			mstatus.mie := mstatus.mpie
 			mstatus.mpie := true.B
 			mstatus.mpp := CSR_MODE_U									//mpp有两位
+			printf(p"Mret_addr:${Hexadecimal(mepc.asUInt)}\n")
 		}.elsewhen(handExcS){
 			sepc	<= io.excPC
 			scause 	<= cause
@@ -470,17 +450,24 @@ class CSR extends Module{
 			mstatus.spie := mstatus.sie
 			mstatus.sie := false.B
 			mstatus.spp := mode(0)
+			printf("Sexception occurs:\n")
+			printf(p"mcause:${cause}\n")
+			printf(p"excPC:${Hexadecimal(io.excPC)}\n")
+			printf(p"mtval:${Hexadecimal(io.excValue)}\n")
+			printf(p"mode:${mode}\n\n\n")
+
 		}.otherwise{
-			printf(p"exception occurs: ${cause}\n")
-			printf(p"mepc:${Hexadecimal(io.excPC)};\n")
-			printf(p"mtval:${Hexadecimal(io.excValue)};\n")
-			printf(p"mstatus:${mstatus}\n")
 			mepc <= io.excPC
 			mcause <= cause
 			mtval <= io.excValue
 			mstatus.mpie := mstatus.mie
 			mstatus.mie := false.B
 			mstatus.mpp := mode
+			printf("Mexception occurs:\n")
+			printf(p"mcause:${cause}\n")
+			printf(p"excPC:${Hexadecimal(io.excPC)}\n")
+			printf(p"mtval:${Hexadecimal(io.excValue)}\n")
+			printf(p"mode:${mode}\n\n\n")
 		}
 	}
 
@@ -489,17 +476,9 @@ class CSR extends Module{
 							Mux(io.isSret, sepc.asUInt, trapVec)
 						)
 					)
-
 	//when(io.trap){
-	//	printf(p"trapVec:${io.trapVec}\n")
-	//}		
-	//printf(p"hasExc:${hasExc}; hasInt:${hasInt}; xret:${(io.isSret || io.isMret) && io.em_enable}\n")
+	//	printf(p"cause:${cause}\n")
+	//	printf(p"mtvec:${mtvec}\n")
+	//}
 	io.trap := (hasExc || hasInt || ((io.isSret || io.isMret) && io.em_enable)) && !writeEn && !io.stall
-	//printf(p"mstatus:${Hexadecimal(mstatus.asUInt)}; mip:${Hexadecimal(mip.asUInt)}; mie:${Hexadecimal(mie.asUInt)}; inst_num:${instret.asUInt}\n")
-//	when(io.trap){
-//		printf(p"hasExc:${hasExc}; hasInt:${hasInt}; isSret:${io.isSret}; isMret:${io.isMret}\n")
-//	}
-	//io.pageEn   := !mode(1) && satp.mode
-	//io.basePpn  := satp.ppn
-	//io.sum      := mstatus.sum
 }

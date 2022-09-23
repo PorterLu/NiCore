@@ -36,9 +36,8 @@ class CPU_Response extends Bundle{
 }
 
 object CacheState extends ChiselEnum{
-	//	0		1				 2					3				  4					 5				   6		 7		 8 			 9 		  10		 11			 12			13			   14	   15			16			 17			18								
 	val sIdle, sUnCacheReadAddr, sUnCacheWriteAddr, sUnCacheReadData, sUnCacheWriteData, sUnCacheWriteAck, 
-	sReMatch, sMatch, sWriteback, sRefill, sReadAddr, sWriteAddr, sWriteAck, sWait_a_cycle, 
+	sMatch, sWriteback, sRefill, sReadAddr, sWriteAddr, sWriteAck, sWait_a_cycle, 
 	sFlush, sFlushMatch, sFlushWrite, sFlushAddr,sFlushAck = Value
 }
 
@@ -180,14 +179,6 @@ class Cache(cache_name: String) extends Module{
 	val compare_1_0 = WireInit(false.B)
 	val compare_2_3 = WireInit(false.B)
 	val max_01_or_23 = WireInit(false.B)
-	//val is_twice = RegInit(false.B)
-
-	//val flush_running = RegInit(false.B)
-	//val (block_transfer_index, block_over) = Counter(flush_running, nSets)
-	//val (flush_loop, flush_last) = Counter(block_over, blockSize / bitWidth)
-	//when(flush_last){
-	//	flush_flush_running := false.B
-	//}
 	val flush_loop_enable = WireInit(false.B)
 	val index_in_line_enable = WireInit(false.B)
 	val (flush_loop, flush_last) = Counter(flush_loop_enable, nSets)
@@ -196,13 +187,14 @@ class Cache(cache_name: String) extends Module{
 
 	flush_loop_enable := false.B
 	index_in_line_enable := false.B
-	
-	//if(cache_name == "inst_cache"){
-	//	printf(p"icache_state:${cache_state.asUInt}\n")
-	//}
 
-	//if(cache_name == "data_cache"){
+	//when(cache_type){
+	//	printf(p"icache_state:${cache_state.asUInt}\n")
+	//}.otherwise{
 	//	printf(p"dcache_state:${cache_state.asUInt}\n")
+	//}
+	//when(cpu_request_addr_reg === "h80006c08".U || cpu_request_addr_reg_origin === "h80006c08".U){
+	//	printf(p"cpu_request_data:${Hexadecimal(cpu_request_data)}\n")
 	//}
 
 	switch(cache_state){
@@ -226,10 +218,9 @@ class Cache(cache_name: String) extends Module{
 		}
 		is(sFlush){
 			//将last信号拉到最后一级进行判断
-			//printf(p"flush_loop:${flush_loop}\n")
-			when(!cpu_request_valid){
+			/*when(!cpu_request_valid){
 				next_state := sIdle
-			}.otherwise{
+			}.otherwise{*/
 				when(flush_over){
 					next_state := sIdle
 					flush_loop := 0.U
@@ -238,19 +229,16 @@ class Cache(cache_name: String) extends Module{
 				}.otherwise{
 					next_state := sFlushMatch
 				}
-			}
+			//}
 		}
 		is(sFlushMatch){
 			//将index加1的操作推迟到最后一个周期
 			when(!cache_type){
-				//printf("dcache flush match\n")
 				for(i <- 0 until nWays){
 					tag_mem(i).io.cache_req.index := flush_loop
 				}
 
 				is_match := tag_mem.map{k => k.io.tag_read.valid}
-
-				//next_state := sFlushMatch
 				for(i <- 0 until nWays){
 					when(i.U === index_in_line){
 						when(is_match(i)){
@@ -271,12 +259,10 @@ class Cache(cache_name: String) extends Module{
 					}
 				}
 			}.otherwise{
-				//printf("Icache flush match\n")
 				for(i <- 0 until nWays){
 					tag_mem(i).io.cache_req.index := flush_loop
 				}
 
-				//is_match := tag_mem.map{k => k.io.tag_read.valid}
 				for(i <- 0 until nWays){
 					tag_mem(i).io.cache_req.we := true.B 
 					tag_mem(i).io.tag_write.tag := tag_mem(i).io.tag_read.tag
@@ -291,11 +277,8 @@ class Cache(cache_name: String) extends Module{
 					flush_over := true.B
 				}
 			}
-			//printf(p"flush_loop:${flush_loop}\n")
-			//printf(p"index_in_line: ${index_in_line}\n")
 		}
 		is(sFlushAddr){
-			//printf("sFlushAddr\n")
 			for(i <- 0 until nWays){
 				when(i.U === index_in_line){
 					data_mem(i).io.cache_req.index := flush_loop
@@ -312,7 +295,6 @@ class Cache(cache_name: String) extends Module{
 			}
 		}
 		is(sFlushWrite){
-			//printf("sFlushWrite\n")
 			for(i <- 0 until nWays){
 				when(i.U === index_in_line){
 					data_mem(i).io.cache_req.index := flush_loop
@@ -330,7 +312,6 @@ class Cache(cache_name: String) extends Module{
 					io.mem_io.w.bits.data := cache_data(index)
 				}
 			}
-			//printf(p"index:${index}; cache_data:${Hexadecimal(cache_data(0))}; cache_data:${Hexadecimal(cache_data(1))}\n")
 
 			when(last){
 				next_state := sFlushAck
@@ -349,39 +330,35 @@ class Cache(cache_name: String) extends Module{
 					index_in_line := 0.U
 					when(flush_loop === (nSets - 1).U){
 						flush_over := true.B
-//						printf("over\n\n\n\n")
 					}.otherwise{
 						flush_loop_enable := true.B
 					}
 				}
 			}
-
 		}
 		is(sUnCacheReadAddr){
-			io.mem_io.ar.valid := true.B && cpu_request_valid
+			io.mem_io.ar.valid := true.B //&& cpu_request_valid
 			io.mem_io.ar.bits.len := 0.U 
 			io.mem_io.ar.bits.size := cpu_request_accessType
-			//printf(p"cpu_read_request_accessType${cpu_request_accessType}\n")
 			io.mem_io.ar.bits.addr := cpu_request_addr_reg_origin
 			next_state := sUnCacheReadAddr
 			when(io.mem_io.ar.ready){
 				next_state := sUnCacheReadData
-			}.elsewhen(!cpu_request_valid){
+			}/*.elsewhen(!cpu_request_valid){
 				next_state := sIdle
-			}
+			}*/
 		}
 		is(sUnCacheWriteAddr){
-			io.mem_io.aw.valid := true.B && cpu_request_valid
+			io.mem_io.aw.valid := true.B //&& cpu_request_valid
 			io.mem_io.aw.bits.len := 0.U
 			io.mem_io.aw.bits.size := cpu_request_accessType
-			//printf(p"cpu_write_request_accessType:${cpu_request_accessType}\n")
 			io.mem_io.aw.bits.addr := cpu_request_addr_reg_origin
 			next_state := sUnCacheWriteAddr
 			when(io.mem_io.aw.ready){
 				next_state := sUnCacheWriteData
-			}.elsewhen(!cpu_request_valid){
+			}/*.elsewhen(!cpu_request_valid){
 				next_state := sIdle
-			}
+			}*/
 		}
 		is(sUnCacheReadData){
 
@@ -395,10 +372,6 @@ class Cache(cache_name: String) extends Module{
 			}
 		}
 		is(sUnCacheWriteData){
-		//if(cache_name == "data_cache"){
-			//printf("UnCacheWriteData\n")
-		//}
-			//printf(p"cpu_request_data:${cpu_request_data}\n")
 			io.mem_io.w.valid := true.B 
 			io.mem_io.w.bits.last := true.B 
 			io.mem_io.w.bits.data := cpu_request_data
@@ -410,9 +383,6 @@ class Cache(cache_name: String) extends Module{
 			}
 		}
 		is(sUnCacheWriteAck){
-		//if(cache_name == "data_cache"){
-			//printf("UnCacheWriteAck\n")
-		//}
 			io.mem_io.b.ready := true.B 
 			when(io.mem_io.b.valid){
 				io.cpu_response.ready := true.B 
@@ -422,24 +392,22 @@ class Cache(cache_name: String) extends Module{
 			}
 		}
 		is(sMatch){
+			
 			for(i <- 0 until nWays){
 				tag_mem(i).io.cache_req.index := cpu_request_addr_index
 			}
 
 			is_match := tag_mem.map{k => (k.io.tag_read.tag === cpu_request_addr_tag) && (k.io.tag_read.valid)}
 
-			//printf(p"index:${Hexadecimal(cpu_request_addr_index)}\n")
-			//for(i <- 0 until nWays){
-			//	printf(p"tag:${Hexadecimal(tag_mem(i).io.tag_read.tag)}; valid:${tag_mem(i).io.tag_read.valid}\n")
-			//	printf(p"is_match:${is_match(i)}\n\n")
-			//}
-
 			when(is_match.reduce(_|_)){
-//				if(cache_name == "inst_cache"){
-//					printf("match\n")
-//				}
 				when(!cpu_request_rw){
-					//printf("read\n\n")
+					//when(cpu_request_addr_reg === "h80006c08".U){
+					//	printf(p"read_data0:${Hexadecimal(data_mem(0).io.data_read.data)}\n")
+					//	printf(p"read_data1:${Hexadecimal(data_mem(1).io.data_read.data)}\n")
+					//	printf(p"read_data2:${Hexadecimal(data_mem(2).io.data_read.data)}\n")
+					//	printf(p"read_data3:${Hexadecimal(data_mem(3).io.data_read.data)}\n")
+					//}
+					
 					io.cpu_response.ready := true.B
 					io.cpu_response.data := MuxCase(VecInit.tabulate(2){k => data_mem(3).io.data_read.data((k+1)*word_len - 1, k*word_len)}(cpu_request_addr_reg(blockSize_len-1, log2Ceil(word_len/8))),
 										Array(
@@ -448,23 +416,7 @@ class Cache(cache_name: String) extends Module{
 											is_match(2) -> VecInit.tabulate(2){k => data_mem(2).io.data_read.data((k+1)*word_len - 1, k*word_len)}(cpu_request_addr_reg(blockSize_len-1, log2Ceil(word_len/8))),
 										)
 									)
-//					printf(p"response_data:${io.cpu_response.data}\n")
-//					printf(p"read_addr:${Hexadecimal(cpu_request_addr_reg)}\n")
-//					printf(p"read_data0:${Hexadecimal(data_mem(0).io.data_read.data.asUInt)}\n")
-//					printf(p"read_data1:${Hexadecimal(data_mem(1).io.data_read.data.asUInt)}\n")
-//					printf(p"read_data2:${Hexadecimal(data_mem(2).io.data_read.data.asUInt)}\n")
-//					printf(p"read_data3:${Hexadecimal(data_mem(3).io.data_read.data.asUInt)}\n")
-
-																	
-					when(cache_type){
-						when(io.cpu_request.valid && align_addr >= "h80000000".U && align_addr <= "h88000000".U){
-							next_state := sMatch
-						}.otherwise{
-							next_state := sIdle
-						}
-					}.otherwise{
-						next_state := sIdle
-					}
+					next_state := sIdle
 				}
 
 				for(i <- 0 until nWays){
@@ -485,6 +437,14 @@ class Cache(cache_name: String) extends Module{
 				}
 
 				when(cpu_request_rw){
+					//when(cpu_request_addr_reg === "h80006c08".U){
+					//	printf(p"write_data:${Hexadecimal(result)}\n")
+					//	printf(p"cache_part_select:${cpu_request_addr_reg(blockSize_len - 1, log2Ceil(word_len/8))}\n")
+					//}
+					//when(cpu_request_data === "h0000000080004c08".U){
+					//	printf(p"cpu_request_addr:${Hexadecimal(cpu_request_addr_reg)}\n\n\n")
+					//}
+
 					for(i <- 0 until nWays){
 						when(is_match(i)){
 							data_mem(i).io.cache_req.we := true.B 
@@ -498,16 +458,12 @@ class Cache(cache_name: String) extends Module{
 							cache_data := VecInit.tabulate(2){k => data_mem(i).io.data_read.data((k+1)*word_len - 1, k*word_len)}
 							cache_data(cpu_request_addr_reg(blockSize_len - 1, log2Ceil(word_len/8))) := result
 							data_mem(i).io.data_write.data := cache_data.asUInt
-							//printf(p"cache_data:${Hexadecimal(cache_data.asUInt)}\n")
 						}
 					}
 					
 					next_state := sWait_a_cycle
 				}
 			}.otherwise{
-//				if(cache_name == "inst_cache"){
-//					printf("unMatch\n")
-//				}
 				when(tag_mem.map{k => k.io.tag_read.valid}.reduceLeft(_&_)){
 					visit := tag_mem.map{k => k.io.tag_read.visit}
 					compare_1_0 := visit(1) > visit(0)
@@ -528,7 +484,6 @@ class Cache(cache_name: String) extends Module{
 						tag_mem(i).io.tag_write.valid := true.B 
 						tag_mem(i).io.tag_write.dirty := cpu_request_rw
 						tag_mem(i).io.tag_write.tag := cpu_request_addr_tag
-						//printf(p"we:${tag_mem(i).io.cache_req.we}; tag:${Hexadecimal(cpu_request_addr_tag)}\n")
 						tag_mem(i).io.tag_write.visit := 0.U 
 						when((!tag_mem(i).io.tag_read.valid)||(!tag_mem(i).io.tag_read.dirty)){
 							next_state := sReadAddr
@@ -555,16 +510,16 @@ class Cache(cache_name: String) extends Module{
 			next_state := sIdle
 		}
 		is(sReadAddr){
-			io.mem_io.ar.valid := true.B && cpu_request_valid
+			io.mem_io.ar.valid := true.B //&& cpu_request_valid
+			//printf(p"ar_valid:${io.mem_io.ar.valid}\n")
 			io.mem_io.ar.bits.len := 1.U
 			next_state := sReadAddr
 			io.mem_io.ar.bits.addr := refill_addr
-//			printf(p"refill_addr:${Hexadecimal(io.mem_io.ar.bits.addr)}\n")
 			when(io.mem_io.ar.ready){
 				next_state := sRefill
-			}.elsewhen(!cpu_request_valid){
+			}/*.elsewhen(!cpu_request_valid){
 				next_state := sIdle
-			}
+			}*/
 		}
 		is(sRefill){
 			io.mem_io.r.ready := true.B 
@@ -574,7 +529,6 @@ class Cache(cache_name: String) extends Module{
 					when(i.U === replace){
 						cache_data := VecInit.tabulate(2){k => data_mem(i).io.data_read.data((k+1)*word_len - 1, k*word_len)}
 						cache_data(index) := io.mem_io.r.bits.data
-						//printf(p"refill_cache_data: ${cache_data}\n")
 						data_mem(i).io.data_write.data := cache_data.asUInt
 						data_mem(i).io.cache_req.we := true.B
 					}
@@ -589,15 +543,15 @@ class Cache(cache_name: String) extends Module{
 			}
 		}
 		is(sWriteAddr){
-			io.mem_io.aw.valid := true.B && cpu_request_valid 
+			io.mem_io.aw.valid := true.B //&& cpu_request_valid 
 			io.mem_io.aw.bits.len := 1.U 
 			io.mem_io.aw.bits.addr := writeback_addr
 			next_state := sWriteAddr
 			when(io.mem_io.aw.ready){
 				next_state := sWriteback
-			}.elsewhen(!cpu_request_valid){
+			}/*.elsewhen(!cpu_request_valid){
 				next_state := sIdle
-			}
+			}*/
 		}
 		is(sWriteback){
 			next_state := sWriteback
@@ -610,7 +564,6 @@ class Cache(cache_name: String) extends Module{
 					io.mem_io.w.bits.data := cache_data(index)
 				}
 			}
-			//printf(p"io.mem_io.w.bits.data:${io.mem_io.w.bits.data}\n")
 			when(last){
 				next_state := sWriteAck
 				index := 0.U

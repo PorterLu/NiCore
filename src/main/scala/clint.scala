@@ -15,6 +15,7 @@ class clint extends Module{
 		val timer_valid = Output(Bool())
 
 		val timer_clear = Output(Bool())
+		val soft_clear = Output(Bool())
 	})
 
 	val msip = RegInit(0.U(64.W))
@@ -25,6 +26,7 @@ class clint extends Module{
 	io.soft_valid := false.B 
 	io.timer_valid := false.B
 	io.timer_clear := false.B
+	io.soft_clear := false.B
 
 	when(io.wen){
 		when(io.addr === "h2000000".U){
@@ -48,6 +50,8 @@ class clint extends Module{
 	//如果软件中断的寄存器中存有一个值，那么
 	when(msip(0).asBool){
 		io.soft_valid := true.B
+	}.otherwise{
+		io.soft_clear := true.B
 	}
 
 	when(mtime >= mtimecmp){
@@ -55,6 +59,4 @@ class clint extends Module{
 	}
 
 	mtime := mtime + 1.U
-
-	//printf(p"mtime:${mtime}; mtimecmp:${mtimecmp}; time_clear:${io.timer_clear}\n")
 }

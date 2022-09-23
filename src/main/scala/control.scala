@@ -10,11 +10,10 @@ object Control{
 	val Y = true.B
 	val N = false.B
 
-	val PC_4 = 0.U(3.W)
-	val PC_ALU = 1.U(3.W)
-	val PC_0 = 2.U(3.W)
-	val PC_EPC = 3.U(3.W)
-	val PC_FENCE = 4.U(3.W)
+	val PC_4 = 0.U(2.W)
+	val PC_ALU = 1.U(2.W)
+	val PC_0 = 2.U(2.W)
+	val PC_EPC = 3.U(2.W)
 
 	val A_XXX = 0.U(1.W)
   	val A_PC = 0.U(1.W)
@@ -65,14 +64,10 @@ object Control{
 	val WB_PC4 = 2.U(2.W)
 	val WB_CSR = 3.U(2.W)
 
-//	val CSR_MODE_U = 0.U(1.W)
-//	val EX_U = 1.U(1.W)
-
 	import Instructions._ 
 	import Alu._
 
 	val default = 
-		//
 		//				PC_SEL		A_SEL	B_SEL	 WIDTH	IMM_SEL 	ALU_OP	 		BR_TYPE		ST_TYPE		LD_TYPE	 	WB_SEL		WB_EN	PRV			csr_cmd	 	illegal	 kill
 		//		
 			   		List(PC_4,		A_XXX,	B_XXX,	 W_D,	IMM_U,		ALU_COPY_B,	 	BR_XXX, 	ST_XXX, 	LD_XXX,		WB_ALU,		Y,		CSR_MODE_U,	CSR_NOP,		Y,		N)
@@ -149,12 +144,10 @@ object Control{
 		SRET	-> 	List(PC_EPC,	A_XXX,	B_XXX,	 W_D,	IMM_X,		ALU_XXX,		BR_XXX,		ST_XXX,		LD_XXX,		WB_CSR,		N,		CSR_MODE_S,	CSR_NOP,		N,		N), //Y
 		ECALL 	-> 	List(PC_4,		A_XXX,	B_XXX,	 W_D,	IMM_X,		ALU_XXX,		BR_XXX,		ST_XXX,		LD_XXX,		WB_CSR,		N,		CSR_MODE_U,	CSR_NOP,		N,		N),
 		EBREAK 	->	List(PC_4,		A_XXX,	B_XXX,	 W_D,	IMM_X,		ALU_XXX,		BR_XXX,		ST_XXX,		LD_XXX,		WB_CSR,		N,		CSR_MODE_U,	CSR_NOP,		N,		N),
-		FENCE_I	->	List(PC_FENCE,	A_XXX,	B_XXX,	 W_D,	IMM_X,		ALU_XXX,		BR_XXX,		ST_XXX,		LD_XXX,		WB_ALU,		N,		CSR_MODE_U,	CSR_NOP,		N,		N)
-//		BitPat(NOP)	->	List(PC_4,		A_RS1,	B_IMM,	 W_D,	IMM_X,		ALU_XXX,		BR_XXX,		ST_XXX,		LD_XXX,		WB_CSR,		N,		CSR_MODE_U,	CSR_NOP,		N,		N)
+		FENCE_I	->	List(PC_0,		A_XXX,	B_XXX,	 W_D,	IMM_X,		ALU_XXX,		BR_XXX,		ST_XXX,		LD_XXX,		WB_ALU,		N,		CSR_MODE_U,	CSR_NOP,		N,		N)
 	)
 
 }
-
 
 class ControlSignals extends Bundle{
 	val inst = Input(UInt(32.W))
@@ -175,7 +168,6 @@ class ControlSignals extends Bundle{
 	val is_kill = Output(Bool())
 }
 
-//	PC_SEL		A_SEL	B_SEL	 WIDTH	IMM_SEL 	ALU_OP	 		BR_TYPE		ST_TYPE		LD_TYPE	 	WB_SEL		WB_EN	PRV			csr_cmd	 	illegal	 kill
 class Control extends Module{
 	val io = IO(new ControlSignals)
 	val ctrlSignals = ListLookup(io.inst, Control.default, Control.map)
