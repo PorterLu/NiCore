@@ -10,8 +10,6 @@ object CSR_OP{
 	val CSR_OP_WIDTH = log2Ceil(4)
 	
 	val CSR_NOP = 0.U(CSR_OP_WIDTH.W)	//nop
-	//val CSR_R 	= 1.U(CSR_OP_WIDTH.W)	//read
-	//val CSR_W 	= 2.U(CSR_OP_WIDTH.W)	//write
 	val CSR_RW  = 1.U(CSR_OP_WIDTH.W)	//read and write
 	val CSR_RS 	= 2.U(CSR_OP_WIDTH.W)	//read and set
 	val CSR_RC 	= 3.U(CSR_OP_WIDTH.W)	//read and clear
@@ -26,7 +24,6 @@ abstract class CSR_Bundle extends Bundle{
 		requireWidth(data)
 		this := data.asTypeOf(this)		//将UInt转化为对应的bundle
 	}
-
 
 	def castAssign[T <: CSR_Bundle](that: T, data: UInt) = {	//将UInt转化为that类型，最后将其使用重载<=赋值给this
 		val tmp = 0.U.asTypeOf(that)		
