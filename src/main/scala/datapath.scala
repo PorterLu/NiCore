@@ -810,17 +810,25 @@ class Datapath extends Module{
 						)
 }
 
+/*val pc_debug = Output(UInt(64.W))
+val inst = Output(UInt(32.W))
+val commit_inst = Output(UInt(32.W))
+val start = Output(Bool())
+val stall = Output(Bool())*/
+/*io.inst := datapath.io.inst
+io.commit_inst := datapath.io.commit_inst
+io.pc_debug := datapath.io.pc
+io.start := datapath.io.start
+io.stall := datapath.io.stall*/
+
+//slave signals suspension
+
+
 class myCPU extends Module{
 	val io = IO(new Bundle{
-		/*val pc_debug = Output(UInt(64.W))
-		val inst = Output(UInt(32.W))
-		val commit_inst = Output(UInt(32.W))
-		val start = Output(Bool())
-		val stall = Output(Bool())*/
 		
 		val interrupt = Input(Bool())
 
-		//write address channel
 		val master_awready = Input(Bool())
 		val master_awvalid = Output(Bool())
 		val master_awaddr = Output(UInt(32.W))
@@ -829,20 +837,17 @@ class myCPU extends Module{
 		val master_awsize = Output(UInt(3.W))
 		val master_awburst = Output(UInt(2.W))
 
-		//write data channel
 		val master_wready = Input(Bool())
 		val master_wvalid = Output(Bool())
 		val master_wdata = Output(UInt(64.W))
 		val master_wstrb = Output(UInt(8.W))
 		val master_wlast = Output(Bool())
 
-		//write response
 		val master_bready = Output(Bool())
 		val master_bvalid = Input(Bool())
 		val master_bresp = Input(UInt(2.W))
 		val master_bid = Input(UInt(4.W))
 
-		//read address channel
 		val master_arready = Input(Bool())
 		val master_arvalid = Output(Bool())
 		val master_araddr = Output(UInt(32.W))
@@ -851,7 +856,6 @@ class myCPU extends Module{
 		val master_arsize = Output(UInt(3.W))
 		val master_arburst = Output(UInt(2.W))
 
-		//read data channel
 		val master_rready = Output(Bool())
 		val master_rvalid = Input(Bool())
 		val master_rresp = Input(UInt(2.W))
@@ -859,8 +863,6 @@ class myCPU extends Module{
 		val master_rlast = Input(Bool())
 		val master_rid = Input(UInt(4.W))
 
-		//slave signals
-		//aw channel
 		val slave_awready = Output(Bool())
 		val slave_awvalid = Input(Bool())
 		val slave_awaddr  = Input(UInt(32.W))
@@ -869,20 +871,17 @@ class myCPU extends Module{
 		val slave_awsize  = Input(UInt(3.W))
 		val slave_awburst = Input(UInt(2.W))
 
-		//w channel
 		val slave_wready  = Output(Bool())
 		val slave_wvalid  = Input(Bool())
 		val slave_wdata   = Input(UInt(64.W))
 		val slave_wstrb   = Input(UInt(8.W))
 		val slave_wlast   = Input(Bool())
 
-		//write response channel
 		val slave_bready  = Input(Bool())
 		val slave_bvalid  = Output(Bool())
 		val slave_bresp   = Output(UInt(2.W))
 		val slave_bid 	  = Output(UInt(4.W))
 		
-		//ar channel
 		val slave_arready = Output(Bool())
 		val slave_arvalid = Input(Bool())
 		val slave_araddr  = Input(UInt(32.W))
@@ -891,7 +890,6 @@ class myCPU extends Module{
 		val slave_arsize  = Input(UInt(3.W))
 		val slave_arburst = Input(UInt(2.W))
 
-		//r channel
 		val slave_rready  = Input(Bool())
 		val slave_rvalid  = Output(Bool())
 		val slave_rresp   = Output(UInt(2.W))
@@ -899,54 +897,61 @@ class myCPU extends Module{
 		val slave_rlast   = Output(Bool())
 		val slave_rid     = Output(UInt(4.W))
 
-		//sram接口
-		/*val sram0_addr 	  = Output(UInt(6.W))
+		val sram0_addr 	  = Output(UInt(6.W))
 		val sram0_cen 	  = Output(Bool())
 		val sram0_wen 	  = Output(Bool())
 		val sram0_wmask   = Output(UInt(128.W))
 		val sram0_wdata   = Output(UInt(128.W))
+		val sram0_rdata   = Input(UInt(128.W))
 		
 		val sram1_addr 	  = Output(UInt(6.W))
 		val sram1_cen 	  = Output(Bool())
 		val sram1_wen 	  = Output(Bool())
 		val sram1_wmask   = Output(UInt(128.W))
 		val sram1_wdata   = Output(UInt(128.W))
+		val sram1_rdata	  = Input(UInt(128.W))
 
 		val sram2_addr 	  = Output(UInt(6.W))
 		val sram2_cen 	  = Output(Bool())
 		val sram2_wen 	  = Output(Bool())
 		val sram2_wmask   = Output(UInt(128.W))
 		val sram2_wdata   = Output(UInt(128.W))
+		val sram2_rdata	  = Input(UInt(128.W))
 
 		val sram3_addr 	  = Output(UInt(6.W))
 		val sram3_cen 	  = Output(Bool())
 		val sram3_wen 	  = Output(Bool())
 		val sram3_wmask   = Output(UInt(128.W))
 		val sram3_wdata   = Output(UInt(128.W))
+		val sram3_rdata   = Input(UInt(128.W))
 
 		val sram4_addr 	  = Output(UInt(6.W))
 		val sram4_cen 	  = Output(Bool())
 		val sram4_wen 	  = Output(Bool())
 		val sram4_wmask   = Output(UInt(128.W))
 		val sram4_wdata   = Output(UInt(128.W))
+		val sram4_rdata   = Input(UInt(128.W))
 
 		val sram5_addr 	  = Output(UInt(6.W))
 		val sram5_cen 	  = Output(Bool())
 		val sram5_wen 	  = Output(Bool())
 		val sram5_wmask   = Output(UInt(128.W))
 		val sram5_wdata   = Output(UInt(128.W))
+		val sram5_rdata   = Input(UInt(128.W))
 
 		val sram6_addr 	  = Output(UInt(6.W))
 		val sram6_cen 	  = Output(Bool())
 		val sram6_wen 	  = Output(Bool())
 		val sram6_wmask   = Output(UInt(128.W))
 		val sram6_wdata   = Output(UInt(128.W))
+		val sram6_rdata	  = Input(UInt(128.W))
 
 		val sram7_addr 	  = Output(UInt(6.W))
 		val sram7_cen 	  = Output(Bool())
 		val sram7_wen 	  = Output(Bool())
 		val sram7_wmask   = Output(UInt(128.W))
-		val sram7_wdata   = Output(UInt(128.W))*/
+		val sram7_wdata   = Output(UInt(128.W))
+		val sram7_rdata   = Input(UInt(128.W))
 	})
 
 	val datapath = Module(new Datapath) 
@@ -966,6 +971,62 @@ class myCPU extends Module{
 	dcache.io.accessType := datapath.io.dcache.accessType
 	icache.io.mem_io <> arb.io.icache
 	dcache.io.mem_io <> arb.io.dcache
+
+	io.sram0_addr := icache.io.sram0_addr
+	io.sram0_cen  := icache.io.sram0_cen
+	io.sram0_wen  := icache.io.sram0_wen
+	io.sram0_wmask := icache.io.sram0_wmask
+	io.sram0_wdata := icache.io.sram0_wdata
+	icache.io.sram0_rdata := io.sram0_rdata
+
+	io.sram1_addr := icache.io.sram1_addr
+	io.sram1_cen  := icache.io.sram1_cen
+	io.sram1_wen  := icache.io.sram1_wen
+	io.sram1_wmask := icache.io.sram1_wmask
+	io.sram1_wdata := icache.io.sram1_wdata
+	icache.io.sram1_rdata := io.sram1_rdata
+
+	io.sram2_addr := icache.io.sram2_addr
+	io.sram2_cen  := icache.io.sram2_cen
+	io.sram2_wen  := icache.io.sram2_wen
+	io.sram2_wmask := icache.io.sram2_wmask
+	io.sram2_wdata := icache.io.sram2_wdata
+	icache.io.sram2_rdata := io.sram2_rdata
+
+	io.sram3_addr := icache.io.sram3_addr
+	io.sram3_cen  := icache.io.sram3_cen
+	io.sram3_wen  := icache.io.sram3_wen
+	io.sram3_wmask := icache.io.sram3_wmask
+	io.sram3_wdata := icache.io.sram3_wdata
+	icache.io.sram3_rdata := io.sram3_rdata
+
+	io.sram4_addr := dcache.io.sram0_addr
+	io.sram4_cen  := dcache.io.sram0_cen
+	io.sram4_wen  := dcache.io.sram0_wen
+	io.sram4_wmask := dcache.io.sram0_wmask
+	io.sram4_wdata := dcache.io.sram0_wdata
+	dcache.io.sram0_rdata := io.sram4_rdata
+
+	io.sram5_addr := dcache.io.sram1_addr
+	io.sram5_cen  := dcache.io.sram1_cen
+	io.sram5_wen  := dcache.io.sram1_wen
+	io.sram5_wmask := dcache.io.sram1_wmask
+	io.sram5_wdata := dcache.io.sram1_wdata
+	dcache.io.sram1_rdata := io.sram5_rdata
+
+	io.sram6_addr := dcache.io.sram2_addr
+	io.sram6_cen  := dcache.io.sram2_cen
+	io.sram6_wen  := dcache.io.sram2_wen
+	io.sram6_wmask := dcache.io.sram2_wmask
+	io.sram6_wdata := dcache.io.sram2_wdata
+	dcache.io.sram2_rdata := io.sram6_rdata
+
+	io.sram7_addr := dcache.io.sram3_addr
+	io.sram7_cen  := dcache.io.sram3_cen
+	io.sram7_wen  := dcache.io.sram3_wen
+	io.sram7_wmask := dcache.io.sram3_wmask
+	io.sram7_wdata := dcache.io.sram3_wdata
+	dcache.io.sram3_rdata := io.sram7_rdata
 	
 	arb.io.axi_out.aw.ready := io.master_awready
 	io.master_awvalid := arb.io.axi_out.aw.valid
@@ -1001,13 +1062,6 @@ class myCPU extends Module{
 	arb.io.axi_out.r.bits.last := io.master_rlast
 	arb.io.axi_out.r.bits.id := io.master_rid 
 
-	/*io.inst := datapath.io.inst
-	io.commit_inst := datapath.io.commit_inst
-	io.pc_debug := datapath.io.pc
-	io.start := datapath.io.start
-	io.stall := datapath.io.stall*/
-
-	//slave signals suspension
 	io.slave_awready := false.B 
 	io.slave_wready  := false.B 
 	io.slave_bvalid  := false.B 
@@ -1027,6 +1081,6 @@ object Driver extends App{
 	(new chisel3.stage.ChiselStage).execute(args, Seq(
 		chisel3.stage.ChiselGeneratorAnnotation(() => new myCPU()),
 		firrtl.stage.RunFirrtlTransformAnnotation(new AddModulePrefix()),
-		ModulePrefixAnnotation("ysyx_22041812_")
+		ModulePrefixAnnotation("ysyx_041812_")
 	))
 }

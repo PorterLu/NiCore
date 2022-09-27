@@ -2,102 +2,102 @@
   {
     "class":"firrtl.transforms.DedupedResult",
     "original":"~myCPU|tag_cache",
-    "duplicate":"~myCPU|ysyx_22041812_myCPU/icache:ysyx_22041812_Cache/tag_mem_0:ysyx_22041812_tag_cache",
+    "duplicate":"~myCPU|ysyx_041812_myCPU/icache:ysyx_041812_Cache/tag_mem_0:ysyx_041812_tag_cache",
     "index":0.3448275862068966
   },
   {
     "class":"firrtl.transforms.DedupedResult",
     "original":"~myCPU|tag_cache_1",
-    "duplicate":"~myCPU|ysyx_22041812_myCPU/icache:ysyx_22041812_Cache/tag_mem_1:ysyx_22041812_tag_cache",
+    "duplicate":"~myCPU|ysyx_041812_myCPU/icache:ysyx_041812_Cache/tag_mem_1:ysyx_041812_tag_cache",
     "index":0.3793103448275862
   },
   {
     "class":"firrtl.transforms.DedupedResult",
     "original":"~myCPU|tag_cache_2",
-    "duplicate":"~myCPU|ysyx_22041812_myCPU/icache:ysyx_22041812_Cache/tag_mem_2:ysyx_22041812_tag_cache",
+    "duplicate":"~myCPU|ysyx_041812_myCPU/icache:ysyx_041812_Cache/tag_mem_2:ysyx_041812_tag_cache",
     "index":0.41379310344827586
   },
   {
     "class":"firrtl.transforms.DedupedResult",
     "original":"~myCPU|tag_cache_3",
-    "duplicate":"~myCPU|ysyx_22041812_myCPU/icache:ysyx_22041812_Cache/tag_mem_3:ysyx_22041812_tag_cache",
+    "duplicate":"~myCPU|ysyx_041812_myCPU/icache:ysyx_041812_Cache/tag_mem_3:ysyx_041812_tag_cache",
     "index":0.4482758620689655
   },
   {
     "class":"firrtl.transforms.DedupedResult",
     "original":"~myCPU|data_cache",
-    "duplicate":"~myCPU|ysyx_22041812_myCPU/icache:ysyx_22041812_Cache/data_mem_0:ysyx_22041812_data_cache",
+    "duplicate":"~myCPU|ysyx_041812_myCPU/icache:ysyx_041812_Cache/data_mem_0:ysyx_041812_data_cache",
     "index":0.4827586206896552
   },
   {
     "class":"firrtl.transforms.DedupedResult",
     "original":"~myCPU|data_cache_1",
-    "duplicate":"~myCPU|ysyx_22041812_myCPU/icache:ysyx_22041812_Cache/data_mem_1:ysyx_22041812_data_cache",
+    "duplicate":"~myCPU|ysyx_041812_myCPU/icache:ysyx_041812_Cache/data_mem_1:ysyx_041812_data_cache",
     "index":0.5172413793103449
   },
   {
     "class":"firrtl.transforms.DedupedResult",
     "original":"~myCPU|data_cache_2",
-    "duplicate":"~myCPU|ysyx_22041812_myCPU/icache:ysyx_22041812_Cache/data_mem_2:ysyx_22041812_data_cache",
+    "duplicate":"~myCPU|ysyx_041812_myCPU/icache:ysyx_041812_Cache/data_mem_2:ysyx_041812_data_cache",
     "index":0.5517241379310345
   },
   {
     "class":"firrtl.transforms.DedupedResult",
     "original":"~myCPU|data_cache_3",
-    "duplicate":"~myCPU|ysyx_22041812_myCPU/icache:ysyx_22041812_Cache/data_mem_3:ysyx_22041812_data_cache",
+    "duplicate":"~myCPU|ysyx_041812_myCPU/icache:ysyx_041812_Cache/data_mem_3:ysyx_041812_data_cache",
     "index":0.5862068965517241
   },
   {
     "class":"firrtl.transforms.DedupedResult",
     "original":"~myCPU|tag_cache_4",
-    "duplicate":"~myCPU|ysyx_22041812_myCPU/dcache:ysyx_22041812_Cache_1/tag_mem_0:ysyx_22041812_tag_cache",
+    "duplicate":"~myCPU|ysyx_041812_myCPU/dcache:ysyx_041812_Cache_1/tag_mem_0:ysyx_041812_tag_cache",
     "index":0.6551724137931034
   },
   {
     "class":"firrtl.transforms.DedupedResult",
     "original":"~myCPU|tag_cache_5",
-    "duplicate":"~myCPU|ysyx_22041812_myCPU/dcache:ysyx_22041812_Cache_1/tag_mem_1:ysyx_22041812_tag_cache",
+    "duplicate":"~myCPU|ysyx_041812_myCPU/dcache:ysyx_041812_Cache_1/tag_mem_1:ysyx_041812_tag_cache",
     "index":0.6896551724137931
   },
   {
     "class":"firrtl.transforms.DedupedResult",
     "original":"~myCPU|tag_cache_6",
-    "duplicate":"~myCPU|ysyx_22041812_myCPU/dcache:ysyx_22041812_Cache_1/tag_mem_2:ysyx_22041812_tag_cache",
+    "duplicate":"~myCPU|ysyx_041812_myCPU/dcache:ysyx_041812_Cache_1/tag_mem_2:ysyx_041812_tag_cache",
     "index":0.7241379310344828
   },
   {
     "class":"firrtl.transforms.DedupedResult",
     "original":"~myCPU|tag_cache_7",
-    "duplicate":"~myCPU|ysyx_22041812_myCPU/dcache:ysyx_22041812_Cache_1/tag_mem_3:ysyx_22041812_tag_cache",
+    "duplicate":"~myCPU|ysyx_041812_myCPU/dcache:ysyx_041812_Cache_1/tag_mem_3:ysyx_041812_tag_cache",
     "index":0.7586206896551724
   },
   {
     "class":"firrtl.transforms.DedupedResult",
     "original":"~myCPU|data_cache_4",
-    "duplicate":"~myCPU|ysyx_22041812_myCPU/dcache:ysyx_22041812_Cache_1/data_mem_0:ysyx_22041812_data_cache",
+    "duplicate":"~myCPU|ysyx_041812_myCPU/dcache:ysyx_041812_Cache_1/data_mem_0:ysyx_041812_data_cache",
     "index":0.7931034482758621
   },
   {
     "class":"firrtl.transforms.DedupedResult",
     "original":"~myCPU|data_cache_5",
-    "duplicate":"~myCPU|ysyx_22041812_myCPU/dcache:ysyx_22041812_Cache_1/data_mem_1:ysyx_22041812_data_cache",
+    "duplicate":"~myCPU|ysyx_041812_myCPU/dcache:ysyx_041812_Cache_1/data_mem_1:ysyx_041812_data_cache",
     "index":0.8275862068965517
   },
   {
     "class":"firrtl.transforms.DedupedResult",
     "original":"~myCPU|data_cache_6",
-    "duplicate":"~myCPU|ysyx_22041812_myCPU/dcache:ysyx_22041812_Cache_1/data_mem_2:ysyx_22041812_data_cache",
+    "duplicate":"~myCPU|ysyx_041812_myCPU/dcache:ysyx_041812_Cache_1/data_mem_2:ysyx_041812_data_cache",
     "index":0.8620689655172413
   },
   {
     "class":"firrtl.transforms.DedupedResult",
     "original":"~myCPU|data_cache_7",
-    "duplicate":"~myCPU|ysyx_22041812_myCPU/dcache:ysyx_22041812_Cache_1/data_mem_3:ysyx_22041812_data_cache",
+    "duplicate":"~myCPU|ysyx_041812_myCPU/dcache:ysyx_041812_Cache_1/data_mem_3:ysyx_041812_data_cache",
     "index":0.896551724137931
   },
   {
     "class":"myCPU.ModulePrefixAnnotation",
-    "prefix":"ysyx_22041812_"
+    "prefix":"ysyx_041812_"
   },
   {
     "class":"chisel3.experimental.EnumAnnotations$EnumDefAnnotation",
@@ -115,22 +115,22 @@
   },
   {
     "class":"chisel3.experimental.EnumAnnotations$EnumComponentAnnotation",
-    "target":"myCPU.ysyx_22041812_CacheArbiter.state",
+    "target":"myCPU.ysyx_041812_CacheArbiter.state",
     "enumTypeName":"cacheArbiter.ArbiterState"
   },
   {
     "class":"chisel3.experimental.EnumAnnotations$EnumComponentAnnotation",
-    "target":"myCPU.ysyx_22041812_Cache_1.next_state",
+    "target":"myCPU.ysyx_041812_Cache_1.next_state",
     "enumTypeName":"cache_single_port.CacheState"
   },
   {
     "class":"chisel3.experimental.EnumAnnotations$EnumComponentAnnotation",
-    "target":"myCPU.ysyx_22041812_Cache_1.cache_state",
+    "target":"myCPU.ysyx_041812_Cache_1.cache_state",
     "enumTypeName":"cache_single_port.CacheState"
   },
   {
     "class":"chisel3.experimental.EnumAnnotations$EnumComponentAnnotation",
-    "target":"myCPU.ysyx_22041812_Cache.next_state",
+    "target":"myCPU.ysyx_041812_Cache.next_state",
     "enumTypeName":"cache_single_port.CacheState"
   },
   {
@@ -159,12 +159,12 @@
   },
   {
     "class":"chisel3.experimental.EnumAnnotations$EnumComponentAnnotation",
-    "target":"myCPU.ysyx_22041812_Cache.cache_state",
+    "target":"myCPU.ysyx_041812_Cache.cache_state",
     "enumTypeName":"cache_single_port.CacheState"
   },
   {
     "class":"chisel3.experimental.EnumAnnotations$EnumComponentAnnotation",
-    "target":"myCPU.ysyx_22041812_Divider.next_state",
+    "target":"myCPU.ysyx_041812_Divider.next_state",
     "enumTypeName":"mdu.DivState"
   },
   {
@@ -178,12 +178,12 @@
   },
   {
     "class":"chisel3.experimental.EnumAnnotations$EnumComponentAnnotation",
-    "target":"myCPU.ysyx_22041812_Divider.div_state",
+    "target":"myCPU.ysyx_041812_Divider.div_state",
     "enumTypeName":"mdu.DivState"
   },
   {
     "class":"chisel3.experimental.EnumAnnotations$EnumComponentAnnotation",
-    "target":"myCPU.ysyx_22041812_Multiplier.next_state",
+    "target":"myCPU.ysyx_041812_Multiplier.next_state",
     "enumTypeName":"mdu.MulState"
   },
   {
@@ -197,7 +197,7 @@
   },
   {
     "class":"chisel3.experimental.EnumAnnotations$EnumComponentAnnotation",
-    "target":"myCPU.ysyx_22041812_Multiplier.mul_state",
+    "target":"myCPU.ysyx_041812_Multiplier.mul_state",
     "enumTypeName":"mdu.MulState"
   },
   {
@@ -210,18 +210,230 @@
   },
   {
     "class":"firrtl.transforms.CombinationalPath",
-    "sink":"~myCPU|ysyx_22041812_myCPU>io_master_wlast",
+    "sink":"~myCPU|ysyx_041812_myCPU>io_sram7_wen",
     "sources":[
-      "~myCPU|ysyx_22041812_myCPU>io_master_wready",
-      "~myCPU|ysyx_22041812_myCPU>io_master_rvalid"
+      "~myCPU|ysyx_041812_myCPU>io_master_rvalid"
     ]
   },
   {
     "class":"firrtl.transforms.CombinationalPath",
-    "sink":"~myCPU|ysyx_22041812_myCPU>io_master_wdata",
+    "sink":"~myCPU|ysyx_041812_myCPU>io_sram5_wen",
     "sources":[
-      "~myCPU|ysyx_22041812_myCPU>io_master_rvalid",
-      "~myCPU|ysyx_22041812_myCPU>io_master_rdata"
+      "~myCPU|ysyx_041812_myCPU>io_master_rvalid"
+    ]
+  },
+  {
+    "class":"firrtl.transforms.CombinationalPath",
+    "sink":"~myCPU|ysyx_041812_myCPU>io_sram5_wdata",
+    "sources":[
+      "~myCPU|ysyx_041812_myCPU>io_sram5_rdata",
+      "~myCPU|ysyx_041812_myCPU>io_sram7_rdata",
+      "~myCPU|ysyx_041812_myCPU>io_sram6_rdata",
+      "~myCPU|ysyx_041812_myCPU>io_sram4_rdata",
+      "~myCPU|ysyx_041812_myCPU>io_master_rvalid",
+      "~myCPU|ysyx_041812_myCPU>io_master_rdata"
+    ]
+  },
+  {
+    "class":"firrtl.transforms.CombinationalPath",
+    "sink":"~myCPU|ysyx_041812_myCPU>io_sram7_addr",
+    "sources":[
+      "~myCPU|ysyx_041812_myCPU>io_master_rvalid"
+    ]
+  },
+  {
+    "class":"firrtl.transforms.CombinationalPath",
+    "sink":"~myCPU|ysyx_041812_myCPU>io_sram2_addr",
+    "sources":[
+      "~myCPU|ysyx_041812_myCPU>io_master_rvalid"
+    ]
+  },
+  {
+    "class":"firrtl.transforms.CombinationalPath",
+    "sink":"~myCPU|ysyx_041812_myCPU>io_sram4_wen",
+    "sources":[
+      "~myCPU|ysyx_041812_myCPU>io_master_rvalid"
+    ]
+  },
+  {
+    "class":"firrtl.transforms.CombinationalPath",
+    "sink":"~myCPU|ysyx_041812_myCPU>io_sram0_wen",
+    "sources":[
+      "~myCPU|ysyx_041812_myCPU>io_master_rvalid"
+    ]
+  },
+  {
+    "class":"firrtl.transforms.CombinationalPath",
+    "sink":"~myCPU|ysyx_041812_myCPU>io_sram0_addr",
+    "sources":[
+      "~myCPU|ysyx_041812_myCPU>io_master_rvalid"
+    ]
+  },
+  {
+    "class":"firrtl.transforms.CombinationalPath",
+    "sink":"~myCPU|ysyx_041812_myCPU>io_sram4_wdata",
+    "sources":[
+      "~myCPU|ysyx_041812_myCPU>io_sram4_rdata",
+      "~myCPU|ysyx_041812_myCPU>io_sram7_rdata",
+      "~myCPU|ysyx_041812_myCPU>io_sram6_rdata",
+      "~myCPU|ysyx_041812_myCPU>io_sram5_rdata",
+      "~myCPU|ysyx_041812_myCPU>io_master_rvalid",
+      "~myCPU|ysyx_041812_myCPU>io_master_rdata"
+    ]
+  },
+  {
+    "class":"firrtl.transforms.CombinationalPath",
+    "sink":"~myCPU|ysyx_041812_myCPU>io_sram3_addr",
+    "sources":[
+      "~myCPU|ysyx_041812_myCPU>io_master_rvalid"
+    ]
+  },
+  {
+    "class":"firrtl.transforms.CombinationalPath",
+    "sink":"~myCPU|ysyx_041812_myCPU>io_sram6_wdata",
+    "sources":[
+      "~myCPU|ysyx_041812_myCPU>io_sram6_rdata",
+      "~myCPU|ysyx_041812_myCPU>io_sram7_rdata",
+      "~myCPU|ysyx_041812_myCPU>io_sram5_rdata",
+      "~myCPU|ysyx_041812_myCPU>io_sram4_rdata",
+      "~myCPU|ysyx_041812_myCPU>io_master_rvalid",
+      "~myCPU|ysyx_041812_myCPU>io_master_rdata"
+    ]
+  },
+  {
+    "class":"firrtl.transforms.CombinationalPath",
+    "sink":"~myCPU|ysyx_041812_myCPU>io_sram4_addr",
+    "sources":[
+      "~myCPU|ysyx_041812_myCPU>io_master_rvalid"
+    ]
+  },
+  {
+    "class":"firrtl.transforms.CombinationalPath",
+    "sink":"~myCPU|ysyx_041812_myCPU>io_master_wdata",
+    "sources":[
+      "~myCPU|ysyx_041812_myCPU>io_sram7_rdata",
+      "~myCPU|ysyx_041812_myCPU>io_sram6_rdata",
+      "~myCPU|ysyx_041812_myCPU>io_sram5_rdata",
+      "~myCPU|ysyx_041812_myCPU>io_sram4_rdata",
+      "~myCPU|ysyx_041812_myCPU>io_master_rvalid",
+      "~myCPU|ysyx_041812_myCPU>io_master_rdata"
+    ]
+  },
+  {
+    "class":"firrtl.transforms.CombinationalPath",
+    "sink":"~myCPU|ysyx_041812_myCPU>io_sram2_wen",
+    "sources":[
+      "~myCPU|ysyx_041812_myCPU>io_master_rvalid"
+    ]
+  },
+  {
+    "class":"firrtl.transforms.CombinationalPath",
+    "sink":"~myCPU|ysyx_041812_myCPU>io_sram5_addr",
+    "sources":[
+      "~myCPU|ysyx_041812_myCPU>io_master_rvalid"
+    ]
+  },
+  {
+    "class":"firrtl.transforms.CombinationalPath",
+    "sink":"~myCPU|ysyx_041812_myCPU>io_sram6_wen",
+    "sources":[
+      "~myCPU|ysyx_041812_myCPU>io_master_rvalid"
+    ]
+  },
+  {
+    "class":"firrtl.transforms.CombinationalPath",
+    "sink":"~myCPU|ysyx_041812_myCPU>io_sram1_wen",
+    "sources":[
+      "~myCPU|ysyx_041812_myCPU>io_master_rvalid"
+    ]
+  },
+  {
+    "class":"firrtl.transforms.CombinationalPath",
+    "sink":"~myCPU|ysyx_041812_myCPU>io_sram0_wdata",
+    "sources":[
+      "~myCPU|ysyx_041812_myCPU>io_sram0_rdata",
+      "~myCPU|ysyx_041812_myCPU>io_sram3_rdata",
+      "~myCPU|ysyx_041812_myCPU>io_sram2_rdata",
+      "~myCPU|ysyx_041812_myCPU>io_sram1_rdata",
+      "~myCPU|ysyx_041812_myCPU>io_master_rvalid",
+      "~myCPU|ysyx_041812_myCPU>io_master_rdata"
+    ]
+  },
+  {
+    "class":"firrtl.transforms.CombinationalPath",
+    "sink":"~myCPU|ysyx_041812_myCPU>io_sram7_wdata",
+    "sources":[
+      "~myCPU|ysyx_041812_myCPU>io_sram7_rdata",
+      "~myCPU|ysyx_041812_myCPU>io_sram6_rdata",
+      "~myCPU|ysyx_041812_myCPU>io_sram5_rdata",
+      "~myCPU|ysyx_041812_myCPU>io_sram4_rdata",
+      "~myCPU|ysyx_041812_myCPU>io_master_rvalid",
+      "~myCPU|ysyx_041812_myCPU>io_master_rdata"
+    ]
+  },
+  {
+    "class":"firrtl.transforms.CombinationalPath",
+    "sink":"~myCPU|ysyx_041812_myCPU>io_sram3_wen",
+    "sources":[
+      "~myCPU|ysyx_041812_myCPU>io_master_rvalid"
+    ]
+  },
+  {
+    "class":"firrtl.transforms.CombinationalPath",
+    "sink":"~myCPU|ysyx_041812_myCPU>io_sram1_wdata",
+    "sources":[
+      "~myCPU|ysyx_041812_myCPU>io_sram1_rdata",
+      "~myCPU|ysyx_041812_myCPU>io_sram3_rdata",
+      "~myCPU|ysyx_041812_myCPU>io_sram2_rdata",
+      "~myCPU|ysyx_041812_myCPU>io_sram0_rdata",
+      "~myCPU|ysyx_041812_myCPU>io_master_rvalid",
+      "~myCPU|ysyx_041812_myCPU>io_master_rdata"
+    ]
+  },
+  {
+    "class":"firrtl.transforms.CombinationalPath",
+    "sink":"~myCPU|ysyx_041812_myCPU>io_master_wlast",
+    "sources":[
+      "~myCPU|ysyx_041812_myCPU>io_master_wready",
+      "~myCPU|ysyx_041812_myCPU>io_master_rvalid"
+    ]
+  },
+  {
+    "class":"firrtl.transforms.CombinationalPath",
+    "sink":"~myCPU|ysyx_041812_myCPU>io_sram3_wdata",
+    "sources":[
+      "~myCPU|ysyx_041812_myCPU>io_sram3_rdata",
+      "~myCPU|ysyx_041812_myCPU>io_sram2_rdata",
+      "~myCPU|ysyx_041812_myCPU>io_sram1_rdata",
+      "~myCPU|ysyx_041812_myCPU>io_sram0_rdata",
+      "~myCPU|ysyx_041812_myCPU>io_master_rvalid",
+      "~myCPU|ysyx_041812_myCPU>io_master_rdata"
+    ]
+  },
+  {
+    "class":"firrtl.transforms.CombinationalPath",
+    "sink":"~myCPU|ysyx_041812_myCPU>io_sram1_addr",
+    "sources":[
+      "~myCPU|ysyx_041812_myCPU>io_master_rvalid"
+    ]
+  },
+  {
+    "class":"firrtl.transforms.CombinationalPath",
+    "sink":"~myCPU|ysyx_041812_myCPU>io_sram2_wdata",
+    "sources":[
+      "~myCPU|ysyx_041812_myCPU>io_sram2_rdata",
+      "~myCPU|ysyx_041812_myCPU>io_sram3_rdata",
+      "~myCPU|ysyx_041812_myCPU>io_sram1_rdata",
+      "~myCPU|ysyx_041812_myCPU>io_sram0_rdata",
+      "~myCPU|ysyx_041812_myCPU>io_master_rvalid",
+      "~myCPU|ysyx_041812_myCPU>io_master_rdata"
+    ]
+  },
+  {
+    "class":"firrtl.transforms.CombinationalPath",
+    "sink":"~myCPU|ysyx_041812_myCPU>io_sram6_addr",
+    "sources":[
+      "~myCPU|ysyx_041812_myCPU>io_master_rvalid"
     ]
   }
 ]

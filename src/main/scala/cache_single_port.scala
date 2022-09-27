@@ -66,14 +66,30 @@ class data_cache extends Module{
 		val cache_req = Input(new CacheReq)
 		val data_write = Input(new CacheData)
 		val data_read = Output(new CacheData) 
+		
+		val sram_addr = Output(UInt(6.W))
+		val sram_cen  = Output(Bool())
+		val sram_wen  = Output(Bool())
+		val sram_wmask 	  = Output(UInt(128.W))
+		val sram_wdata 	  = Output(UInt(128.W))
+		val sram_rdata    = Input(UInt(128.W))
 	})
 
-	val data_mem = SyncReadMem(64, new CacheData)
-	io.data_read := data_mem.read(io.cache_req.index, true.B)
-	when(io.cache_req.we){
-		data_mem.write(io.cache_req.index, io.data_write)
-	} 
+	io.sram_cen := true.B
+	io.sram_addr := io.cache_req.index
+	io.sram_wen := io.cache_req.we
+	io.sram_wmask := 0.U
+	io.sram_wdata := io.data_write.data
+	io.data_read := io.sram_rdata.asTypeOf(io.data_read)
 }
+
+/*
+val data_mem = SyncReadMem(64, new CacheData)
+io.data_read := data_mem.read(io.cache_req.index, true.B)
+when(io.cache_req.we){
+	data_mem.write(io.cache_req.index, io.data_write)
+} */
+
 
 import CacheState._ 
 
@@ -84,6 +100,34 @@ class Cache(cache_name: String) extends Module{
 		val mem_io = new Axi
 		val flush = Input(Bool())
 		val accessType = Input(UInt(2.W))
+
+		val sram0_addr 	  = Output(UInt(6.W))
+		val sram0_cen 	  = Output(Bool())
+		val sram0_wen 	  = Output(Bool())
+		val sram0_wmask   = Output(UInt(128.W))
+		val sram0_wdata   = Output(UInt(128.W))
+		val sram0_rdata   = Input(UInt(128.W))
+		
+		val sram1_addr 	  = Output(UInt(6.W))
+		val sram1_cen 	  = Output(Bool())
+		val sram1_wen 	  = Output(Bool())
+		val sram1_wmask   = Output(UInt(128.W))
+		val sram1_wdata   = Output(UInt(128.W))
+		val sram1_rdata   = Input(UInt(128.W))
+
+		val sram2_addr 	  = Output(UInt(6.W))
+		val sram2_cen 	  = Output(Bool())
+		val sram2_wen 	  = Output(Bool())
+		val sram2_wmask   = Output(UInt(128.W))
+		val sram2_wdata   = Output(UInt(128.W))
+		val sram2_rdata   = Input(UInt(128.W))
+
+		val sram3_addr 	  = Output(UInt(6.W))
+		val sram3_cen 	  = Output(Bool())
+		val sram3_wen 	  = Output(Bool())
+		val sram3_wmask   = Output(UInt(128.W))
+		val sram3_wdata   = Output(UInt(128.W))
+		val sram3_rdata   = Input(UInt(128.W))
 	})
 	val cache_type = if(cache_name == "inst_cache") true.B else false.B
 
@@ -120,6 +164,34 @@ class Cache(cache_name: String) extends Module{
 	val cpu_request_valid = RegInit(false.B)
 	val cpu_request_accessType = RegInit(0.U(2.W))
 	
+	io.sram0_addr := data_mem(0).io.sram_addr
+	io.sram0_cen  := data_mem(0).io.sram_cen
+	io.sram0_wen  := data_mem(0).io.sram_wen
+	io.sram0_wmask := data_mem(0).io.sram_wmask
+	io.sram0_wdata := data_mem(0).io.sram_wdata
+	data_mem(0).io.sram_rdata := io.sram0_rdata
+
+	io.sram1_addr := data_mem(1).io.sram_addr
+	io.sram1_cen  := data_mem(1).io.sram_cen
+	io.sram1_wen  := data_mem(1).io.sram_wen
+	io.sram1_wmask := data_mem(1).io.sram_wmask
+	io.sram1_wdata := data_mem(1).io.sram_wdata
+	data_mem(1).io.sram_rdata := io.sram1_rdata
+
+	io.sram2_addr := data_mem(2).io.sram_addr
+	io.sram2_cen  := data_mem(2).io.sram_cen
+	io.sram2_wen  := data_mem(2).io.sram_wen
+	io.sram2_wmask := data_mem(2).io.sram_wmask
+	io.sram2_wdata := data_mem(2).io.sram_wdata
+	data_mem(2).io.sram_rdata := io.sram2_rdata
+
+	io.sram3_addr := data_mem(3).io.sram_addr
+	io.sram3_cen  := data_mem(3).io.sram_cen
+	io.sram3_wen  := data_mem(3).io.sram_wen
+	io.sram3_wmask := data_mem(3).io.sram_wmask
+	io.sram3_wdata := data_mem(3).io.sram_wdata
+	data_mem(3).io.sram_rdata := io.sram3_rdata
+
 	val align_addr = Cat(io.cpu_request.addr(addr_len - 1, log2Ceil(bitWidth/8)), 0.U((log2Ceil(bitWidth/8)).W))
 	cpu_request_addr_reg := align_addr
 	cpu_request_addr_reg_origin := io.cpu_request.addr
@@ -187,15 +259,6 @@ class Cache(cache_name: String) extends Module{
 
 	flush_loop_enable := false.B
 	index_in_line_enable := false.B
-
-	//when(cache_type){
-	//	printf(p"icache_state:${cache_state.asUInt}\n")
-	//}.otherwise{
-	//	printf(p"dcache_state:${cache_state.asUInt}\n")
-	//}
-	//when(cpu_request_addr_reg === "h80006c08".U || cpu_request_addr_reg_origin === "h80006c08".U){
-	//	printf(p"cpu_request_data:${Hexadecimal(cpu_request_data)}\n")
-	//}
 
 	switch(cache_state){
 		is(sIdle){
