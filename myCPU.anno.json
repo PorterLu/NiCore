@@ -140,21 +140,22 @@
       "sRefill":8,
       "sWriteAck":11,
       "sIdle":0,
-      "sFlush":13,
-      "sFlushMatch":14,
+      "sWait_a_cycle_r":12,
+      "sFlush":14,
+      "sFlushMatch":15,
       "sWriteAddr":10,
       "sMatch":6,
+      "sWait_a_cycle_w":13,
       "sReadAddr":9,
       "sUnCacheWriteAck":5,
-      "sFlushAck":17,
-      "sFlushWrite":15,
+      "sFlushAck":18,
+      "sFlushWrite":16,
       "sUnCacheReadData":3,
       "sUnCacheWriteAddr":2,
       "sUnCacheReadAddr":1,
       "sUnCacheWriteData":4,
-      "sFlushAddr":16,
-      "sWriteback":7,
-      "sWait_a_cycle":12
+      "sFlushAddr":17,
+      "sWriteback":7
     }
   },
   {
@@ -224,6 +225,13 @@
   },
   {
     "class":"firrtl.transforms.CombinationalPath",
+    "sink":"~myCPU|ysyx_041812_myCPU>io_sram0_wmask",
+    "sources":[
+      "~myCPU|ysyx_041812_myCPU>io_master_rvalid"
+    ]
+  },
+  {
+    "class":"firrtl.transforms.CombinationalPath",
     "sink":"~myCPU|ysyx_041812_myCPU>io_sram5_wdata",
     "sources":[
       "~myCPU|ysyx_041812_myCPU>io_sram5_rdata",
@@ -232,6 +240,13 @@
       "~myCPU|ysyx_041812_myCPU>io_sram4_rdata",
       "~myCPU|ysyx_041812_myCPU>io_master_rvalid",
       "~myCPU|ysyx_041812_myCPU>io_master_rdata"
+    ]
+  },
+  {
+    "class":"firrtl.transforms.CombinationalPath",
+    "sink":"~myCPU|ysyx_041812_myCPU>io_sram1_wmask",
+    "sources":[
+      "~myCPU|ysyx_041812_myCPU>io_master_rvalid"
     ]
   },
   {
@@ -251,6 +266,13 @@
   {
     "class":"firrtl.transforms.CombinationalPath",
     "sink":"~myCPU|ysyx_041812_myCPU>io_sram4_wen",
+    "sources":[
+      "~myCPU|ysyx_041812_myCPU>io_master_rvalid"
+    ]
+  },
+  {
+    "class":"firrtl.transforms.CombinationalPath",
+    "sink":"~myCPU|ysyx_041812_myCPU>io_sram2_wmask",
     "sources":[
       "~myCPU|ysyx_041812_myCPU>io_master_rvalid"
     ]
@@ -283,6 +305,13 @@
   },
   {
     "class":"firrtl.transforms.CombinationalPath",
+    "sink":"~myCPU|ysyx_041812_myCPU>io_sram6_wmask",
+    "sources":[
+      "~myCPU|ysyx_041812_myCPU>io_master_rvalid"
+    ]
+  },
+  {
+    "class":"firrtl.transforms.CombinationalPath",
     "sink":"~myCPU|ysyx_041812_myCPU>io_sram3_addr",
     "sources":[
       "~myCPU|ysyx_041812_myCPU>io_master_rvalid"
@@ -303,6 +332,20 @@
   {
     "class":"firrtl.transforms.CombinationalPath",
     "sink":"~myCPU|ysyx_041812_myCPU>io_sram4_addr",
+    "sources":[
+      "~myCPU|ysyx_041812_myCPU>io_master_rvalid"
+    ]
+  },
+  {
+    "class":"firrtl.transforms.CombinationalPath",
+    "sink":"~myCPU|ysyx_041812_myCPU>io_sram3_wmask",
+    "sources":[
+      "~myCPU|ysyx_041812_myCPU>io_master_rvalid"
+    ]
+  },
+  {
+    "class":"firrtl.transforms.CombinationalPath",
+    "sink":"~myCPU|ysyx_041812_myCPU>io_sram5_wmask",
     "sources":[
       "~myCPU|ysyx_041812_myCPU>io_master_rvalid"
     ]
@@ -343,6 +386,20 @@
   {
     "class":"firrtl.transforms.CombinationalPath",
     "sink":"~myCPU|ysyx_041812_myCPU>io_sram1_wen",
+    "sources":[
+      "~myCPU|ysyx_041812_myCPU>io_master_rvalid"
+    ]
+  },
+  {
+    "class":"firrtl.transforms.CombinationalPath",
+    "sink":"~myCPU|ysyx_041812_myCPU>io_sram7_wmask",
+    "sources":[
+      "~myCPU|ysyx_041812_myCPU>io_master_rvalid"
+    ]
+  },
+  {
+    "class":"firrtl.transforms.CombinationalPath",
+    "sink":"~myCPU|ysyx_041812_myCPU>io_sram4_wmask",
     "sources":[
       "~myCPU|ysyx_041812_myCPU>io_master_rvalid"
     ]

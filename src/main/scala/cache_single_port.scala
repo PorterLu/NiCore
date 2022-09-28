@@ -7,6 +7,7 @@ import axi4._
 import chisel3.util._ 
 
 class CacheReq extends Bundle{
+	val wmask = UInt(128.W)
 	val index = UInt(6.W)
 	val we = Bool()
 }
@@ -37,7 +38,7 @@ class CPU_Response extends Bundle{
 
 object CacheState extends ChiselEnum{
 	val sIdle, sUnCacheReadAddr, sUnCacheWriteAddr, sUnCacheReadData, sUnCacheWriteData, sUnCacheWriteAck, 
-	sMatch, sWriteback, sRefill, sReadAddr, sWriteAddr, sWriteAck, sWait_a_cycle, 
+	sMatch, sWriteback, sRefill, sReadAddr, sWriteAddr, sWriteAck, sWait_a_cycle_r, sWait_a_cycle_w, 
 	sFlush, sFlushMatch, sFlushWrite, sFlushAddr,sFlushAck = Value
 }
 
@@ -75,12 +76,15 @@ class data_cache extends Module{
 		val sram_rdata    = Input(UInt(128.W))
 	})
 
-	io.sram_cen := true.B
+	io.sram_cen := false.B
 	io.sram_addr := io.cache_req.index
-	io.sram_wen := io.cache_req.we
-	io.sram_wmask := 0.U
+	io.sram_wen := ~io.cache_req.we
+	io.sram_wmask := io.cache_req.wmask
 	io.sram_wdata := io.data_write.data
 	io.data_read := io.sram_rdata.asTypeOf(io.data_read)
+	when(io.cache_req.we){
+		printf(p"${Hexadecimal(io.data_write.data)}; ${Hexadecimal(io.cache_req.wmask)}\n")
+	}
 }
 
 /*
@@ -217,6 +221,8 @@ class Cache(cache_name: String) extends Module{
 		tag_mem(i).io.tag_write := tag_mem(i).io.tag_read
 		data_mem(i).io.data_write := data_mem(i).io.data_read
 		data_mem(i).io.enable := true.B
+		data_mem(i).io.cache_req.wmask := 0.U
+		tag_mem(i).io.cache_req.wmask := 0.U
 	}
 
 	io.cpu_response.ready := false.B 
@@ -256,10 +262,12 @@ class Cache(cache_name: String) extends Module{
 	val (flush_loop, flush_last) = Counter(flush_loop_enable, nSets)
 	val (index_in_line, line_last) = Counter(index_in_line_enable, nWays)
 	val flush_over = RegInit(false.B)
+	val wmask = VecInit(Seq.fill(2)(0.U(64.W)))
 
 	flush_loop_enable := false.B
 	index_in_line_enable := false.B
 
+	val tmp_response_data = RegInit(0.U(64.W))
 	switch(cache_state){
 		is(sIdle){
 			when(io.flush && io.cpu_request.valid){
@@ -464,22 +472,17 @@ class Cache(cache_name: String) extends Module{
 
 			when(is_match.reduce(_|_)){
 				when(!cpu_request_rw){
-					//when(cpu_request_addr_reg === "h80006c08".U){
-					//	printf(p"read_data0:${Hexadecimal(data_mem(0).io.data_read.data)}\n")
-					//	printf(p"read_data1:${Hexadecimal(data_mem(1).io.data_read.data)}\n")
-					//	printf(p"read_data2:${Hexadecimal(data_mem(2).io.data_read.data)}\n")
-					//	printf(p"read_data3:${Hexadecimal(data_mem(3).io.data_read.data)}\n")
-					//}
 					
-					io.cpu_response.ready := true.B
-					io.cpu_response.data := MuxCase(VecInit.tabulate(2){k => data_mem(3).io.data_read.data((k+1)*word_len - 1, k*word_len)}(cpu_request_addr_reg(blockSize_len-1, log2Ceil(word_len/8))),
+					//io.cpu_response.ready := true.B
+					//io.cpu_response.data 
+					tmp_response_data := MuxCase(VecInit.tabulate(2){k => data_mem(3).io.data_read.data((k+1)*word_len - 1, k*word_len)}(cpu_request_addr_reg(blockSize_len-1, log2Ceil(word_len/8))),
 										Array(
 											is_match(0) -> VecInit.tabulate(2){k => data_mem(0).io.data_read.data((k+1)*word_len - 1, k*word_len)}(cpu_request_addr_reg(blockSize_len-1, log2Ceil(word_len/8))),
 											is_match(1) -> VecInit.tabulate(2){k => data_mem(1).io.data_read.data((k+1)*word_len - 1, k*word_len)}(cpu_request_addr_reg(blockSize_len-1, log2Ceil(word_len/8))),
 											is_match(2) -> VecInit.tabulate(2){k => data_mem(2).io.data_read.data((k+1)*word_len - 1, k*word_len)}(cpu_request_addr_reg(blockSize_len-1, log2Ceil(word_len/8))),
 										)
 									)
-					next_state := sIdle
+					next_state := sWait_a_cycle_r
 				}
 
 				for(i <- 0 until nWays){
@@ -500,31 +503,30 @@ class Cache(cache_name: String) extends Module{
 				}
 
 				when(cpu_request_rw){
-					//when(cpu_request_addr_reg === "h80006c08".U){
-					//	printf(p"write_data:${Hexadecimal(result)}\n")
-					//	printf(p"cache_part_select:${cpu_request_addr_reg(blockSize_len - 1, log2Ceil(word_len/8))}\n")
-					//}
-					//when(cpu_request_data === "h0000000080004c08".U){
-					//	printf(p"cpu_request_addr:${Hexadecimal(cpu_request_addr_reg)}\n\n\n")
-					//}
 
 					for(i <- 0 until nWays){
 						when(is_match(i)){
 							data_mem(i).io.cache_req.we := true.B 
-							response_data := data_mem(i).io.data_read.data
-							for(j <- 0 until 8){
+							//response_data := data_mem(i).io.data_read.data
+							/*for(j <- 0 until 8){
 								part(j) := Mux(cpu_request_mask(j), cpu_request_data((j+1)*8 - 1, j*8) << (j*8),
 									(VecInit.tabulate(2){k => response_data((k+1)*word_len - 1, k*word_len)}(cpu_request_addr_reg(blockSize_len - 1, log2Ceil(word_len/8)))((j+1)*8 - 1, j*8)) << (j*8)
 								)
-							}
-							result := part.reduce(_|_)
-							cache_data := VecInit.tabulate(2){k => data_mem(i).io.data_read.data((k+1)*word_len - 1, k*word_len)}
-							cache_data(cpu_request_addr_reg(blockSize_len - 1, log2Ceil(word_len/8))) := result
+							}*/
+							//result := part.reduce(_|_)
+							//cache_data := VecInit.tabulate(2){k => data_mem(i).io.data_read.data((k+1)*word_len - 1, k*word_len)}
+							cache_data := VecInit.tabulate(2){k => 0.U(64.W)}
+							//cache_data(cpu_request_addr_reg(blockSize_len - 1, log2Ceil(word_len/8))) := result
+							cache_data(cpu_request_addr_reg(blockSize_len - 1, log2Ceil(word_len/8))) := cpu_request_data
 							data_mem(i).io.data_write.data := cache_data.asUInt
+							wmask := VecInit.tabulate(2){k => 0.U(64.W)}
+							wmask(cpu_request_addr_reg(blockSize_len - 1, log2Ceil(word_len/8))) := Cat(Fill(8, cpu_request_mask(7)), Fill(8, cpu_request_mask(6)), Fill(8, cpu_request_mask(5)), Fill(8, cpu_request_mask(4)),
+																									Fill(8, cpu_request_mask(3)), Fill(8, cpu_request_mask(2)), Fill(8, cpu_request_mask(1)), Fill(8, cpu_request_mask(0)))
+							data_mem(i).io.cache_req.wmask := ~wmask.asUInt
 						}
 					}
 					
-					next_state := sWait_a_cycle
+					next_state := sWait_a_cycle_w
 				}
 			}.otherwise{
 				when(tag_mem.map{k => k.io.tag_read.valid}.reduceLeft(_&_)){
@@ -568,7 +570,12 @@ class Cache(cache_name: String) extends Module{
 				}
 			}
 		}
-		is(sWait_a_cycle){
+		is(sWait_a_cycle_r){
+			io.cpu_response.ready := true.B 
+			io.cpu_response.data := tmp_response_data
+			next_state := sIdle
+		}
+		is(sWait_a_cycle_w){
 			io.cpu_response.ready := true.B
 			next_state := sIdle
 		}
@@ -590,9 +597,13 @@ class Cache(cache_name: String) extends Module{
 			when(io.mem_io.r.valid){
 				for(i <- 0 until nWays){
 					when(i.U === replace){
-						cache_data := VecInit.tabulate(2){k => data_mem(i).io.data_read.data((k+1)*word_len - 1, k*word_len)}
+						//cache_data := VecInit.tabulate(2){k => data_mem(i).io.data_read.data((k+1)*word_len - 1, k*word_len)}
+						cache_data := VecInit.tabulate(2){k => 0.U(64.W)}
+						wmask := VecInit.tabulate(2){k => 0.U(64.W)}
 						cache_data(index) := io.mem_io.r.bits.data
+						wmask(index) := "hffffffffffffffff".U
 						data_mem(i).io.data_write.data := cache_data.asUInt
+						data_mem(i).io.cache_req.wmask := ~(wmask.asUInt)
 						data_mem(i).io.cache_req.we := true.B
 					}
 				}
