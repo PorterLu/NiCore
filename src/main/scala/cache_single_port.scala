@@ -94,7 +94,6 @@ when(io.cache_req.we){
 	data_mem.write(io.cache_req.index, io.data_write)
 } */
 
-
 import CacheState._ 
 
 class Cache(cache_name: String) extends Module{
