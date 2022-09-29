@@ -7080,7 +7080,6 @@ end // initial
 endmodule
 module ysyx_22041812_data_cache(
   input          clock,
-  input          reset,
   input  [5:0]   io_cache_req_index,
   input          io_cache_req_we,
   input  [127:0] io_data_write_data,
@@ -7103,7 +7102,6 @@ module ysyx_22041812_data_cache(
   wire  data_mem_data_MPORT_en; // @[cache_single_port.scala 71:35]
   reg  data_mem_data_io_data_read_MPORT_en_pipe_0;
   reg [5:0] data_mem_data_io_data_read_MPORT_addr_pipe_0;
-  wire  _T = ~io_cache_req_we; // @[cache_single_port.scala 78:14]
   assign data_mem_data_io_data_read_MPORT_en = data_mem_data_io_data_read_MPORT_en_pipe_0;
   assign data_mem_data_io_data_read_MPORT_addr = data_mem_data_io_data_read_MPORT_addr_pipe_0;
   assign data_mem_data_io_data_read_MPORT_data = data_mem_data[data_mem_data_io_data_read_MPORT_addr]; // @[cache_single_port.scala 71:35]
@@ -7120,17 +7118,6 @@ module ysyx_22041812_data_cache(
     if (1'h1) begin
       data_mem_data_io_data_read_MPORT_addr_pipe_0 <= io_cache_req_index;
     end
-    `ifndef SYNTHESIS
-    `ifdef PRINTF_COND
-      if (`PRINTF_COND) begin
-    `endif
-        if (_T & ~reset) begin
-          $fwrite(32'h80000002,"%x\n",io_data_read_data); // @[cache_single_port.scala 79:23]
-        end
-    `ifdef PRINTF_COND
-      end
-    `endif
-    `endif // SYNTHESIS
   end
 // Register and memory initialization
 `ifdef RANDOMIZE_GARBAGE_ASSIGN
@@ -7258,25 +7245,21 @@ module ysyx_22041812_Cache(
   wire [7:0] tag_mem_3_io_tag_read_visit; // @[cache_single_port.scala 107:45]
   wire [21:0] tag_mem_3_io_tag_read_tag; // @[cache_single_port.scala 107:45]
   wire  data_mem_0_clock; // @[cache_single_port.scala 108:46]
-  wire  data_mem_0_reset; // @[cache_single_port.scala 108:46]
   wire [5:0] data_mem_0_io_cache_req_index; // @[cache_single_port.scala 108:46]
   wire  data_mem_0_io_cache_req_we; // @[cache_single_port.scala 108:46]
   wire [127:0] data_mem_0_io_data_write_data; // @[cache_single_port.scala 108:46]
   wire [127:0] data_mem_0_io_data_read_data; // @[cache_single_port.scala 108:46]
   wire  data_mem_1_clock; // @[cache_single_port.scala 108:46]
-  wire  data_mem_1_reset; // @[cache_single_port.scala 108:46]
   wire [5:0] data_mem_1_io_cache_req_index; // @[cache_single_port.scala 108:46]
   wire  data_mem_1_io_cache_req_we; // @[cache_single_port.scala 108:46]
   wire [127:0] data_mem_1_io_data_write_data; // @[cache_single_port.scala 108:46]
   wire [127:0] data_mem_1_io_data_read_data; // @[cache_single_port.scala 108:46]
   wire  data_mem_2_clock; // @[cache_single_port.scala 108:46]
-  wire  data_mem_2_reset; // @[cache_single_port.scala 108:46]
   wire [5:0] data_mem_2_io_cache_req_index; // @[cache_single_port.scala 108:46]
   wire  data_mem_2_io_cache_req_we; // @[cache_single_port.scala 108:46]
   wire [127:0] data_mem_2_io_data_write_data; // @[cache_single_port.scala 108:46]
   wire [127:0] data_mem_2_io_data_read_data; // @[cache_single_port.scala 108:46]
   wire  data_mem_3_clock; // @[cache_single_port.scala 108:46]
-  wire  data_mem_3_reset; // @[cache_single_port.scala 108:46]
   wire [5:0] data_mem_3_io_cache_req_index; // @[cache_single_port.scala 108:46]
   wire  data_mem_3_io_cache_req_we; // @[cache_single_port.scala 108:46]
   wire [127:0] data_mem_3_io_data_write_data; // @[cache_single_port.scala 108:46]
@@ -8219,7 +8202,6 @@ module ysyx_22041812_Cache(
   );
   ysyx_22041812_data_cache data_mem_0 ( // @[cache_single_port.scala 108:46]
     .clock(data_mem_0_clock),
-    .reset(data_mem_0_reset),
     .io_cache_req_index(data_mem_0_io_cache_req_index),
     .io_cache_req_we(data_mem_0_io_cache_req_we),
     .io_data_write_data(data_mem_0_io_data_write_data),
@@ -8227,7 +8209,6 @@ module ysyx_22041812_Cache(
   );
   ysyx_22041812_data_cache data_mem_1 ( // @[cache_single_port.scala 108:46]
     .clock(data_mem_1_clock),
-    .reset(data_mem_1_reset),
     .io_cache_req_index(data_mem_1_io_cache_req_index),
     .io_cache_req_we(data_mem_1_io_cache_req_we),
     .io_data_write_data(data_mem_1_io_data_write_data),
@@ -8235,7 +8216,6 @@ module ysyx_22041812_Cache(
   );
   ysyx_22041812_data_cache data_mem_2 ( // @[cache_single_port.scala 108:46]
     .clock(data_mem_2_clock),
-    .reset(data_mem_2_reset),
     .io_cache_req_index(data_mem_2_io_cache_req_index),
     .io_cache_req_we(data_mem_2_io_cache_req_we),
     .io_data_write_data(data_mem_2_io_data_write_data),
@@ -8243,7 +8223,6 @@ module ysyx_22041812_Cache(
   );
   ysyx_22041812_data_cache data_mem_3 ( // @[cache_single_port.scala 108:46]
     .clock(data_mem_3_clock),
-    .reset(data_mem_3_reset),
     .io_cache_req_index(data_mem_3_io_cache_req_index),
     .io_cache_req_we(data_mem_3_io_cache_req_we),
     .io_data_write_data(data_mem_3_io_data_write_data),
@@ -8285,22 +8264,18 @@ module ysyx_22041812_Cache(
   assign tag_mem_3_io_tag_write_visit = 5'h0 == cache_state ? tag_mem_3_io_tag_read_visit : _GEN_1424; // @[cache_single_port.scala 205:28 150:41]
   assign tag_mem_3_io_tag_write_tag = 5'h0 == cache_state ? tag_mem_3_io_tag_read_tag : _GEN_1423; // @[cache_single_port.scala 205:28 150:41]
   assign data_mem_0_clock = clock;
-  assign data_mem_0_reset = reset;
   assign data_mem_0_io_cache_req_index = 5'h0 == cache_state ? io_cpu_request_addr[9:4] : _GEN_1427; // @[cache_single_port.scala 205:28 147:48]
   assign data_mem_0_io_cache_req_we = 5'h0 == cache_state ? 1'h0 : _GEN_1428; // @[cache_single_port.scala 205:28 149:45]
   assign data_mem_0_io_data_write_data = 5'h0 == cache_state ? data_mem_0_io_data_read_data : _GEN_1464; // @[cache_single_port.scala 205:28 151:43]
   assign data_mem_1_clock = clock;
-  assign data_mem_1_reset = reset;
   assign data_mem_1_io_cache_req_index = io_cpu_request_addr[9:4]; // @[cache_single_port.scala 147:70]
   assign data_mem_1_io_cache_req_we = 5'h0 == cache_state ? 1'h0 : _GEN_1430; // @[cache_single_port.scala 205:28 149:45]
   assign data_mem_1_io_data_write_data = 5'h0 == cache_state ? data_mem_1_io_data_read_data : _GEN_1465; // @[cache_single_port.scala 205:28 151:43]
   assign data_mem_2_clock = clock;
-  assign data_mem_2_reset = reset;
   assign data_mem_2_io_cache_req_index = io_cpu_request_addr[9:4]; // @[cache_single_port.scala 147:70]
   assign data_mem_2_io_cache_req_we = 5'h0 == cache_state ? 1'h0 : _GEN_1432; // @[cache_single_port.scala 205:28 149:45]
   assign data_mem_2_io_data_write_data = 5'h0 == cache_state ? data_mem_2_io_data_read_data : _GEN_1466; // @[cache_single_port.scala 205:28 151:43]
   assign data_mem_3_clock = clock;
-  assign data_mem_3_reset = reset;
   assign data_mem_3_io_cache_req_index = io_cpu_request_addr[9:4]; // @[cache_single_port.scala 147:70]
   assign data_mem_3_io_cache_req_we = 5'h0 == cache_state ? 1'h0 : _GEN_1434; // @[cache_single_port.scala 205:28 149:45]
   assign data_mem_3_io_data_write_data = 5'h0 == cache_state ? data_mem_3_io_data_read_data : _GEN_1467; // @[cache_single_port.scala 205:28 151:43]
@@ -8542,25 +8517,21 @@ module ysyx_22041812_Cache_1(
   wire [7:0] tag_mem_3_io_tag_read_visit; // @[cache_single_port.scala 107:45]
   wire [21:0] tag_mem_3_io_tag_read_tag; // @[cache_single_port.scala 107:45]
   wire  data_mem_0_clock; // @[cache_single_port.scala 108:46]
-  wire  data_mem_0_reset; // @[cache_single_port.scala 108:46]
   wire [5:0] data_mem_0_io_cache_req_index; // @[cache_single_port.scala 108:46]
   wire  data_mem_0_io_cache_req_we; // @[cache_single_port.scala 108:46]
   wire [127:0] data_mem_0_io_data_write_data; // @[cache_single_port.scala 108:46]
   wire [127:0] data_mem_0_io_data_read_data; // @[cache_single_port.scala 108:46]
   wire  data_mem_1_clock; // @[cache_single_port.scala 108:46]
-  wire  data_mem_1_reset; // @[cache_single_port.scala 108:46]
   wire [5:0] data_mem_1_io_cache_req_index; // @[cache_single_port.scala 108:46]
   wire  data_mem_1_io_cache_req_we; // @[cache_single_port.scala 108:46]
   wire [127:0] data_mem_1_io_data_write_data; // @[cache_single_port.scala 108:46]
   wire [127:0] data_mem_1_io_data_read_data; // @[cache_single_port.scala 108:46]
   wire  data_mem_2_clock; // @[cache_single_port.scala 108:46]
-  wire  data_mem_2_reset; // @[cache_single_port.scala 108:46]
   wire [5:0] data_mem_2_io_cache_req_index; // @[cache_single_port.scala 108:46]
   wire  data_mem_2_io_cache_req_we; // @[cache_single_port.scala 108:46]
   wire [127:0] data_mem_2_io_data_write_data; // @[cache_single_port.scala 108:46]
   wire [127:0] data_mem_2_io_data_read_data; // @[cache_single_port.scala 108:46]
   wire  data_mem_3_clock; // @[cache_single_port.scala 108:46]
-  wire  data_mem_3_reset; // @[cache_single_port.scala 108:46]
   wire [5:0] data_mem_3_io_cache_req_index; // @[cache_single_port.scala 108:46]
   wire  data_mem_3_io_cache_req_we; // @[cache_single_port.scala 108:46]
   wire [127:0] data_mem_3_io_data_write_data; // @[cache_single_port.scala 108:46]
@@ -10049,7 +10020,6 @@ module ysyx_22041812_Cache_1(
   );
   ysyx_22041812_data_cache data_mem_0 ( // @[cache_single_port.scala 108:46]
     .clock(data_mem_0_clock),
-    .reset(data_mem_0_reset),
     .io_cache_req_index(data_mem_0_io_cache_req_index),
     .io_cache_req_we(data_mem_0_io_cache_req_we),
     .io_data_write_data(data_mem_0_io_data_write_data),
@@ -10057,7 +10027,6 @@ module ysyx_22041812_Cache_1(
   );
   ysyx_22041812_data_cache data_mem_1 ( // @[cache_single_port.scala 108:46]
     .clock(data_mem_1_clock),
-    .reset(data_mem_1_reset),
     .io_cache_req_index(data_mem_1_io_cache_req_index),
     .io_cache_req_we(data_mem_1_io_cache_req_we),
     .io_data_write_data(data_mem_1_io_data_write_data),
@@ -10065,7 +10034,6 @@ module ysyx_22041812_Cache_1(
   );
   ysyx_22041812_data_cache data_mem_2 ( // @[cache_single_port.scala 108:46]
     .clock(data_mem_2_clock),
-    .reset(data_mem_2_reset),
     .io_cache_req_index(data_mem_2_io_cache_req_index),
     .io_cache_req_we(data_mem_2_io_cache_req_we),
     .io_data_write_data(data_mem_2_io_data_write_data),
@@ -10073,7 +10041,6 @@ module ysyx_22041812_Cache_1(
   );
   ysyx_22041812_data_cache data_mem_3 ( // @[cache_single_port.scala 108:46]
     .clock(data_mem_3_clock),
-    .reset(data_mem_3_reset),
     .io_cache_req_index(data_mem_3_io_cache_req_index),
     .io_cache_req_we(data_mem_3_io_cache_req_we),
     .io_data_write_data(data_mem_3_io_data_write_data),
@@ -10124,22 +10091,18 @@ module ysyx_22041812_Cache_1(
   assign tag_mem_3_io_tag_write_visit = 5'h0 == cache_state ? tag_mem_3_io_tag_read_visit : _GEN_1424; // @[cache_single_port.scala 205:28 150:41]
   assign tag_mem_3_io_tag_write_tag = 5'h0 == cache_state ? tag_mem_3_io_tag_read_tag : _GEN_1423; // @[cache_single_port.scala 205:28 150:41]
   assign data_mem_0_clock = clock;
-  assign data_mem_0_reset = reset;
   assign data_mem_0_io_cache_req_index = 5'h0 == cache_state ? io_cpu_request_addr[9:4] : _GEN_1427; // @[cache_single_port.scala 205:28 147:48]
   assign data_mem_0_io_cache_req_we = 5'h0 == cache_state ? 1'h0 : _GEN_1428; // @[cache_single_port.scala 205:28 149:45]
   assign data_mem_0_io_data_write_data = 5'h0 == cache_state ? data_mem_0_io_data_read_data : _GEN_1464; // @[cache_single_port.scala 205:28 151:43]
   assign data_mem_1_clock = clock;
-  assign data_mem_1_reset = reset;
   assign data_mem_1_io_cache_req_index = 5'h0 == cache_state ? io_cpu_request_addr[9:4] : _GEN_1429; // @[cache_single_port.scala 205:28 147:48]
   assign data_mem_1_io_cache_req_we = 5'h0 == cache_state ? 1'h0 : _GEN_1430; // @[cache_single_port.scala 205:28 149:45]
   assign data_mem_1_io_data_write_data = 5'h0 == cache_state ? data_mem_1_io_data_read_data : _GEN_1465; // @[cache_single_port.scala 205:28 151:43]
   assign data_mem_2_clock = clock;
-  assign data_mem_2_reset = reset;
   assign data_mem_2_io_cache_req_index = 5'h0 == cache_state ? io_cpu_request_addr[9:4] : _GEN_1431; // @[cache_single_port.scala 205:28 147:48]
   assign data_mem_2_io_cache_req_we = 5'h0 == cache_state ? 1'h0 : _GEN_1432; // @[cache_single_port.scala 205:28 149:45]
   assign data_mem_2_io_data_write_data = 5'h0 == cache_state ? data_mem_2_io_data_read_data : _GEN_1466; // @[cache_single_port.scala 205:28 151:43]
   assign data_mem_3_clock = clock;
-  assign data_mem_3_reset = reset;
   assign data_mem_3_io_cache_req_index = 5'h0 == cache_state ? io_cpu_request_addr[9:4] : _GEN_1433; // @[cache_single_port.scala 205:28 147:48]
   assign data_mem_3_io_cache_req_we = 5'h0 == cache_state ? 1'h0 : _GEN_1434; // @[cache_single_port.scala 205:28 149:45]
   assign data_mem_3_io_data_write_data = 5'h0 == cache_state ? data_mem_3_io_data_read_data : _GEN_1467; // @[cache_single_port.scala 205:28 151:43]

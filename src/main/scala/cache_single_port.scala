@@ -75,9 +75,9 @@ class data_cache extends Module{
 		//printf(p"${Hexadecimal(io.data_write.asUInt)}\n")
 	} 
 
-	when(!io.cache_req.we){
-		printf(p"${Hexadecimal(io.data_read.asUInt)}\n")
-	}
+//	when(!io.cache_req.we){
+//		printf(p"${Hexadecimal(io.data_read.asUInt)}\n")
+//	}
 }
 
 import CacheState._ 

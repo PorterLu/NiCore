@@ -4519,12 +4519,6 @@ circuit myCPU :
     when io.cache_req.we : @[cache_single_port.scala 73:30]
       write mport MPORT = data_mem[io.cache_req.index], clock
       MPORT.data <= io.data_write.data
-    node _T = eq(io.cache_req.we, UInt<1>("h0")) @[cache_single_port.scala 78:14]
-    when _T : @[cache_single_port.scala 78:31]
-      node _T_1 = asUInt(reset) @[cache_single_port.scala 79:23]
-      node _T_2 = eq(_T_1, UInt<1>("h0")) @[cache_single_port.scala 79:23]
-      when _T_2 : @[cache_single_port.scala 79:23]
-        printf(clock, UInt<1>("h1"), "%x\n", io.data_read.data) : printf @[cache_single_port.scala 79:23]
 
   module data_cache_1 :
     input clock : Clock
@@ -4543,12 +4537,6 @@ circuit myCPU :
     when io.cache_req.we : @[cache_single_port.scala 73:30]
       write mport MPORT = data_mem[io.cache_req.index], clock
       MPORT.data <= io.data_write.data
-    node _T = eq(io.cache_req.we, UInt<1>("h0")) @[cache_single_port.scala 78:14]
-    when _T : @[cache_single_port.scala 78:31]
-      node _T_1 = asUInt(reset) @[cache_single_port.scala 79:23]
-      node _T_2 = eq(_T_1, UInt<1>("h0")) @[cache_single_port.scala 79:23]
-      when _T_2 : @[cache_single_port.scala 79:23]
-        printf(clock, UInt<1>("h1"), "%x\n", io.data_read.data) : printf @[cache_single_port.scala 79:23]
 
   module data_cache_2 :
     input clock : Clock
@@ -4567,12 +4555,6 @@ circuit myCPU :
     when io.cache_req.we : @[cache_single_port.scala 73:30]
       write mport MPORT = data_mem[io.cache_req.index], clock
       MPORT.data <= io.data_write.data
-    node _T = eq(io.cache_req.we, UInt<1>("h0")) @[cache_single_port.scala 78:14]
-    when _T : @[cache_single_port.scala 78:31]
-      node _T_1 = asUInt(reset) @[cache_single_port.scala 79:23]
-      node _T_2 = eq(_T_1, UInt<1>("h0")) @[cache_single_port.scala 79:23]
-      when _T_2 : @[cache_single_port.scala 79:23]
-        printf(clock, UInt<1>("h1"), "%x\n", io.data_read.data) : printf @[cache_single_port.scala 79:23]
 
   module data_cache_3 :
     input clock : Clock
@@ -4591,12 +4573,6 @@ circuit myCPU :
     when io.cache_req.we : @[cache_single_port.scala 73:30]
       write mport MPORT = data_mem[io.cache_req.index], clock
       MPORT.data <= io.data_write.data
-    node _T = eq(io.cache_req.we, UInt<1>("h0")) @[cache_single_port.scala 78:14]
-    when _T : @[cache_single_port.scala 78:31]
-      node _T_1 = asUInt(reset) @[cache_single_port.scala 79:23]
-      node _T_2 = eq(_T_1, UInt<1>("h0")) @[cache_single_port.scala 79:23]
-      when _T_2 : @[cache_single_port.scala 79:23]
-        printf(clock, UInt<1>("h1"), "%x\n", io.data_read.data) : printf @[cache_single_port.scala 79:23]
 
   module Cache :
     input clock : Clock
@@ -6167,12 +6143,6 @@ circuit myCPU :
     when io.cache_req.we : @[cache_single_port.scala 73:30]
       write mport MPORT = data_mem[io.cache_req.index], clock
       MPORT.data <= io.data_write.data
-    node _T = eq(io.cache_req.we, UInt<1>("h0")) @[cache_single_port.scala 78:14]
-    when _T : @[cache_single_port.scala 78:31]
-      node _T_1 = asUInt(reset) @[cache_single_port.scala 79:23]
-      node _T_2 = eq(_T_1, UInt<1>("h0")) @[cache_single_port.scala 79:23]
-      when _T_2 : @[cache_single_port.scala 79:23]
-        printf(clock, UInt<1>("h1"), "%x\n", io.data_read.data) : printf @[cache_single_port.scala 79:23]
 
   module data_cache_5 :
     input clock : Clock
@@ -6191,12 +6161,6 @@ circuit myCPU :
     when io.cache_req.we : @[cache_single_port.scala 73:30]
       write mport MPORT = data_mem[io.cache_req.index], clock
       MPORT.data <= io.data_write.data
-    node _T = eq(io.cache_req.we, UInt<1>("h0")) @[cache_single_port.scala 78:14]
-    when _T : @[cache_single_port.scala 78:31]
-      node _T_1 = asUInt(reset) @[cache_single_port.scala 79:23]
-      node _T_2 = eq(_T_1, UInt<1>("h0")) @[cache_single_port.scala 79:23]
-      when _T_2 : @[cache_single_port.scala 79:23]
-        printf(clock, UInt<1>("h1"), "%x\n", io.data_read.data) : printf @[cache_single_port.scala 79:23]
 
   module data_cache_6 :
     input clock : Clock
@@ -6215,12 +6179,6 @@ circuit myCPU :
     when io.cache_req.we : @[cache_single_port.scala 73:30]
       write mport MPORT = data_mem[io.cache_req.index], clock
       MPORT.data <= io.data_write.data
-    node _T = eq(io.cache_req.we, UInt<1>("h0")) @[cache_single_port.scala 78:14]
-    when _T : @[cache_single_port.scala 78:31]
-      node _T_1 = asUInt(reset) @[cache_single_port.scala 79:23]
-      node _T_2 = eq(_T_1, UInt<1>("h0")) @[cache_single_port.scala 79:23]
-      when _T_2 : @[cache_single_port.scala 79:23]
-        printf(clock, UInt<1>("h1"), "%x\n", io.data_read.data) : printf @[cache_single_port.scala 79:23]
 
   module data_cache_7 :
     input clock : Clock
@@ -6239,12 +6197,6 @@ circuit myCPU :
     when io.cache_req.we : @[cache_single_port.scala 73:30]
       write mport MPORT = data_mem[io.cache_req.index], clock
       MPORT.data <= io.data_write.data
-    node _T = eq(io.cache_req.we, UInt<1>("h0")) @[cache_single_port.scala 78:14]
-    when _T : @[cache_single_port.scala 78:31]
-      node _T_1 = asUInt(reset) @[cache_single_port.scala 79:23]
-      node _T_2 = eq(_T_1, UInt<1>("h0")) @[cache_single_port.scala 79:23]
-      when _T_2 : @[cache_single_port.scala 79:23]
-        printf(clock, UInt<1>("h1"), "%x\n", io.data_read.data) : printf @[cache_single_port.scala 79:23]
 
   module Cache_1 :
     input clock : Clock
