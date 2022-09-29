@@ -38,7 +38,7 @@ class CPU_Response extends Bundle{
 
 object CacheState extends ChiselEnum{
 	val sIdle, sUnCacheReadAddr, sUnCacheWriteAddr, sUnCacheReadData, sUnCacheWriteData, sUnCacheWriteAck, 
-	sMatch, sWriteback, sRefill, sReadAddr, sWriteAddr, sWriteAck, sWait_a_cycle_r, sWait_a_cycle_w, 
+	sMatch, sWriteback, sRefill, sReadAddr, sWriteAddr, sWriteAck, sWait_a_cycle_r, sWait_a_cycle_w, sWait_a_cycle_refill, 
 	sFlush, sFlushMatch, sFlushWrite, sFlushAddr,sFlushAck = Value
 }
 
@@ -82,9 +82,7 @@ class data_cache extends Module{
 	io.sram_wmask := io.cache_req.wmask
 	io.sram_wdata := io.data_write.data
 	io.data_read := io.sram_rdata.asTypeOf(io.data_read)
-	when(io.cache_req.we){
-		printf(p"${Hexadecimal(io.data_write.data)}; ${Hexadecimal(io.cache_req.wmask)}\n")
-	}
+
 }
 
 /*
@@ -195,6 +193,14 @@ class Cache(cache_name: String) extends Module{
 	io.sram3_wdata := data_mem(3).io.sram_wdata
 	data_mem(3).io.sram_rdata := io.sram3_rdata
 
+	/*when(!cache_type){
+		for(i <- 0 until 4){
+			when(!data_mem(i).io.sram_wen){
+				printf(p"${Hexadecimal(data_mem(i).io.sram_wdata)}; ${Hexadecimal(data_mem(i).io.sram_wmask)}\n")
+			}
+		}
+	}*/
+
 	val align_addr = Cat(io.cpu_request.addr(addr_len - 1, log2Ceil(bitWidth/8)), 0.U((log2Ceil(bitWidth/8)).W))
 	cpu_request_addr_reg := align_addr
 	cpu_request_addr_reg_origin := io.cpu_request.addr
@@ -265,8 +271,8 @@ class Cache(cache_name: String) extends Module{
 
 	flush_loop_enable := false.B
 	index_in_line_enable := false.B
-
 	val tmp_response_data = RegInit(0.U(64.W))
+
 	switch(cache_state){
 		is(sIdle){
 			when(io.flush && io.cpu_request.valid){
@@ -481,6 +487,7 @@ class Cache(cache_name: String) extends Module{
 											is_match(2) -> VecInit.tabulate(2){k => data_mem(2).io.data_read.data((k+1)*word_len - 1, k*word_len)}(cpu_request_addr_reg(blockSize_len-1, log2Ceil(word_len/8))),
 										)
 									)
+
 					next_state := sWait_a_cycle_r
 				}
 
@@ -515,8 +522,12 @@ class Cache(cache_name: String) extends Module{
 							//result := part.reduce(_|_)
 							//cache_data := VecInit.tabulate(2){k => data_mem(i).io.data_read.data((k+1)*word_len - 1, k*word_len)}
 							cache_data := VecInit.tabulate(2){k => 0.U(64.W)}
-							//cache_data(cpu_request_addr_reg(blockSize_len - 1, log2Ceil(word_len/8))) := result
 							cache_data(cpu_request_addr_reg(blockSize_len - 1, log2Ceil(word_len/8))) := cpu_request_data
+
+							//cache_data(cpu_request_addr_reg(blockSize_len - 1, log2Ceil(word_len/8))) := result
+//							when(cpu_request_addr_reg >= "h80000000".U){
+//								printf(p"write data:${Hexadecimal(cpu_request_data)}\n")
+//							}
 							data_mem(i).io.data_write.data := cache_data.asUInt
 							wmask := VecInit.tabulate(2){k => 0.U(64.W)}
 							wmask(cpu_request_addr_reg(blockSize_len - 1, log2Ceil(word_len/8))) := Cat(Fill(8, cpu_request_mask(7)), Fill(8, cpu_request_mask(6)), Fill(8, cpu_request_mask(5)), Fill(8, cpu_request_mask(4)),
@@ -602,8 +613,9 @@ class Cache(cache_name: String) extends Module{
 						cache_data(index) := io.mem_io.r.bits.data
 						wmask(index) := "hffffffffffffffff".U
 						data_mem(i).io.data_write.data := cache_data.asUInt
-						data_mem(i).io.cache_req.wmask := ~(wmask.asUInt)
+						data_mem(i).io.cache_req.wmask := ~wmask.asUInt
 						data_mem(i).io.cache_req.we := true.B
+//						printf(p"Refill wmask:${Hexadecimal(~wmask.asUInt)}; write_data:${Hexadecimal(cache_data.asUInt)}\n")
 					}
 				}
 			}
@@ -611,9 +623,12 @@ class Cache(cache_name: String) extends Module{
 			fill_block_en := io.mem_io.r.valid
 			
 			when(io.mem_io.r.bits.last){
-				next_state := sMatch
+				next_state := sWait_a_cycle_refill
 				index := 0.U
 			}
+		}
+		is(sWait_a_cycle_refill){
+			next_state := sMatch
 		}
 		is(sWriteAddr){
 			io.mem_io.aw.valid := true.B //&& cpu_request_valid 
@@ -635,6 +650,7 @@ class Cache(cache_name: String) extends Module{
 				when(i.U === replace){
 					cache_data := VecInit.tabulate(2){k => data_mem(i).io.data_read.data((k+1)*word_len - 1, k*word_len)}
 					io.mem_io.w.bits.data := cache_data(index)
+//					printf(p"writeback:${Hexadecimal(cache_data(index))};\n")
 				}
 			}
 			when(last){

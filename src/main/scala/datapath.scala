@@ -361,7 +361,7 @@ class Datapath extends Module{
 		fd_pipe_reg.enable := true.B
 	}
 
-	//printf(p"de_code_stage:\npc:${Hexadecimal(fd_pipe_reg.pc)}; inst:${Hexadecimal(fd_pipe_reg.inst)};\n")
+	//printf(p"fd_stage:\npc:${Hexadecimal(fd_pipe_reg.pc)}; inst:${Hexadecimal(fd_pipe_reg.inst)};\n")
 	/***** Decode ******/
 	//control模块输入指令
 	io.ctrl.inst := fd_pipe_reg.inst
@@ -468,7 +468,7 @@ class Datapath extends Module{
 		de_pipe_reg.enable := fd_pipe_reg.enable
 	}
 	
-	/*printf(p"execute_stage:\npc:${Hexadecimal(de_pipe_reg.pc)}; inst:${Hexadecimal(de_pipe_reg.inst)}; alu_op:${de_pipe_reg.alu_op}; csr_write_op:${de_pipe_reg.csr_write_op};" +
+	/*printf(p"de_stage:\npc:${Hexadecimal(de_pipe_reg.pc)}; inst:${Hexadecimal(de_pipe_reg.inst)}; alu_op:${de_pipe_reg.alu_op}; csr_write_op:${de_pipe_reg.csr_write_op};" +
   p"ld_type:${de_pipe_reg.ld_type}; st_type:${de_pipe_reg.st_type}; br_type:${de_pipe_reg.br_type}\n")*/
 	/****** Execute *****/
 	csr.io.de_enable := de_pipe_reg.enable
@@ -688,13 +688,18 @@ class Datapath extends Module{
 		em_pipe_reg.enable := de_pipe_reg.enable
 	}
 	
-	//printf(p"mem_stage:\n inst: ${Hexadecimal(em_pipe_reg.inst)}; pc:${Hexadecimal(em_pipe_reg.pc)}; alu_out:${Hexadecimal{em_pipe_reg.pc}}; ld_type:${em_pipe_reg.ld_type}; st_type:${em_pipe_reg.st_type}\n")
+	//printf(p"em_stage:\n inst: ${Hexadecimal(em_pipe_reg.inst)}; pc:${Hexadecimal(em_pipe_reg.pc)}; alu_out:${Hexadecimal{em_pipe_reg.pc}}; ld_type:${em_pipe_reg.ld_type}; st_type:${em_pipe_reg.st_type}\n")
 	/****** Mem *********/
 	when(!stall){
 		data_cache_tag := false.B
 	}.elsewhen(io.dcache.cpu_request.valid && io.dcache.cpu_response.ready){
 		data_cache_tag := true.B
 		data_cache_response_data := io.dcache.cpu_response.data
+		when(em_pipe_reg.ld_type === 4.U || em_pipe_reg.ld_type === 2.U || em_pipe_reg.st_type === 2.U){
+			//printf(p"addr:${Hexadecimal(io.dcache.cpu_request.addr)}; data:${Hexadecimal(data_cache_response_data)}\n")
+	//		printf(p"em_stage:\n inst: ${Hexadecimal(em_pipe_reg.inst)}; pc:${Hexadecimal(em_pipe_reg.pc)}; alu_out:${Hexadecimal{em_pipe_reg.alu_out}}; ld_type:${em_pipe_reg.ld_type}; st_type:${em_pipe_reg.st_type};  write_data:${Hexadecimal(em_pipe_reg.st_data)};" +
+  //p"data:${Hexadecimal(io.dcache.cpu_response.data)}\n")
+		}
 	} 
 
 	clint.io.addr := em_pipe_reg.alu_out
@@ -787,7 +792,7 @@ class Datapath extends Module{
 		mw_pipe_reg.enable := em_pipe_reg.enable
 	}
 
-	//printf(p"writeback_stage:\nload_data:${Hexadecimal(load_data_ext)}; pc:${Hexadecimal(mw_pipe_reg.pc)}; inst:${Hexadecimal(mw_pipe_reg.inst)}; csr_op:${Hexadecimal(mw_pipe_reg.csr_write_op)}\n\n\n")
+	//printf(p"mw_stage:\nload_data:${Hexadecimal(load_data_ext)}; pc:${Hexadecimal(mw_pipe_reg.pc)}; inst:${Hexadecimal(mw_pipe_reg.inst)}; csr_op:${Hexadecimal(mw_pipe_reg.csr_write_op)}\n\n\n")
 	/****** Writeback ***/
 	csr.io.mw_enable := mw_pipe_reg.enable
 	csr.io.retired := mw_pipe_reg.inst =/= Instructions.NOP			//指令如果不是nop，则指令计数器要进行加1
