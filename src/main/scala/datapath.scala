@@ -325,7 +325,8 @@ class Datapath extends Module{
 		started := false.B
 	}
 
-	val next_pc = MuxCase(
+	val next_pc = WireInit(0.U(64.W))
+	next_pc := MuxCase(
 		pc + 4.U,
 		IndexedSeq(
 		(!started && stall) -> pc,	

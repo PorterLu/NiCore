@@ -109,7 +109,7 @@ class CSR extends Module{
 
 		//val inst_mode = Input(UInt(2.W))
 
-		val excValue = Output(UInt(64.W))
+		//val excValue = Output(UInt(64.W))
 		val int_timer_clear = Input(Bool())
 		val int_soft_clear = Input(Bool())
 		val int_timer = Input(Bool())		//时钟中断信号
@@ -293,7 +293,7 @@ class CSR extends Module{
 	val cause = Mux(hasInt, Cat(true.B, intCause),
 							Cat(false.B, excCause))
 	
-	io.excValue := Mux((excCause === EXC_LOAD_ADDR) || (excCause === EXC_STORE_ADDR) ,io.alu_out,
+	val excValue = Mux((excCause === EXC_LOAD_ADDR) || (excCause === EXC_STORE_ADDR) ,io.alu_out,
 							Mux((excCause === EXC_BRK_POINT) || (excCause === EXC_INST_ADDR), io.excPC,
 									Mux(excCause === EXC_ILL_INST, io.inst, 0.U))
 						) 
@@ -347,6 +347,8 @@ class CSR extends Module{
 			io.flush_mask := "b0111".U
 		}.elsewhen(hasInt && hasExc){
 			io.flush_mask := "b1111".U
+		}.elsewhen(io.inst === Instructions.ECALL){
+			io.flush.mask := "b0111".U
 		}.elsewhen(hasExc){
 			io.flush_mask := "b1111".U
 		}.elsewhen(io.isSret || io.isMret){
@@ -381,7 +383,7 @@ class CSR extends Module{
 		}.elsewhen(handIntS){
 			sepc 	<= Mux(hasExc, io.excPC,  io.de_pipe_reg_pc)	//考虑跳转指令时发生中断的情况
 			scause 	<= cause
-			stval 	<= io.excValue
+			stval 	<= excValue
 			mstatus.spie := mstatus.sie					
 			mstatus.sie := false.B
 			mstatus.spp := mode(0)
@@ -391,7 +393,7 @@ class CSR extends Module{
 		}.elsewhen(hasInt){
 			mepc 	<=  Mux(hasExc, io.excPC,  io.de_pipe_reg_pc)
 			mcause  <= cause
-			mtval 	<= io.excValue
+			mtval 	<= excValue
 			mstatus.mpie := mstatus.mie
 			mstatus.mie := false.B
 			mstatus.mpp := mode
@@ -404,7 +406,7 @@ class CSR extends Module{
 		}.elsewhen(hasExcS){
 			sepc	<= io.excPC
 			scause 	<= cause
-			stval 	<= io.excValue
+			stval 	<= excValue
 			mstatus.spie := mstatus.sie
 			mstatus.sie := false.B
 			mstatus.spp := mode(0)
@@ -416,7 +418,7 @@ class CSR extends Module{
 		}.elsewhen(hasExc){
 			mepc <= io.excPC
 			mcause <= cause
-			mtval <= io.excValue
+			mtval <= excValue
 			mstatus.mpie := mstatus.mie
 			mstatus.mie := false.B
 			mstatus.mpp := mode
