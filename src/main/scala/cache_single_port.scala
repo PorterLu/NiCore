@@ -202,6 +202,9 @@ class Cache(cache_name: String) extends Module{
 	//	printf(p"cpu_request_data:${Hexadecimal(cpu_request_data)}\n")
 	//}
 
+	val write_addr_over = RegInit(false.B)
+	val write_data_over = RegInit(false.B)
+
 	switch(cache_state){
 		is(sIdle){
 			when(io.flush && io.cpu_request.valid){

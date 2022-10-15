@@ -244,7 +244,7 @@ class Datapath extends Module{
 	val alu = Module(new AluSimple(64))					
 	val immGen = Module(new ImmGenWire)
 	val brCond = Module(new BrCondSimple(64))			//专门用于跳转判断
-	val regFile = Module(new RegisterFile(2))			//有35个读口的寄存器文件
+	val regFile = Module(new RegisterFile(35))			//有35个读口的寄存器文件
 	val multiplier = Module(new Multiplier)
 	val divider = Module(new Divider)
 	val started = RegInit(true.B)
@@ -261,7 +261,7 @@ class Datapath extends Module{
 
 	val csr = Module(new CSR)							//csr寄存器文件，同时可以用于特权判断，中断和异常处理
 	val jump_addr = Wire(UInt(64.W))					//要跳转的地址
-	//val gpr_ptr = Module(new gpr_ptr)					//用于向外输出寄存器信息，用于debug
+	val gpr_ptr = Module(new gpr_ptr)					//用于向外输出寄存器信息，用于debug
 	val clint  = Module(new clint())
 	val br_flush = WireInit(false.B)
 	val jmp_flush = WireInit(false.B)
@@ -290,11 +290,11 @@ class Datapath extends Module{
 	io.stall := stall
 
 	//2号多余，寄存器文件依次读出，输出到gpr_ptr，最后在sim的过程输出寄存器信息用于调试
-	//regFile.io.raddr(2) := 0.U
-	/*for(i <- 3 until 35){
+	regFile.io.raddr(2) := 0.U
+	for(i <- 3 until 35){
 		regFile.io.raddr(i) := (i-3).U
 		gpr_ptr.io.regfile(i-3) := regFile.io.rdata(i);
-	}*/
+	}
 
 	//gpr_ptr向外同步的时机依靠时钟，所以要向外输出时钟
 	//gpr_ptr.io.clock := clock
@@ -320,7 +320,7 @@ class Datapath extends Module{
 
 	csr_atomic := csr_atomic_flush.orR
 	//下面next_pc默认是pc+4
-	val pc = RegInit("h30000000".U(64.W) - 4.U)
+	val pc = RegInit("h80000000".U(64.W) - 4.U)
 	when(started){
 		started := false.B
 	}
@@ -812,11 +812,11 @@ class Datapath extends Module{
 
 class myCPU extends Module{
 	val io = IO(new Bundle{
-		/*val pc_debug = Output(UInt(64.W))
+		val pc_debug = Output(UInt(64.W))
 		val inst = Output(UInt(32.W))
 		val commit_inst = Output(UInt(32.W))
 		val start = Output(Bool())
-		val stall = Output(Bool())*/
+		val stall = Output(Bool())
 		
 		val interrupt = Input(Bool())
 
@@ -1001,11 +1001,11 @@ class myCPU extends Module{
 	arb.io.axi_out.r.bits.last := io.master_rlast
 	arb.io.axi_out.r.bits.id := io.master_rid 
 
-	/*io.inst := datapath.io.inst
+	io.inst := datapath.io.inst
 	io.commit_inst := datapath.io.commit_inst
 	io.pc_debug := datapath.io.pc
 	io.start := datapath.io.start
-	io.stall := datapath.io.stall*/
+	io.stall := datapath.io.stall
 
 	//slave signals suspension
 	io.slave_awready := false.B 
