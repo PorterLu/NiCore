@@ -348,7 +348,7 @@ class CSR extends Module{
 		}.elsewhen(hasInt && hasExc){
 			io.flush_mask := "b1111".U
 		}.elsewhen(io.inst === Instructions.ECALL){
-			io.flush.mask := "b0111".U
+			io.flush_mask := "b0111".U
 		}.elsewhen(hasExc){
 			io.flush_mask := "b1111".U
 		}.elsewhen(io.isSret || io.isMret){

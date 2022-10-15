@@ -25,8 +25,8 @@ class CacheArbiter extends Module{
 
 	//Write Address
 	io.axi_out.aw.bits := io.dcache.aw.bits								//只有dcache会进行写操作
-	io.axi_out.aw.valid := io.dcache.aw.valid && state === sDAddrWrite	//在sIdle状态收到dcache的写地址通道的valid，那么axi_out就会向外发出写地址通道的请求
-	io.dcache.aw.ready := io.axi_out.aw.ready && state === sDAddrWrite	//dcache受到写地址通道ready响应来自axi写地址通道的ready，因为只有dcache能进行写
+	io.axi_out.aw.valid := io.dcache.aw.valid && state === sDCacheWrite	//在sIdle状态收到dcache的写地址通道的valid，那么axi_out就会向外发出写地址通道的请求
+	io.dcache.aw.ready := io.axi_out.aw.ready && state === sDCacheWrite	//dcache受到写地址通道ready响应来自axi写地址通道的ready，因为只有dcache能进行写
 	io.icache.aw := DontCare											//icache不需要进行写
 
 	//Write Data
@@ -63,10 +63,12 @@ class CacheArbiter extends Module{
 
 	//printf(p"addr:${Hexadecimal(io.icache.ar.bits.addr)}; id:${io.icache.ar.bits.id}; len:${io.icache.ar.bits.len}; size:${io.icache.ar.bits.size}; burst:${io.icache.ar.bits.burst}\n")
 	//axi状态机，根据地址通道上的ready-valid握手进行判断要转向哪个事务, 如何抬高信号的时间
+	val write_addr_reg = RegInit(false.B)
+	val write_data_reg = RegInit(false.B)
 	switch(state){
 		is(sIdle){
-			when(io.dcache.aw.valid){
-				state := sDAddrWrite
+			when(io.dcache.aw.valid || io.dcache.w.valid){
+				state := sDCacheWrite
 //				io.axi_out.aw.valid := true.B
 			}.elsewhen(io.dcache.ar.valid){
 				state := sDAddrRead
@@ -93,16 +95,15 @@ class CacheArbiter extends Module{
 			when(io.dcache.ar.fire){
 				state := sDCacheRead
 			}
-		}
+		}/*
 		is(sDAddrWrite){
 			when(io.dcache.aw.fire){
 				state := sDCacheWrite
 			}
-		}
+		}*/
 		is(sICacheRead){
 			when(io.axi_out.r.fire && io.axi_out.r.bits.last){
 				state := sIdle
-//				printf("Read over\n\n\n\n")
 			}
 		}
 		is(sDCacheRead){
@@ -111,8 +112,20 @@ class CacheArbiter extends Module{
 			}
 		}
 		is(sDCacheWrite){
+
+			when(io.dcache.aw.fire){
+				write_addr_reg := true.B
+			}
+
 			when(io.dcache.w.fire && io.dcache.w.bits.last){
+				//state := sDCacheAck
+				write_data_reg := true.B
+			}
+
+			when(write_addr_reg && write_data_reg){
 				state := sDCacheAck
+				write_addr_reg := false.B 
+				write_data_reg := false.B
 			}
 		}
 		is(sDCacheAck){

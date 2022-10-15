@@ -273,6 +273,9 @@ class Cache(cache_name: String) extends Module{
 	index_in_line_enable := false.B
 	val tmp_response_data = RegInit(0.U(64.W))
 
+	val write_addr_reg = RegInit(false.B)
+	val write_data_reg = RegInit(false.B)
+
 	switch(cache_state){
 		is(sIdle){
 			when(io.flush && io.cpu_request.valid){
@@ -284,7 +287,7 @@ class Cache(cache_name: String) extends Module{
 				next_state := sMatch
 			}.elsewhen(io.cpu_request.valid){
 				when(io.cpu_request.rw){
-					next_state := sUnCacheWriteAddr
+					next_state := sUnCacheWriteData
 				}.otherwise{
 					next_state := sUnCacheReadAddr
 				}
@@ -318,7 +321,7 @@ class Cache(cache_name: String) extends Module{
 				for(i <- 0 until nWays){
 					when(i.U === index_in_line){
 						when(is_match(i)){
-							next_state := sFlushAddr
+							next_state := sFlushWrite
 							writeback_addr := Cat(tag_mem(i).io.tag_read.tag, flush_loop, 0.U(4.W))
 						}.elsewhen(!(index_in_line === (nWays - 1).U)){
 							next_state := sFlushMatch
@@ -354,6 +357,8 @@ class Cache(cache_name: String) extends Module{
 				}
 			}
 		}
+		is(sFlushWrite){
+			/*
 		is(sFlushAddr){
 			for(i <- 0 until nWays){
 				when(i.U === index_in_line){
@@ -369,28 +374,52 @@ class Cache(cache_name: String) extends Module{
 			when(io.mem_io.aw.ready){
 				next_state := sFlushWrite
 			}
-		}
-		is(sFlushWrite){
-			for(i <- 0 until nWays){
-				when(i.U === index_in_line){
-					data_mem(i).io.cache_req.index := flush_loop
-					data_mem(i).io.cache_req.we := false.B
-				}
-			}
-
+		}*/
 			next_state := sFlushWrite
-			fill_block_en := io.mem_io.w.ready
-			io.mem_io.w.bits.strb := "b11111111".U
-			io.mem_io.w.valid := true.B
-			for(i <- 0 until nWays){
-				when(i.U === index_in_line){
-					cache_data := VecInit.tabulate(2){k => data_mem(i).io.data_read.data((k+1)*word_len - 1, k*word_len)}
-					io.mem_io.w.bits.data := cache_data(index)
+			when(!write_addr_reg){
+				for(i <- 0 until nWays){
+					when(i.U === index_in_line){
+						data_mem(i).io.cache_req.index := flush_loop
+						data_mem(i).io.cache_req.we := false.B 
+					}
+				}
+
+				io.mem_io.aw.valid := true.B 
+				io.mem_io.aw.bits.len := 1.U 
+				io.mem_io.aw.bits.addr := writeback_addr
+			}
+
+			when(!write_data_reg){
+				for(i <- 0 until nWays){
+					when(i.U === index_in_line){
+						data_mem(i).io.cache_req.index := flush_loop
+						data_mem(i).io.cache_req.we := false.B
+					}
+				}
+
+				fill_block_en := io.mem_io.w.ready
+				io.mem_io.w.bits.strb := "b11111111".U
+				io.mem_io.w.valid := true.B
+				for(i <- 0 until nWays){
+					when(i.U === index_in_line){
+						cache_data := VecInit.tabulate(2){k => data_mem(i).io.data_read.data((k+1)*word_len - 1, k*word_len)}
+						io.mem_io.w.bits.data := cache_data(index)
+					}
 				}
 			}
 
-			when(last){
+			when(io.mem_io.aw.ready){
+				write_addr_reg := true.B
+			}
+
+			when(io.mem_io.w.ready && last){
+				write_data_reg := true.B
+			}
+
+			when(write_addr_reg && last){
 				next_state := sFlushAck
+				write_addr_reg := false.B
+				write_data_reg := false.B
 				index := 0.U
 			}
 		}
@@ -424,20 +453,7 @@ class Cache(cache_name: String) extends Module{
 				next_state := sIdle
 			}*/
 		}
-		is(sUnCacheWriteAddr){
-			io.mem_io.aw.valid := true.B //&& cpu_request_valid
-			io.mem_io.aw.bits.len := 0.U
-			io.mem_io.aw.bits.size := cpu_request_accessType
-			io.mem_io.aw.bits.addr := cpu_request_addr_reg_origin
-			next_state := sUnCacheWriteAddr
-			when(io.mem_io.aw.ready){
-				next_state := sUnCacheWriteData
-			}/*.elsewhen(!cpu_request_valid){
-				next_state := sIdle
-			}*/
-		}
 		is(sUnCacheReadData){
-
 			io.cpu_response.data := io.mem_io.r.bits.data
 			io.mem_io.r.ready := true.B 
 			when(io.mem_io.r.valid){
@@ -448,14 +464,46 @@ class Cache(cache_name: String) extends Module{
 			}
 		}
 		is(sUnCacheWriteData){
-			io.mem_io.w.valid := true.B 
-			io.mem_io.w.bits.last := true.B 
-			io.mem_io.w.bits.data := cpu_request_data
-			io.mem_io.w.bits.strb := cpu_request_mask
+			/*
+			is(sUnCacheWriteAddr){
+				io.mem_io.aw.valid := true.B //&& cpu_request_valid
+				io.mem_io.aw.bits.len := 0.U
+				io.mem_io.aw.bits.size := cpu_request_accessType
+				io.mem_io.aw.bits.addr := cpu_request_addr_reg_origin
+				next_state := sUnCacheWriteAddr
+				when(io.mem_io.aw.ready){
+					next_state := sUnCacheWriteData
+				}/*.elsewhen(!cpu_request_valid){
+					next_state := sIdle
+				}*/
+			}*/
+			next_state := sUnCacheWriteData
+			when(!write_addr_reg){
+				io.mem_io.aw.valid := true.B 
+				io.mem_io.aw.bits.len := 0.U 
+				io.mem_io.aw.bits.size := cpu_request_accessType
+				io.mem_io.aw.bits.addr := cpu_request_addr_reg_origin
+			}
+
+			when(io.mem_io.aw.ready){
+				write_addr_reg := true.B 
+			}
+
+			when(!write_data_reg){
+				io.mem_io.w.valid := true.B 
+				io.mem_io.w.bits.last := true.B 
+				io.mem_io.w.bits.data := cpu_request_data
+				io.mem_io.w.bits.strb := cpu_request_mask
+			}
+
 			when(io.mem_io.w.ready){
+				write_data_reg := true.B
+			}
+
+			when(write_addr_reg && write_data_reg){
 				next_state := sUnCacheWriteAck
-			}.otherwise{
-				next_state := sUnCacheWriteData
+				write_addr_reg := false.B 
+				write_data_reg := false.B
 			}
 		}
 		is(sUnCacheWriteAck){
@@ -564,7 +612,7 @@ class Cache(cache_name: String) extends Module{
 							next_state := sReadAddr
 						}.otherwise{
 							writeback_addr := Cat(tag_mem(i).io.tag_read.tag, cpu_request_addr_index, 0.U(blockSize_len.W))
-							next_state := sWriteAddr
+							next_state := sWriteback
 						}
 					}
 				}
@@ -630,31 +678,52 @@ class Cache(cache_name: String) extends Module{
 		is(sWait_a_cycle_refill){
 			next_state := sMatch
 		}
-		is(sWriteAddr){
-			io.mem_io.aw.valid := true.B //&& cpu_request_valid 
-			io.mem_io.aw.bits.len := 1.U 
-			io.mem_io.aw.bits.addr := writeback_addr
-			next_state := sWriteAddr
-			when(io.mem_io.aw.ready){
-				next_state := sWriteback
-			}/*.elsewhen(!cpu_request_valid){
-				next_state := sIdle
-			}*/
-		}
 		is(sWriteback){
+			/*
+			is(sWriteAddr){
+				io.mem_io.aw.valid := true.B //&& cpu_request_valid 
+				io.mem_io.aw.bits.len := 1.U 
+				io.mem_io.aw.bits.addr := writeback_addr
+				next_state := sWriteAddr
+				when(io.mem_io.aw.ready){
+					next_state := sWriteback
+				}/*.elsewhen(!cpu_request_valid){
+					next_state := sIdle
+				}*/
+			}*/
 			next_state := sWriteback
-			fill_block_en := io.mem_io.w.ready
-			io.mem_io.w.valid := true.B  
-			io.mem_io.w.bits.strb := "b11111111".U
-			for(i <- 0 until nWays){
-				when(i.U === replace){
-					cache_data := VecInit.tabulate(2){k => data_mem(i).io.data_read.data((k+1)*word_len - 1, k*word_len)}
-					io.mem_io.w.bits.data := cache_data(index)
-//					printf(p"writeback:${Hexadecimal(cache_data(index))};\n")
+
+			when(!write_addr_reg){
+				io.mem_io.aw.valid := true.B 
+				io.mem_io.aw.bits.len := 1.U 
+				io.mem_io.aw.bits.addr := writeback_addr
+			}
+
+			when(io.mem_io.aw.ready){
+				write_addr_reg := true.B
+			}
+
+			when(!write_data_reg){
+				fill_block_en := io.mem_io.w.ready
+				io.mem_io.w.valid := true.B  
+				io.mem_io.w.bits.strb := "b11111111".U
+				for(i <- 0 until nWays){
+					when(i.U === replace){
+						cache_data := VecInit.tabulate(2){k => data_mem(i).io.data_read.data((k+1)*word_len - 1, k*word_len)}
+						io.mem_io.w.bits.data := cache_data(index)
+	//					printf(p"writeback:${Hexadecimal(cache_data(index))};\n")
+					}
 				}
 			}
-			when(last){
+
+			when(io.mem_io.w.ready && last){
+				write_data_reg := true.B
+			}
+
+			when(write_addr_reg && write_data_reg){
 				next_state := sWriteAck
+				write_data_reg := false.B
+				write_addr_reg := false.B
 				index := 0.U
 			}
 		}
