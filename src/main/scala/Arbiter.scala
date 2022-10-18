@@ -65,8 +65,11 @@ class CacheArbiter extends Module{
 	//axi状态机，根据地址通道上的ready-valid握手进行判断要转向哪个事务, 如何抬高信号的时间
 	val write_addr_reg = RegInit(false.B)
 	val write_data_reg = RegInit(false.B)
+	//val next_state = WireInit(sIdle)
+	//state := next_state
 	switch(state){
 		is(sIdle){
+			//next_state := sIdle
 			when(io.dcache.aw.valid || io.dcache.w.valid){
 				state := sDCacheWrite
 //				io.axi_out.aw.valid := true.B
@@ -87,32 +90,37 @@ class CacheArbiter extends Module{
 			}*/
 		}
 		is(sIAddrRead){
+			//next_state := sIAddrRead
 			when(io.icache.ar.fire){
 				state := sICacheRead
 			}
 		}
 		is(sDAddrRead){
+			//next_state := sDAddrRead
 			when(io.dcache.ar.fire){
 				state := sDCacheRead
 			}
-		}/*
-		is(sDAddrWrite){
-			when(io.dcache.aw.fire){
-				state := sDCacheWrite
-			}
-		}*/
+		}
 		is(sICacheRead){
+			//state := sICacheRead
 			when(io.axi_out.r.fire && io.axi_out.r.bits.last){
 				state := sIdle
 			}
 		}
 		is(sDCacheRead){
+			//next_state := sDCacheRead
 			when(io.axi_out.r.fire && io.axi_out.r.bits.last){
 				state := sIdle
 			}
 		}
 		is(sDCacheWrite){
-
+			/*
+			is(sDAddrWrite){
+			when(io.dcache.aw.fire){
+				state := sDCacheWrite
+			}
+			}*/
+			//next_state := sDCacheWrite
 			when(io.dcache.aw.fire){
 				write_addr_reg := true.B
 			}

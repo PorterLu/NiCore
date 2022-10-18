@@ -122,6 +122,8 @@ class CSR extends Module{
 		val isMret = Input(Bool())			//输入的是否是mret的信号
 
 		val de_pipe_reg_pc = Input(UInt(64.W))
+		val fd_pipe_reg_pc = Input(UInt(64.W))
+		val jump_addr = Input(UInt(64.W))
 		val excPC = Input(UInt(64.W))		//异常pc的输入
 
 		val trapVec = Output(UInt(64.W))
@@ -138,6 +140,7 @@ class CSR extends Module{
 		val mw_enable = Input(Bool())
 		val em_enable = Input(Bool())
 		val de_enable = Input(Bool())
+		val fd_enable = Input(Bool())
 	})
 
 	val mode = RegInit(CSR_MODE_M)				//模式寄存器
@@ -230,32 +233,9 @@ class CSR extends Module{
 		RC 	-> (csrData & ~io.w_data)
 	))
 
-	//中断的判断
-	val flagIntS = sip.asUInt & sie.asUInt 					//s模式中断判断，对应的中断使能并且sip中该位已经挂起
-	val flagIntM = mip.asUInt & mie.asUInt 					//M模式中断判断
-
-	/*
-	*	是否是s和m模式的中断，还要考虑相关的csr寄存器：
-	* 	1. 陷入S，特权级小于S或者在S模式下但是对应的mstatus的全局sie打开 ，最后做一个委托的判断
-	* 	2. 陷入M，当前特权级小于M或者在M特权下mie打开，最后作一个非委托判断
-	*/
-
-	//判断中断的flag位是否能生效
-	val hasIntS  = Mux(mode < CSR_MODE_S || (mode === CSR_MODE_S && mstatus.sie), (flagIntS & mideleg.asUInt).orR, false.B)
-	val hasIntM	 = Mux(mode <= CSR_MODE_S || mstatus.mie, (flagIntM & ~mideleg.asUInt).orR, false.B)
-	val hasInt = (hasIntM || hasIntS) && !io.jump_taken && io.de_enable && !writeEn && !io.stall
-	//是否是S模式的中断
-	val handIntS = hasInt && !hasIntM 
-
-	/*
-	*	异常判断，流水线中会将异常信息前递，在非中断的情况触发异常。
-	*	如果异常被委托，那么意味着，低权限在S模式下进行处理
-	*	最后作一个判断，现在如果是M模式那么仍然是在M模式下处理
-	*/
-
 	//异常具体判断
 	val hasExc 	= (io.is_illegal || io.inst_misalign || io.store_misalign ||
-					 io.load_misalign || (io.inst === Instructions.ECALL) || (io.inst === Instructions.EBREAK)) && io.em_enable && !io.stall
+					 io.load_misalign || (io.inst === Instructions.ECALL) || (io.inst === Instructions.EBREAK)) && io.em_enable && !io.stall && !writeEn
 
 	val excCause = Mux(io.inst_misalign, EXC_INST_ADDR, 
 						Mux(io.is_illegal, EXC_ILL_INST, 
@@ -274,6 +254,29 @@ class CSR extends Module{
 	val hasExcS = hasExc && medeleg.asUInt(excCause(3,0))
 	val handExcS = !mode(1) && hasExcS		//这里是想说明M模式下是无论如何都不会到S模式进行处理的
 
+	//中断的判断
+	val flagIntS = sip.asUInt & sie.asUInt 					//s模式中断判断，对应的中断使能并且sip中该位已经挂起
+	val flagIntM = mip.asUInt & mie.asUInt 					//M模式中断判断
+
+	/*
+	*	是否是s和m模式的中断，还要考虑相关的csr寄存器：
+	* 	1. 陷入S，特权级小于S或者在S模式下但是对应的mstatus的全局sie打开 ，最后做一个委托的判断
+	* 	2. 陷入M，当前特权级小于M或者在M特权下mie打开，最后作一个非委托判断
+	*/
+
+	//判断中断的flag位是否能生效
+	val hasIntS  = Mux(mode < CSR_MODE_S || (mode === CSR_MODE_S && mstatus.sie), (flagIntS & mideleg.asUInt).orR, false.B)
+	val hasIntM	 = Mux(mode <= CSR_MODE_S || mstatus.mie, (flagIntM & ~mideleg.asUInt).orR, false.B)
+	val hasInt = (hasIntM || hasIntS) && (io.fd_enable || io.de_enable || (io.em_enable && (hasExc || io.jump_taken))) && io.de_enable  && !io.stall  && !writeEn				//((!io.jump_taken && io.em_enable) || !io.em_enable) 
+	//是否是S模式的中断
+	val handIntS = hasInt && !hasIntM 
+
+	/*
+	*	异常判断，流水线中会将异常信息前递，在非中断的情况触发异常。
+	*	如果异常被委托，那么意味着，低权限在S模式下进行处理
+	*	最后作一个判断，现在如果是M模式那么仍然是在M模式下处理
+	*/
+	
 	/*
 	*	作一个仲裁判断，flagIntS，都是sip和sie的想与的结果，优先级为外部中断，大于软件中断，
 	*	最后大于时钟中断
@@ -319,14 +322,14 @@ class CSR extends Module{
 							)
 						)
 					)
-	val nextMode = Mux((hasInt || hasExc) && !io.stall && !writeEn, trapMode, mode)		//冲刷之前的所有寄存器，所以不会存在异常和写同时存在的情况
+	val nextMode = Mux((hasInt || hasExc) && !io.stall && !writeEn, trapMode, mode)		//冲刷之前的所有寄存器，所以不会存在异常和写同时存在的情况,
 	mode := nextMode
 
 	//如果有中断，会将相应的位置高, 这里由于sip是线网所以会同步更新				
 	mip.meip := mip.meip & io.extern		
 	mip.seip := mip.seip & io.extern
 	mip.mtip := (mip.mtip | io.int_timer) && !io.int_timer_clear
-	mip.stip := (mip.mtip | io.int_timer) && !io.int_timer_clear
+	mip.stip := (mip.stip | io.int_timer) && !io.int_timer_clear
 	mip.msip := (mip.msip | io.int_soft) && !io.int_soft_clear 
 	mip.ssip := (mip.ssip | io.int_soft) && !io.int_soft_clear
 	sip.seip := mip.seip
@@ -342,10 +345,10 @@ class CSR extends Module{
 
 	//根据情况刷新不同阶段的流水线
 	io.flush_mask := 0.U
-	when(!io.stall && !writeEn){
-		when(hasInt && !hasExc){
+	when(!io.stall && !writeEn){						//
+		when(hasInt && !hasExc && !io.isMret && !io.isSret){
 			io.flush_mask := "b0111".U
-		}.elsewhen(hasInt && hasExc){
+		}.elsewhen(hasInt && (hasExc || io.isMret || io.isSret)){
 			io.flush_mask := "b1111".U
 		}.elsewhen(io.inst === Instructions.ECALL){
 			io.flush_mask := "b0111".U
@@ -356,8 +359,13 @@ class CSR extends Module{
 		}
 	}
 
+	val interrupt_return_addr = Mux(io.jump_taken && io.em_enable, io.jump_addr,
+									Mux(io.de_enable, io.de_pipe_reg_pc,
+										Mux(io.fd_enable, io.fd_pipe_reg_pc, io.excPC)
+									)
+								)
+
 	//exceptions and interrupts handling
-	
 	when(!io.stall){
 		when(writeEn){
 			when(io.w_addr === CSR_SSTATUS){ mstatus.castAssign(SstatusCsr(), writeData)}
@@ -377,11 +385,11 @@ class CSR extends Module{
 			when(io.w_addr === CSR_MIP){ mip <= writeData }
 			when(io.w_addr === CSR_MTVEC){ mtvec <= writeData }
 			when(io.w_addr === CSR_MSCRATCH){ mscratch <= writeData }
-			when(io.w_addr === CSR_MEPC){ mepc <= writeData }
+			when(io.w_addr === CSR_MEPC){ mepc <= writeData}
 			when(io.w_addr === CSR_MCAUSE){ mcause <= writeData }
 			when(io.w_addr === CSR_MTVAL){ mtval <= writeData }
 		}.elsewhen(handIntS){
-			sepc 	<= Mux(hasExc, io.excPC,  io.de_pipe_reg_pc)	//考虑跳转指令时发生中断的情况
+			sepc 	<= Mux(hasExc || io.isSret || io.isMret, io.excPC,  interrupt_return_addr)	//考虑跳转指令时发生中断的情况
 			scause 	<= cause
 			stval 	<= excValue
 			mstatus.spie := mstatus.sie					
@@ -391,7 +399,7 @@ class CSR extends Module{
 			//printf(p"cause:${Hexadecimal(cause)}\n")
 			//printf(p"mtval:${Hexadecimal(io.excValue)}\n")
 		}.elsewhen(hasInt){
-			mepc 	<=  Mux(hasExc, io.excPC,  io.de_pipe_reg_pc)
+			mepc 	<=  Mux(hasExc || io.isSret || io.isMret, io.excPC,  interrupt_return_addr)
 			mcause  <= cause
 			mtval 	<= excValue
 			mstatus.mpie := mstatus.mie
@@ -402,7 +410,7 @@ class CSR extends Module{
 			//printf(p"excPC:${Hexadecimal(io.excPC)}\n")
 			//printf(p"mtval:${Hexadecimal(io.excValue)}\n")
 			//printf(p"de_pipe_reg.pc:${Hexadecimal{io.de_pipe_reg_pc}}\n")
-			//printf(p"select_pc:${Hexadecimal(Mux(hasExc, io.excPC,  io.de_pipe_reg_pc))}\n")
+			//printf(p"select_pc:${Hexadecimal(Mux(hasExc|| io.isSret || io.isMret, io.excPC,  io.de_pipe_reg_pc))}\n")
 		}.elsewhen(hasExcS){
 			sepc	<= io.excPC
 			scause 	<= cause
@@ -444,5 +452,5 @@ class CSR extends Module{
 						)
 					)
 
-	io.trap := (((hasExc || io.isSret || io.isMret) && io.em_enable)|| hasInt)  && !io.stall & !writeEn
+	io.trap := (((hasExc || io.isSret || io.isMret) && io.em_enable)|| hasInt)  && !io.stall && !writeEn
 }

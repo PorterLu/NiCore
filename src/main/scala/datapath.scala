@@ -48,7 +48,6 @@ class RegisterFile(readPorts : Int) extends Module{
 			io.rdata(i) := reg(io.raddr(i))
 		}
 	}
-
 }
 
 class gpr_ptr extends BlackBox with HasBlackBoxInline{
@@ -254,7 +253,7 @@ class Datapath extends Module{
 	val div_stall = WireInit(false.B)					//divider.io.div_valid && !div_result_enable
 	val data_cache_tag = RegInit(false.B)
 	val data_cache_response_data = RegInit(0.U(64.W))
-	val dcache_stall = (em_pipe_reg.ld_type.orR || em_pipe_reg.st_type.orR || em_pipe_reg.inst === FENCE_I) && 
+	val dcache_stall = ((em_pipe_reg.ld_type.orR) || (em_pipe_reg.st_type.orR) || em_pipe_reg.inst === FENCE_I) && 
 						em_pipe_reg.enable && !data_cache_tag && !(em_pipe_reg.is_clint) 
 	val icache_stall = !io.icache.cpu_response.ready
 	val stall = icache_stall || dcache_stall || mul_stall || div_stall						//stall暂时设置为false
@@ -365,6 +364,9 @@ class Datapath extends Module{
 	//printf(p"fd_stage:\npc:${Hexadecimal(fd_pipe_reg.pc)}; inst:${Hexadecimal(fd_pipe_reg.inst)};\n")
 	/***** Decode ******/
 	//control模块输入指令
+
+	csr.io.fd_enable := fd_pipe_reg.enable
+	csr.io.fd_pipe_reg_pc := fd_pipe_reg.pc
 	io.ctrl.inst := fd_pipe_reg.inst
 
 	//地址若存在，则位置固定
@@ -494,7 +496,7 @@ class Datapath extends Module{
 	val src2_data = WireInit(0.U(64.W))
 	val alu_out = WireInit(0.U(64.W))
 	val alu_sum = WireInit(0.U(64.W))
-	val is_clint = alu_out >= "h2000000".U && alu_out <= "h200ffff".U && de_pipe_reg.enable && (de_pipe_reg.ld_type.orR || de_pipe_reg.st_type.orR)
+	val is_clint = alu_out >= "h2000000".U && alu_out <= "h200ffff".U && de_pipe_reg.enable && ((de_pipe_reg.ld_type.orR) || (de_pipe_reg.st_type.orR))
 
 	val load_data_hazard = Mux(em_pipe_reg.is_clint && em_pipe_reg.enable, clint.io.r_data, data_cache_response_data >> ((em_pipe_reg.alu_out & "h07".U) << 3.U))
 	val load_data_ext_hazard = Mux(em_pipe_reg.ld_type === LD_LW, Cat(Mux(load_data_hazard(31).asBool, "hffffffff".U, 0.U(32.W)), load_data_hazard(31, 0)),
@@ -696,11 +698,6 @@ class Datapath extends Module{
 	}.elsewhen(io.dcache.cpu_request.valid && io.dcache.cpu_response.ready){
 		data_cache_tag := true.B
 		data_cache_response_data := io.dcache.cpu_response.data
-		when(em_pipe_reg.ld_type === 4.U || em_pipe_reg.ld_type === 2.U || em_pipe_reg.st_type === 2.U){
-			//printf(p"addr:${Hexadecimal(io.dcache.cpu_request.addr)}; data:${Hexadecimal(data_cache_response_data)}\n")
-	//		printf(p"em_stage:\n inst: ${Hexadecimal(em_pipe_reg.inst)}; pc:${Hexadecimal(em_pipe_reg.pc)}; alu_out:${Hexadecimal{em_pipe_reg.alu_out}}; ld_type:${em_pipe_reg.ld_type}; st_type:${em_pipe_reg.st_type};  write_data:${Hexadecimal(em_pipe_reg.st_data)};" +
-  //p"data:${Hexadecimal(io.dcache.cpu_response.data)}\n")
-		}
 	} 
 
 	clint.io.addr := em_pipe_reg.alu_out
@@ -710,7 +707,7 @@ class Datapath extends Module{
 	csr.io.em_enable := em_pipe_reg.enable
 	io.dcache.flush := dcache_flush_tag
 	io.dcache.cpu_request.valid := (Mux(stall, (em_pipe_reg.ld_type.orR || em_pipe_reg.st_type.orR) && em_pipe_reg.enable && (!em_pipe_reg.is_clint), 
-										(de_pipe_reg.ld_type.orR || de_pipe_reg.st_type.orR) && de_pipe_reg.enable && !is_clint && !flush_em) || (dcache_flush_tag && flush_em)) && (!data_cache_tag)
+										(de_pipe_reg.ld_type.orR || de_pipe_reg.st_type.orR) && de_pipe_reg.enable && !is_clint && !flush_em) || (dcache_flush_tag)) && (!data_cache_tag)
 	io.dcache.cpu_request.rw := Mux(stall, em_pipe_reg.st_type.orR && em_pipe_reg.enable, de_pipe_reg.st_type.orR && de_pipe_reg.enable) 
 	io.dcache.cpu_request.addr := Mux(stall, em_pipe_reg.alu_out, alu_out)
 	io.dcache.cpu_request.data := Mux(stall, em_pipe_reg.st_data << (em_pipe_reg.alu_out(2, 0) << 3.U), src2_data << (alu_out(2, 0) << 3.U))(63, 0)
@@ -752,7 +749,8 @@ class Datapath extends Module{
 									)
 								)
 							)
-
+							
+	csr.io.jump_addr := alu_out
 	csr.io.inst := em_pipe_reg.inst								//mw中马上要commit的指令
 	csr.io.isSret := em_pipe_reg.inst === Instructions.SRET		//sret
 	csr.io.isMret := em_pipe_reg.inst === Instructions.MRET		//mret

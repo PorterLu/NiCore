@@ -19,6 +19,17 @@ class CacheTag extends Bundle{
 	val tag = UInt(22.W)
 }
 
+object CacheTag{
+	def apply(): CacheTag = {
+		val tmp = Wire(new CacheTag)
+		tmp.valid := WireInit(false.B)
+		tmp.dirty := WireInit(false.B)
+		tmp.visit := WireInit(0.U(8.W))
+		tmp.tag := WireInit(0.U(22.W))
+		tmp
+	}
+}
+
 class CacheData extends Bundle{
 	val data = UInt(128.W)
 }
@@ -53,7 +64,7 @@ class tag_cache extends Module{
 		val tag_read = Output(new CacheTag)
 	})
 
-	val tag_mem = Reg(Vec(64, new CacheTag))
+	val tag_mem = RegInit(VecInit(Seq.fill(64)(CacheTag())))//Reg(Vec(64, new CacheTag))
 	io.tag_read := tag_mem(io.cache_req.index)
 
 	when(io.cache_req.we){
@@ -416,7 +427,7 @@ class Cache(cache_name: String) extends Module{
 				write_data_reg := true.B
 			}
 
-			when(write_addr_reg && last){
+			when(write_addr_reg && write_data_reg){
 				next_state := sFlushAck
 				write_addr_reg := false.B
 				write_data_reg := false.B
