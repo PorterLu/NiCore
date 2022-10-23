@@ -80,14 +80,6 @@ class CacheArbiter extends Module{
 				state := sIAddrRead
 //				io.axi_out.ar.valid := true.B
 			}
-			/*
-			when(io.dcache.aw.fire){
-				state := sDCacheWrite
-			}.elsewhen(io.dcache.ar.fire){
-				state := sDCacheRead
-			}.elsewhen(io.icache.ar.fire){
-				state := sICacheRead
-			}*/
 		}
 		is(sIAddrRead){
 			//next_state := sIAddrRead
