@@ -27,6 +27,7 @@ class ExecuteStage extends Module{
 		val dcache_cpu_response_ready = Input(Bool())
 		val data_cache_tag = Input(Bool())
 		val clint_r_data = Input(UInt(64.W))
+		val is_clint = Output(Bool())
 		val data_cache_response_data = Input(UInt(64.W))
 		val de_pipe_reg = Input(new decode_execute_pipeline_reg)
 		val em_pipe_reg = Output(new execute_mem_pipeline_reg)
@@ -94,6 +95,9 @@ class ExecuteStage extends Module{
 	val src2_data = WireInit(0.U(64.W))
 	val is_clint = alu_out >= "h2000000".U && alu_out <= "h200ffff".U && io.de_pipe_reg.enable && 
 					(io.de_pipe_reg.ld_type.orR || io.de_pipe_reg.st_type.orR)
+
+	io.is_clint := is_clint
+
 	val load_data_hazard = Mux(em_pipe_reg.is_clint && em_pipe_reg.enable, io.clint_r_data, io.data_cache_response_data >> ((em_pipe_reg.alu_out & "h07".U) << 3.U))
 	val load_data_ext_hazard = Mux(em_pipe_reg.ld_type === LD_LW, Cat(Mux(load_data_hazard(31).asBool, "hffffffff".U, 0.U(32.W)), load_data_hazard(31, 0)),
 								Mux(em_pipe_reg.ld_type === LD_LWU, Cat(Fill(32, 0.U), load_data_hazard(31, 0)),

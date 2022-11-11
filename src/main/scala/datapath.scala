@@ -59,7 +59,6 @@ class Datapath extends Module{
 
 	val csr = Module(new CSR)							//csr寄存器文件，同时可以用于特权判断，中断和异常处理
 	val jump_addr = WireInit(0.U(64.W))					//要跳转的地址
-	val clint  = Module(new clint())
 	val br_flush = WireInit(false.B)
 	val jmp_flush = WireInit(false.B)
 	val csr_atomic_flush = WireInit(0.U(4.W))
@@ -76,10 +75,10 @@ class Datapath extends Module{
 	val csr_atomic 	 = WireInit(false.B)
 
 	io.start := started
-	csr.io.int_timer_clear := clint.io.timer_clear
-	csr.io.int_soft_clear := clint.io.soft_clear
-	csr.io.int_timer := clint.io.timer_valid
-	csr.io.int_soft  := clint.io.soft_valid
+	csr.io.int_timer_clear := memory_stage.io.clint_timer_clear
+	csr.io.int_soft_clear := memory_stage.io.clint_soft_clear
+	csr.io.int_timer := memory_stage.io.clint_timer_valid
+	csr.io.int_soft  := memory_stage.io.clint_soft_valid
 	csr.io.extern    := io.interrupt
 	io.stall := stall	
 
@@ -127,11 +126,16 @@ class Datapath extends Module{
 	fetch_stage.io.flush_em := flush_em
 	fetch_stage.io.brCond_taken := execute_stage.io.brCond_taken
 	fetch_stage.io.jump_addr := execute_stage.io.jump_addr
-	fetch_stage.io.icache <> io.icache	
+	fetch_stage.io.icache <> io.icache
+	fetch_stage.io.csr_atomic := csr_atomic
+	csr.io.fd_enable := fetch_stage.io.fd_pipe_reg.enable
+	csr.io.fd_pipe_reg_pc := fetch_stage.io.fd_pipe_reg.pc	
 
 	decode_stage.io.flush_de := flush_de
 	decode_stage.io.stall := stall
 	csr.io.r_op := decode_stage.io.csr_r_op
+	csr.io.r_addr := decode_stage.io.csr_r_addr
+	decode_stage.io.csr_mode := csr.io.mode
 	decode_stage.io.csr_r_data := csr.io.r_data
 	decode_stage.io.csr_accessType_illegal := csr.io.accessType_illegal
 	decode_stage.io.regFile_wen := writeback_stage.io.regFile_wen
@@ -144,7 +148,9 @@ class Datapath extends Module{
 	decode_stage.io.mw_pipe_reg_pc := memory_stage.io.mw_pipe_reg.pc
 	decode_stage.io.mw_pipe_reg_csr_read_data := memory_stage.io.mw_pipe_reg.csr_read_data
 	decode_stage.io.mw_pipe_reg_load_data := memory_stage.io.mw_pipe_reg.load_data
+	decode_stage.io.mw_pipe_reg_wb_sel := memory_stage.io.mw_pipe_reg.wb_sel
 	decode_stage.io.fd_pipe_reg <> fetch_stage.io.fd_pipe_reg
+
 
 	execute_stage.io.de_pipe_reg <> decode_stage.io.de_pipe_reg
 	mul_stall := execute_stage.io.mul_stall
@@ -168,12 +174,17 @@ class Datapath extends Module{
 	execute_stage.io.mw_pipe_reg_pc := memory_stage.io.mw_pipe_reg.pc
 	execute_stage.io.mw_pipe_reg_csr_read_data := memory_stage.io.mw_pipe_reg.csr_read_data
 	execute_stage.io.mw_pipe_reg_load_data := memory_stage.io.mw_pipe_reg.load_data
+	execute_stage.io.mw_pipe_reg_wb_sel := memory_stage.io.mw_pipe_reg.wb_sel
 
 	memory_stage.io.stall := stall
 	memory_stage.io.flush_mw := flush_mw
 	memory_stage.io.flush_em := flush_em
 	memory_stage.io.alu_out := execute_stage.io.alu_out
 	memory_stage.io.src2_data := execute_stage.io.src2_data
+	memory_stage.io.is_clint := execute_stage.io.is_clint
+	memory_stage.io.de_pipe_reg_st_type := decode_stage.io.de_pipe_reg.st_type
+	memory_stage.io.de_pipe_reg_ld_type := decode_stage.io.de_pipe_reg.ld_type
+	memory_stage.io.de_pipe_reg_enable := decode_stage.io.de_pipe_reg.enable
 	data_cache_tag := memory_stage.io.data_cache_tag
 	data_cache_response_data := memory_stage.io.data_cache_response_data
 	memory_stage.io.em_pipe_reg <> execute_stage.io.em_pipe_reg
@@ -184,6 +195,7 @@ class Datapath extends Module{
 	csr.io.excPC := memory_stage.io.csr_excPC
 	csr.io.jump_taken := memory_stage.io.csr_jump_taken
 	csr.io.jump_addr := memory_stage.io.alu_out
+	csr.io.alu_out := memory_stage.io.alu_out
 	csr.io.is_illegal := memory_stage.io.csr_is_illegal
 	csr.io.inst_misalign := memory_stage.io.csr_inst_misalign
 	csr.io.store_misalign := memory_stage.io.csr_store_misalign
@@ -192,6 +204,7 @@ class Datapath extends Module{
 	memory_stage.io.dcache_flush_tag := dcache_flush_tag
 
 	writeback_stage.io.mw_pipe_reg <> memory_stage.io.mw_pipe_reg
+	writeback_stage.io.stall := stall
 	csr.io.mw_enable := writeback_stage.io.mw_enable
 	csr.io.retired := writeback_stage.io.retired
 	csr.io.w_op := writeback_stage.io.csr_w_op
@@ -201,6 +214,7 @@ class Datapath extends Module{
 	io.pc := memory_stage.io.mw_pipe_reg.pc
 	io.inst := execute_stage.io.em_pipe_reg.inst
 	io.commit_inst := memory_stage.io.mw_pipe_reg.inst
+	//printf(p"mw dest: ${memory_stage.io.mw_pipe_reg.dest}\n\n")
 }
 
 class myCPU extends Module{

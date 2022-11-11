@@ -61,7 +61,7 @@ class DecodeStage extends Module{
 		val csr_mode = Input(UInt(2.W))
 		val csr_r_data = Input(UInt(64.W))
 		val mw_pipe_reg_enable = Input(Bool())
-		val mw_pipe_reg_dest = Input(Bool())
+		val mw_pipe_reg_dest = Input(UInt(5.W))
 		val mw_pipe_reg_wb_en = Input(Bool())
 		val mw_pipe_reg_wb_sel = Input(UInt(2.W))
 		val mw_pipe_reg_alu_out = Input(UInt(64.W))
@@ -120,7 +120,6 @@ class DecodeStage extends Module{
 	//gpr_ptr向外同步的时机依靠时钟，所以要向外输出时钟
 	//gpr_ptr.io.clock := clock
 	//gpr_ptr.io.reset := reset
-
 
 	control.io.inst := io.fd_pipe_reg.inst
 	io.csr_cmd := control.io.csr_cmd
@@ -224,5 +223,16 @@ class DecodeStage extends Module{
 		de_pipe_reg.enable := io.fd_pipe_reg.enable
 	}
 
+	/*printf(p"${io.mw_pipe_reg_enable && (io.mw_pipe_reg_dest === src1_addr) && io.mw_pipe_reg_wb_en && (src1_addr =/= 0.U)}, ${io.mw_pipe_reg_wb_sel}\n")
+	printf(p"src1_addr:${Hexadecimal(src1_addr)}; src2_addr:${Hexadecimal(src2_addr)}\n")
+	printf(p"reg0:${regFile.io.rdata(0)}; reg1:${regFile.io.rdata(1)}\n")
+	printf(p"rs1:${Hexadecimal(Mux(io.mw_pipe_reg_enable && (io.mw_pipe_reg_dest === src1_addr) && io.mw_pipe_reg_wb_en && (src1_addr =/= 0.U), 
+							Mux(io.mw_pipe_reg_wb_sel === WB_ALU, io.mw_pipe_reg_alu_out,
+								Mux(io.mw_pipe_reg_wb_sel === WB_PC4, io.mw_pipe_reg_pc + 4.U, 
+									Mux(io.mw_pipe_reg_wb_sel === WB_CSR, io.mw_pipe_reg_csr_read_data, io.mw_pipe_reg_load_data))),regFile.io.rdata(0)))} ;")
+	printf(p"rs2:${Hexadecimal(Mux(io.mw_pipe_reg_enable && (io.mw_pipe_reg_dest === src2_addr) && io.mw_pipe_reg_wb_en && (src2_addr =/= 0.U), 
+							Mux(io.mw_pipe_reg_wb_sel === WB_ALU, io.mw_pipe_reg_alu_out,
+								Mux(io.mw_pipe_reg_wb_sel === WB_PC4, io.mw_pipe_reg_pc + 4.U, 
+									Mux(io.mw_pipe_reg_wb_sel === WB_CSR, io.mw_pipe_reg_csr_read_data, io.mw_pipe_reg_load_data))),regFile.io.rdata(1)))}\n")*/
 	io.de_pipe_reg := de_pipe_reg
 }

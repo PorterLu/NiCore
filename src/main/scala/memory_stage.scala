@@ -15,7 +15,7 @@ class MemoryStage extends Module{
 		val flush_em = Input(Bool())
 		val data_cache_tag = Output(Bool())
 		val data_cache_response_data = Output(UInt(64.W))
-		val dcache = Flipped(new CacheIO)
+		val dcache = new CacheIO
 		val em_pipe_reg = Input(new execute_mem_pipeline_reg)
 		val mw_pipe_reg = Output(new mem_writeback_pipeline_reg)
 		val de_pipe_reg_ld_type = Input(UInt(3.W))
@@ -37,6 +37,10 @@ class MemoryStage extends Module{
 		val csr_inst_misalign = Output(Bool())
 		val csr_store_misalign = Output(Bool())
 		val csr_load_misalign = Output(Bool())
+		val clint_timer_clear = Output(Bool())
+		val clint_soft_clear = Output(Bool())
+		val clint_timer_valid = Output(Bool())
+		val clint_soft_valid = Output(Bool())
 	})
 
 	val mw_pipe_reg = RegInit(
@@ -73,11 +77,17 @@ class MemoryStage extends Module{
 	clint.io.addr := io.em_pipe_reg.alu_out
 	clint.io.w_data := io.em_pipe_reg.st_data
 	clint.io.wen := io.em_pipe_reg.st_type.orR && io.em_pipe_reg.enable && io.em_pipe_reg.is_clint
-	
+	io.clint_r_data := clint.io.r_data
+	io.clint_timer_clear := clint.io.timer_clear
+	io.clint_soft_clear := clint.io.soft_clear
+	io.clint_timer_valid := clint.io.timer_valid
+	io.clint_soft_valid := clint.io.soft_valid
+
 	io.em_enable := io.em_pipe_reg.enable
+	io.dcache.flush := io.dcache_flush_tag
 	io.dcache.cpu_request.valid := (Mux(io.stall, (io.em_pipe_reg.ld_type.orR || io.em_pipe_reg.st_type.orR) && io.em_pipe_reg.enable && (!io.em_pipe_reg.is_clint), 
 										(io.de_pipe_reg_ld_type.orR || io.de_pipe_reg_st_type.orR) && io.de_pipe_reg_enable && !io.is_clint && !io.flush_em) || 
-										(io.dcache_flush_tag && io.flush_em)) && (!data_cache_tag)
+										(io.dcache_flush_tag)) && (!data_cache_tag)
 	io.dcache.cpu_request.rw := Mux(io.stall, io.em_pipe_reg.st_type.orR && io.em_pipe_reg.enable, io.de_pipe_reg_st_type.orR && io.de_pipe_reg_enable) 
 	io.dcache.cpu_request.addr := Mux(io.stall, io.em_pipe_reg.alu_out, io.alu_out)
 	io.dcache.cpu_request.data := Mux(io.stall, io.em_pipe_reg.st_data << (io.em_pipe_reg.alu_out(2, 0) << 3.U), io.src2_data << (io.alu_out(2, 0) << 3.U))(63, 0)
@@ -122,7 +132,7 @@ class MemoryStage extends Module{
 
 	io.csr_inst := io.em_pipe_reg.inst
 	io.csr_isSret := io.em_pipe_reg.inst === Instructions.SRET
-	io.csr_isMret := io.em_Pipe_reg.inst === Instructions.MRET 
+	io.csr_isMret := io.em_pipe_reg.inst === Instructions.MRET 
 	io.csr_excPC := io.em_pipe_reg.pc 
 	io.csr_jump_taken := io.em_pipe_reg.jump_taken
 	io.csr_is_illegal := io.em_pipe_reg.csr_is_illegal

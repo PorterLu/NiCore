@@ -2,9 +2,12 @@ package  myCPU
 import chisel3._ 
 import chisel3.util._ 
 import chisel3.experimental.BundleLiterals._
+import Control._
 
 class WritebackStage extends Module{
 	val io = IO(new Bundle{
+		val stall = Input(Bool())
+
 		val mw_enable = Output(Bool())
 		val retired = Output(Bool())
 		val csr_w_op = Output(UInt(3.W))
@@ -23,13 +26,13 @@ class WritebackStage extends Module{
 	io.csr_w_addr := io.mw_pipe_reg.csr_write_addr						//csr寄存器地址
 	io.csr_w_data := io.mw_pipe_reg.csr_write_data						//要写的数据
 
-	io.regFile_wen := ((mw_pipe_reg.wb_sel === WB_ALU ||
-						mw_pipe_reg.wb_sel === WB_PC4 ||
-						mw_pipe_reg.wb_sel === WB_MEM || mw_pipe_reg.wb_sel === WB_CSR) && (mw_pipe_reg.wb_en)) && mw_pipe_reg.enable && !stall
-	io.regFile_waddr := mw_pipe_reg.dest
-	io.regFile_wdata := Mux(mw_pipe_reg.wb_sel === WB_ALU, mw_pipe_reg.alu_out,
-							Mux(mw_pipe_reg.wb_sel === WB_PC4, mw_pipe_reg.pc + 4.U, 
-								Mux(mw_pipe_reg.wb_sel === WB_CSR, mw_pipe_reg.csr_read_data, mw_pipe_reg.load_data)
+	io.regFile_wen := ((io.mw_pipe_reg.wb_sel === WB_ALU ||
+						io.mw_pipe_reg.wb_sel === WB_PC4 ||
+						io.mw_pipe_reg.wb_sel === WB_MEM || io.mw_pipe_reg.wb_sel === WB_CSR) && (io.mw_pipe_reg.wb_en)) && io.mw_pipe_reg.enable && !io.stall
+	io.regFile_waddr := io.mw_pipe_reg.dest
+	io.regFile_wdata := Mux(io.mw_pipe_reg.wb_sel === WB_ALU, io.mw_pipe_reg.alu_out,
+							Mux(io.mw_pipe_reg.wb_sel === WB_PC4, io.mw_pipe_reg.pc + 4.U, 
+								Mux(io.mw_pipe_reg.wb_sel === WB_CSR, io.mw_pipe_reg.csr_read_data, io.mw_pipe_reg.load_data)
 							)
 						)
 	

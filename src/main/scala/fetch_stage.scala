@@ -18,8 +18,6 @@ class FetchStage extends Module{
 		val csr_atomic = Input(Bool())
 		val csr_next_fetch = Input(UInt(64.W))
 
-		val icache_response_ready = Input(Bool())
-		val icache_response_data = Input(UInt(64.W))
 		val dcache_flush_tag = Input(Bool())
 
 		val flush_fd = Input(Bool())
@@ -34,7 +32,7 @@ class FetchStage extends Module{
 		val brCond_taken = Input(Bool())
 		val jump_addr = Input(UInt(64.W))
 		
-		val icache = Flipped(new CacheIO)
+		val icache = new CacheIO
 		val fd_pipe_reg = Output(new fetch_decode_pipeline_reg)
 		val icache_flush_tag = Output(Bool())
 	})
@@ -42,7 +40,7 @@ class FetchStage extends Module{
 	val fd_pipe_reg = RegInit(
 		(new fetch_decode_pipeline_reg).Lit(
 			_.inst -> Instructions.NOP,
-			_.pc -> "80000000".U,
+			_.pc -> "h80000000".U,
 			_.enable -> false.B,
 		)
 	)
@@ -59,6 +57,7 @@ class FetchStage extends Module{
 			io.csr_atomic -> io.csr_next_fetch
 		)
 	)
+
 	val inst = Mux(io.started, Instructions.NOP, Mux(pc(2).asBool, io.icache.cpu_response.data(63, 32), io.icache.cpu_response.data(31, 0)))
 	
 	pc := next_pc
