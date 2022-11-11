@@ -1,10 +1,15 @@
 package myCPU
+
+import chisel3._ 
+import chisel3.util._ 
+import cache_single_port._ 
 import Instructions._ 
 import Control._ 
 import AccessType._ 
+import chisel3.experimental.BundleLiterals._
 
-class fetch_stage extends Module{
-	val io = IO(Bundle{
+class FetchStage extends Module{
+	val io = IO(new Bundle{
 		val started = Input(Bool())
 		val stall = Input(Bool())
 		
@@ -19,7 +24,7 @@ class fetch_stage extends Module{
 
 		val flush_fd = Input(Bool())
 
-		val de_pipe_reg_pc_sel = Input(2.W)
+		val de_pipe_reg_pc_sel = Input(UInt(2.W))
 		val de_pipe_reg_inst = Input(UInt(32.W))
 		val de_pipe_reg_enable = Input(Bool())
 
@@ -29,15 +34,16 @@ class fetch_stage extends Module{
 		val brCond_taken = Input(Bool())
 		val jump_addr = Input(UInt(64.W))
 		
-		val icache = Flip(new CacheIo)
+		val icache = Flipped(new CacheIO)
 		val fd_pipe_reg = Output(new fetch_decode_pipeline_reg)
-})
+		val icache_flush_tag = Output(Bool())
+	})
 
 	val fd_pipe_reg = RegInit(
 		(new fetch_decode_pipeline_reg).Lit(
 			_.inst -> Instructions.NOP,
-			_pc -> "80000000".U,
-			_enable -> false.B,
+			_.pc -> "80000000".U,
+			_.enable -> false.B,
 		)
 	)
 
@@ -48,8 +54,8 @@ class fetch_stage extends Module{
 		IndexedSeq(
 			(!io.started && io.stall) -> pc,
 			(io.csr_trap) -> io.csr_trapVec,
-			(icache_flush_tag || dcache_flush_tag) -> (em_pipe_reg.pc + 4.U),
-			(((io.de_pipe_reg_pc_sel == PC_ALU) && io.de_pipe_reg_enable) || io.brCond_taken) -> (io.jump_addr >> 1.U << 1.U),
+			(icache_flush_tag || io.dcache_flush_tag) -> (io.em_pipe_reg_pc + 4.U),
+			(((io.de_pipe_reg_pc_sel === PC_ALU) && io.de_pipe_reg_enable) || io.brCond_taken) -> (io.jump_addr >> 1.U << 1.U),
 			io.csr_atomic -> io.csr_next_fetch
 		)
 	)
@@ -59,7 +65,7 @@ class fetch_stage extends Module{
 
 	when(!io.stall && io.flush_em){
 		icache_flush_tag := false.B
-	}.elsewhen(io.de_pipe_reg.inst === FENCE_I && !io.stall){
+	}.elsewhen(io.de_pipe_reg_inst === FENCE_I && !io.stall){
 		icache_flush_tag := true.B
 	}.otherwise{
 		when(io.icache.cpu_response.ready){
@@ -67,7 +73,9 @@ class fetch_stage extends Module{
 		}
 	}
 
-	io.icache.accessTpe := word.asUInt
+	io.icache_flush_tag := icache_flush_tag
+
+	io.icache.accessType := word.asUInt
 	io.icache.flush := icache_flush_tag
 	io.icache.cpu_request.addr := next_pc
 	io.icache.cpu_request.valid := true.B 
@@ -85,6 +93,6 @@ class fetch_stage extends Module{
 		fd_pipe_reg.enable := true.B
 	}
 
-	io.icache_flush_tag = icache_flush_tag
+	io.icache_flush_tag := icache_flush_tag
 	io.fd_pipe_reg := fd_pipe_reg
 }

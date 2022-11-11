@@ -1,10 +1,15 @@
 package  myCPU
+
 import CSR._ 
 import Control._ 
 import Instructions._ 
+import chisel3._ 
+import chisel3.util._ 
+import chisel3.experimental.BundleLiterals._
+import mdu._
 
-class execute_stage extends Moudle{
-	val io = IO(new Bundle){
+class ExecuteStage extends Module{
+	val io = IO(new Bundle{
 		val mul_stall = Output(Bool())
 		val div_stall = Output(Bool())
 		val jump_addr = Output(UInt(64.W))
@@ -13,12 +18,28 @@ class execute_stage extends Moudle{
 		val br_flush = Output(Bool())
 		val brCond_taken = Output(Bool())
 		val dcache_flush_tag = Output(Bool())
+		val alu_out = Output(UInt(64.W))
+		val src2_data = Output(UInt(64.W))
 
+		val stall = Input(Bool())
+		val flush_em = Input(Bool())
+		val flush_de = Input(Bool())
+		val dcache_cpu_response_ready = Input(Bool())
 		val data_cache_tag = Input(Bool())
 		val clint_r_data = Input(UInt(64.W))
+		val data_cache_response_data = Input(UInt(64.W))
 		val de_pipe_reg = Input(new decode_execute_pipeline_reg)
 		val em_pipe_reg = Output(new execute_mem_pipeline_reg)
-	}
+		
+		val mw_pipe_reg_enable = Input(Bool())
+		val mw_pipe_reg_wb_en = Input(Bool())
+		val mw_pipe_reg_dest = Input(UInt(5.W))
+		val mw_pipe_reg_wb_sel = Input(UInt(2.W))
+		val mw_pipe_reg_alu_out = Input(UInt(64.W))
+		val mw_pipe_reg_pc = Input(UInt(64.W))
+		val mw_pipe_reg_csr_read_data = Input(UInt(64.W))
+		val mw_pipe_reg_load_data = Input(UInt(64.W))
+	})
 
 	val em_pipe_reg = RegInit(
 		(new execute_mem_pipeline_reg).Lit(
@@ -55,12 +76,14 @@ class execute_stage extends Moudle{
 	val alu_out = alu.io.out
 	val alu_sum = alu.io.sum
 
+	io.alu_out := alu_out
+	
 	when(!io.stall && io.flush_em){
 		dcache_flush_tag := false.B 
-	}.elsewhen(io.de_pipe_reg_inst === FENCE_I && !io.stall){
+	}.elsewhen(io.de_pipe_reg.inst === FENCE_I && !io.stall){
 		dcache_flush_tag := true.B
 	}.otherwise{
-		when(io.dcache.cpu_response.ready){
+		when(io.dcache_cpu_response_ready){
 			dcache_flush_tag := false.B
 		}
 	}
@@ -69,11 +92,9 @@ class execute_stage extends Moudle{
 	val computation_result = WireInit(0.U(64.W))
 	val src1_data = WireInit(0.U(64.W))
 	val src2_data = WireInit(0.U(64.W))
-	val alu_out = WireInit(0.U(64.W))
-	val alu_sum = WireInit(0.U(64.W))
 	val is_clint = alu_out >= "h2000000".U && alu_out <= "h200ffff".U && io.de_pipe_reg.enable && 
 					(io.de_pipe_reg.ld_type.orR || io.de_pipe_reg.st_type.orR)
-	val load_data_hazard = Mux(em_pipe_reg.is_clint && em_pipe_reg.enable, io.clint_r_data, io.dcache.cpu_response.data >> ((em_pipe_reg.alu_out & "h07".U) << 3.U))
+	val load_data_hazard = Mux(em_pipe_reg.is_clint && em_pipe_reg.enable, io.clint_r_data, io.data_cache_response_data >> ((em_pipe_reg.alu_out & "h07".U) << 3.U))
 	val load_data_ext_hazard = Mux(em_pipe_reg.ld_type === LD_LW, Cat(Mux(load_data_hazard(31).asBool, "hffffffff".U, 0.U(32.W)), load_data_hazard(31, 0)),
 								Mux(em_pipe_reg.ld_type === LD_LWU, Cat(Fill(32, 0.U), load_data_hazard(31, 0)),
 									Mux(em_pipe_reg.ld_type === LD_LH, Cat(Mux(load_data_hazard(15).asBool, "hffffffffffff".U, 0.U(48.W)), load_data_hazard(15, 0)),
@@ -118,26 +139,26 @@ class execute_stage extends Moudle{
 								(io.de_pipe_reg.alu_op === Alu.ALU_DIV) || 
 								(io.de_pipe_reg.alu_op === Alu.ALU_REM) || 
 								(io.de_pipe_reg.alu_op === Alu.ALU_REMU)) && io.de_pipe_reg.enable && !src_unready && !div_result_enable
-	divider.io.flush := flush_de
+	divider.io.flush := io.flush_de
 	divider.io.divw := Mux(io.de_pipe_reg.wd_type === W_D, false.B, true.B)
 	divider.io.div_signed := (io.de_pipe_reg.alu_op === Alu.ALU_DIV) || (io.de_pipe_reg.alu_op === Alu.ALU_REM)
 	divider.io.dividend := src1_data.asSInt
 	divider.io.divisor := src2_data.asSInt
 
-	when(flush_de){
+	when(io.flush_de){
 		mul_result_enable := false.B
 	}.elsewhen(multiplier.io.out_valid){
 		mul_result := multiplier.io.result.asUInt
 		mul_result_enable := true.B
 	}
 
-	when(flush_de){
+	when(io.flush_de){
 		div_result_enable := false.B
 	}.elsewhen(divider.io.out_valid){
 		div_result_enable := true.B
-		when(de_pipe_reg.alu_op === Alu.ALU_DIVU || de_pipe_reg.alu_op === Alu.ALU_DIV){
+		when(io.de_pipe_reg.alu_op === Alu.ALU_DIVU || io.de_pipe_reg.alu_op === Alu.ALU_DIV){
 			div_result := divider.io.quotient.asUInt
-		}.elsewhen(de_pipe_reg.alu_op === Alu.ALU_REMU || de_pipe_reg.alu_op === Alu.ALU_REM){
+		}.elsewhen(io.de_pipe_reg.alu_op === Alu.ALU_REMU || io.de_pipe_reg.alu_op === Alu.ALU_REM){
 			div_result := divider.io.remainder.asUInt
 		}
 	}
@@ -157,11 +178,11 @@ class execute_stage extends Moudle{
 						Mux(em_pipe_reg.wb_sel === WB_PC4, em_pipe_reg.pc + 4.U, 
 							Mux(em_pipe_reg.wb_sel === WB_CSR, em_pipe_reg.csr_read_data, load_data_ext_hazard)))
 		}
-	}.elsewhen(io.mw_pipe_reg.enable && io.mw_pipe_reg.wb_en &&(io.de_pipe_reg.src1_addr === io.mw_pipe_reg.dest) && (io.de_pipe_reg.src1_addr =/= 0.U)){
-		when(io.de_pipe_reg.src1_addr === io.mw_pipe_reg.dest){
-			src1_data := Mux(io.mw_pipe_reg.wb_sel === WB_ALU, io.mw_pipe_reg.alu_out,
-						Mux(io.mw_pipe_reg.wb_sel === WB_PC4, io.mw_pipe_reg.pc + 4.U, 
-							Mux(io.mw_pipe_reg.wb_sel === WB_CSR, io.mw_pipe_reg.csr_read_data, io.mw_pipe_reg.load_data)))
+	}.elsewhen(io.mw_pipe_reg_enable && io.mw_pipe_reg_wb_en &&(io.de_pipe_reg.src1_addr === io.mw_pipe_reg_dest) && (io.de_pipe_reg.src1_addr =/= 0.U)){
+		when(io.de_pipe_reg.src1_addr === io.mw_pipe_reg_dest){
+			src1_data := Mux(io.mw_pipe_reg_wb_sel === WB_ALU, io.mw_pipe_reg_alu_out,
+						Mux(io.mw_pipe_reg_wb_sel === WB_PC4, io.mw_pipe_reg_pc + 4.U, 
+							Mux(io.mw_pipe_reg_wb_sel === WB_CSR, io.mw_pipe_reg_csr_read_data, io.mw_pipe_reg_load_data)))
 		}
 	}.otherwise{
 		src1_data := io.de_pipe_reg.rs1
@@ -173,16 +194,18 @@ class execute_stage extends Moudle{
 						Mux(em_pipe_reg.wb_sel === WB_PC4, em_pipe_reg.pc + 4.U, 
 							Mux(em_pipe_reg.wb_sel === WB_CSR, em_pipe_reg.csr_read_data, load_data_ext_hazard)))
 		}
-	}.elsewhen(io.mw_pipe_reg.enable && io.mw_pipe_reg.wb_en &&(io.de_pipe_reg.src2_addr === io.mw_pipe_reg.dest) && 
+	}.elsewhen(io.mw_pipe_reg_enable && io.mw_pipe_reg_wb_en &&(io.de_pipe_reg.src2_addr === io.mw_pipe_reg_dest) && 
 				(io.de_pipe_reg.src2_addr =/= 0.U)){
-		when(io.de_pipe_reg.src2_addr === io.mw_pipe_reg.dest){
-			src2_data := Mux(io.mw_pipe_reg.wb_sel === WB_ALU, io.mw_pipe_reg.alu_out,
-						Mux(io.mw_pipe_reg.wb_sel === WB_PC4, io.mw_pipe_reg.pc + 4.U, 
-							Mux(io.mw_pipe_reg.wb_sel === WB_CSR, io.mw_pipe_reg.csr_read_data, io.mw_pipe_reg.load_data)))
+		when(io.de_pipe_reg.src2_addr === io.mw_pipe_reg_dest){
+			src2_data := Mux(io.mw_pipe_reg_wb_sel === WB_ALU, io.mw_pipe_reg_alu_out,
+						Mux(io.mw_pipe_reg_wb_sel === WB_PC4, io.mw_pipe_reg_pc + 4.U, 
+							Mux(io.mw_pipe_reg_wb_sel === WB_CSR, io.mw_pipe_reg_csr_read_data, io.mw_pipe_reg_load_data)))
 		}
 	}.otherwise{
 		src2_data := io.de_pipe_reg.rs2
 	}
+
+	io.src2_data := src2_data
 
 	alu.io.alu_op := io.de_pipe_reg.alu_op
 	alu.io.width_type := io.de_pipe_reg.wd_type
@@ -192,15 +215,15 @@ class execute_stage extends Moudle{
 	alu.io.B := Mux(io.de_pipe_reg.wd_type === W_W, B_data(31, 0), B_data)
 	
 	io.jmp_occur := io.de_pipe_reg.enable && (io.de_pipe_reg.pc_sel === PC_ALU)
-	io.jmp_flush := jmp_occur
+	io.jmp_flush := io.jmp_occur
 	io.jump_addr := alu_out
 	brCond.io.br_type := io.de_pipe_reg.br_type 							//思考跳转发生时会发生什么？当跳转发生时，前一个周期的指令直接被刷新为nop
 	brCond.io.rs1 := src1_data											//A_data
 	brCond.io.rs2 := src2_data											//B_data
 	io.brCond_taken := brCond.io.taken && io.de_pipe_reg.enable				//taken需要信号有效时才产生作用
-	io.br_flush := brCond_taken
+	io.br_flush := io.brCond_taken
 
-	when(flush_em && !stall){
+	when(io.flush_em && !io.stall){
 		em_pipe_reg.inst := Instructions.NOP
 		em_pipe_reg.dest := 0.U
 		em_pipe_reg.alu_out := 0.U
@@ -223,7 +246,7 @@ class execute_stage extends Moudle{
 		em_pipe_reg.csr_store_misalign := false.B
 		em_pipe_reg.csr_load_misalign := false.B
 		em_pipe_reg.enable := false.B
-	}.elsewhen(!stall && !flush_em){
+	}.elsewhen(!io.stall && !io.flush_em){
 		em_pipe_reg.inst := io.de_pipe_reg.inst
 		em_pipe_reg.dest := io.de_pipe_reg.dest
 		em_pipe_reg.alu_out := computation_result //alu_result
@@ -234,13 +257,13 @@ class execute_stage extends Moudle{
 		em_pipe_reg.csr_write_op := io.de_pipe_reg.csr_write_op
 		em_pipe_reg.csr_write_addr := io.de_pipe_reg.csr_write_addr
 		em_pipe_reg.csr_write_data := Mux(io.de_pipe_reg.imm_sel === IMM_Z, io.de_pipe_reg.imm, src1_data)
-		em_pipe_reg.jump_taken := brCond_taken || (io.de_pipe_reg.pc_sel === PC_ALU && io.de_pipe_reg.enable)
+		em_pipe_reg.jump_taken := brCond.io.taken || (io.de_pipe_reg.pc_sel === PC_ALU && io.de_pipe_reg.enable)
 		em_pipe_reg.st_data := src2_data
 		em_pipe_reg.st_type := io.de_pipe_reg.st_type
 		em_pipe_reg.ld_type := io.de_pipe_reg.ld_type
 		em_pipe_reg.wb_sel := io.de_pipe_reg.wb_sel
 		em_pipe_reg.wb_en := io.de_pipe_reg.wb_en
-		em_pipe_reg.pc := io.de_pipe_reg_pc
+		em_pipe_reg.pc := io.de_pipe_reg.pc
 		em_pipe_reg.is_clint := is_clint
 		em_pipe_reg.csr_inst_mode := io.de_pipe_reg.csr_inst_mode
 		em_pipe_reg.csr_is_illegal := io.de_pipe_reg.csr_is_illegal

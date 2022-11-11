@@ -1,6 +1,11 @@
 package myCPU
 import CSR._ 
+import CSR_OP._ 
 import Control._ 
+import Alu._
+import chisel3._ 
+import chisel3.util._
+import chisel3.experimental.BundleLiterals._
 
 class gpr_ptr extends BlackBox with HasBlackBoxInline{
 	val io = IO(new Bundle{
@@ -21,17 +26,6 @@ class RegisterFile(readPorts : Int) extends Module{
     })
 
     val reg = RegInit(VecInit(Seq.fill(32)(0.U(64.W))))
-	val gpr_ptr = Module(new gpr_ptr)					//用于向外输出寄存器信息，用于debug
-	
-	regFile.io.raddr(2) := 0.U
-	for(i <- 3 until 35){
-		regFile.io.raddr(i) := (i-3).U
-		gpr_ptr.io.regfile(i-3) := regFile.io.rdata(i);
-	}
-
-	//gpr_ptr向外同步的时机依靠时钟，所以要向外输出时钟
-	//gpr_ptr.io.clock := clock
-	//gpr_ptr.io.reset := reset
 
     when(io.wen){
         reg(io.waddr) := io.wdata
@@ -50,7 +44,7 @@ class RegisterFile(readPorts : Int) extends Module{
 
 }
 
-class decode_stage extends Module{
+class DecodeStage extends Module{
 	val io = IO(new Bundle{
 		val flush_de = Input(Bool())
 		val stall = Input(Bool())
@@ -58,18 +52,25 @@ class decode_stage extends Module{
 		val csr_r_op = Output(UInt(3.W))
 		val csr_r_addr = Output(UInt(12.W)) 
 
+		val csr_cmd = Output(UInt(3.W))
+
+		val csr_accessType_illegal = Input(Bool())
+		val regFile_wen = Input(Bool())
+		val regFile_waddr = Input(UInt(5.W))
+		val regFile_wdata = Input(UInt(64.W))
 		val csr_mode = Input(UInt(2.W))
 		val csr_r_data = Input(UInt(64.W))
-		val mw_pipe_reg_enable = Iuput(Bool())
+		val mw_pipe_reg_enable = Input(Bool())
 		val mw_pipe_reg_dest = Input(Bool())
 		val mw_pipe_reg_wb_en = Input(Bool())
+		val mw_pipe_reg_wb_sel = Input(UInt(2.W))
 		val mw_pipe_reg_alu_out = Input(UInt(64.W))
 		val mw_pipe_reg_pc = Input(UInt(64.W))
 		val mw_pipe_reg_csr_read_data = Input(UInt(64.W))
 		val mw_pipe_reg_load_data = Input(UInt(64.W))
 
 		val fd_pipe_reg = Input(new fetch_decode_pipeline_reg)
-		val decode_execute_pipeline_reg = Output(new decode_execute_pipeline_reg)
+		val de_pipe_reg = Output(new decode_execute_pipeline_reg)
 	})
 
 	val de_pipe_reg = RegInit(
@@ -108,23 +109,40 @@ class decode_stage extends Module{
 	val control = Module(new Control)
 	val regFile = Module(new RegisterFile(35))			//有35个读口的寄存器文件
 
-	control.inst := io.fd_pipe_reg.inst
+	val gpr_ptr = Module(new gpr_ptr)					//用于向外输出寄存器信息，用于debug
+	
+	regFile.io.raddr(2) := 0.U
+	for(i <- 3 until 35){
+		regFile.io.raddr(i) := (i-3).U
+		gpr_ptr.io.regfile(i-3) := regFile.io.rdata(i);
+	}
+
+	//gpr_ptr向外同步的时机依靠时钟，所以要向外输出时钟
+	//gpr_ptr.io.clock := clock
+	//gpr_ptr.io.reset := reset
+
+
+	control.io.inst := io.fd_pipe_reg.inst
+	io.csr_cmd := control.io.csr_cmd
 
 	val src1_addr = io.fd_pipe_reg.inst(19, 15)
 	val src2_addr = io.fd_pipe_reg.inst(24, 20)
 	val dest_addr = io.fd_pipe_reg.inst(11, 7)
 
+	regFile.io.wen := io.regFile_wen
+	regFile.io.waddr := io.regFile_waddr
+	regFile.io.wdata := io.regFile_wdata
 	regFile.io.raddr(0) := src1_addr
 	regFile.io.raddr(1) := src2_addr
 
 	immGen.io.inst := io.fd_pipe_reg.inst
-	immGen.io.sel := control.imm_sel
+	immGen.io.sel := control.io.imm_sel
 
-	val csr_op = Mux((control.csr_cmd === CSR_RW) && (dest_addr === 0.U), CSR.W,
-					Mux(control.csr_cmd === CSR_RW, CSR.RW,
-						Mux((control.csr_cmd === CSR_RC)&&(src1_addr === 0.U), CSR.R,
-							Mux((control.csr_cmd === CSR_RS) && (src1_addr === 0.U), CSR.R,
-								Mux(control.csr_cmd === CSR_RS, CSR.RS, CSR.N)
+	val csr_op = Mux((control.io.csr_cmd === CSR_RW) && (dest_addr === 0.U), CSR.W,
+					Mux(control.io.csr_cmd === CSR_RW, CSR.RW,
+						Mux((control.io.csr_cmd === CSR_RC)&&(src1_addr === 0.U), CSR.R,
+							Mux((control.io.csr_cmd === CSR_RS) && (src1_addr === 0.U), CSR.R,
+								Mux(control.io.csr_cmd === CSR_RS, CSR.RS, CSR.N)
 							)
 						)
 					)
@@ -138,7 +156,7 @@ class decode_stage extends Module{
 	val csr_write_data = Mux(io.mw_pipe_reg_enable && (io.mw_pipe_reg_dest === src1_addr) && io.mw_pipe_reg_wb_en && (src1_addr =/= 0.U), 
 							Mux(io.mw_pipe_reg_wb_sel === WB_ALU, io.mw_pipe_reg_alu_out,
 								Mux(io.mw_pipe_reg_wb_sel === WB_PC4, io.mw_pipe_reg_pc + 4.U, 
-									Mux(io._mw_pipe_reg_wb_sel === WB_CSR, io.mw_pipe_reg_csr_read_data, io.mw_pipe_reg_load_data))), regFile.io.rdata(0))
+									Mux(io.mw_pipe_reg_wb_sel === WB_CSR, io.mw_pipe_reg_csr_read_data, io.mw_pipe_reg_load_data))), regFile.io.rdata(0))
 
 	val csr_write_addr = io.fd_pipe_reg.inst(31, 20)
 
@@ -172,16 +190,16 @@ class decode_stage extends Module{
 		de_pipe_reg.enable := false.B
 	}.elsewhen(!io.stall && !io.flush_de){			//&& !load_stall
 		de_pipe_reg.inst := io.fd_pipe_reg.inst
-		de_pipe_reg.alu_op := control.alu_op
-		de_pipe_reg.A_sel := control.A_sel
-		de_pipe_reg.B_sel := control.B_sel
+		de_pipe_reg.alu_op := control.io.alu_op
+		de_pipe_reg.A_sel := control.io.A_sel
+		de_pipe_reg.B_sel := control.io.B_sel
 		de_pipe_reg.csr_read_data := csr_data
 		de_pipe_reg.csr_write_op := csr_op
 		de_pipe_reg.csr_write_data := csr_write_data
 		de_pipe_reg.csr_write_addr := csr_write_addr
 		de_pipe_reg.pc := io.fd_pipe_reg.pc
 		de_pipe_reg.imm := immGen.io.out
-		de_pipe_reg.imm_sel := control.imm_sel
+		de_pipe_reg.imm_sel := control.io.imm_sel
 		de_pipe_reg.rs1 := Mux(io.mw_pipe_reg_enable && (io.mw_pipe_reg_dest === src1_addr) && io.mw_pipe_reg_wb_en && (src1_addr =/= 0.U), 
 							Mux(io.mw_pipe_reg_wb_sel === WB_ALU, io.mw_pipe_reg_alu_out,
 								Mux(io.mw_pipe_reg_wb_sel === WB_PC4, io.mw_pipe_reg_pc + 4.U, 
@@ -193,15 +211,15 @@ class decode_stage extends Module{
 									Mux(io.mw_pipe_reg_wb_sel === WB_CSR, io.mw_pipe_reg_csr_read_data, io.mw_pipe_reg_load_data))),regFile.io.rdata(1))
 		de_pipe_reg.src2_addr := src2_addr
 		de_pipe_reg.dest := dest_addr
-		de_pipe_reg.pc_sel := control.pc_sel
-		de_pipe_reg.br_type := control.br_type
-		de_pipe_reg.st_type := control.st_type
-		de_pipe_reg.ld_type := control.ld_type
-		de_pipe_reg.wd_type := control.wd_type
-		de_pipe_reg.wb_sel := control.wb_sel
-		de_pipe_reg.wb_en := control.wb_en
-		de_pipe_reg.csr_inst_mode := control.prv
-		de_pipe_reg.csr_is_illegal := control.is_illegal || mode_illegal || io.csr_accessType_illegal || (control.prv > io.csr_mode)
+		de_pipe_reg.pc_sel := control.io.pc_sel
+		de_pipe_reg.br_type := control.io.br_type
+		de_pipe_reg.st_type := control.io.st_type
+		de_pipe_reg.ld_type := control.io.ld_type
+		de_pipe_reg.wd_type := control.io.wd_type
+		de_pipe_reg.wb_sel := control.io.wb_sel
+		de_pipe_reg.wb_en := control.io.wb_en
+		de_pipe_reg.csr_inst_mode := control.io.prv
+		de_pipe_reg.csr_is_illegal := control.io.is_illegal || mode_illegal || io.csr_accessType_illegal || (control.io.prv > io.csr_mode)
 		de_pipe_reg.csr_inst_misalign := ((io.fd_pipe_reg.pc & 3.U) =/= 0.U) && io.fd_pipe_reg.enable
 		de_pipe_reg.enable := io.fd_pipe_reg.enable
 	}

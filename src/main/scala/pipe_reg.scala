@@ -1,4 +1,5 @@
 package  myCPU
+import chisel3._ 
 
 class fetch_decode_pipeline_reg extends Bundle{
 	val inst = chiselTypeOf(Instructions.NOP)
