@@ -30,7 +30,7 @@ class RegisterFile(readPorts : Int) extends Module{
     when(io.wen){
         reg(io.waddr) := io.wdata
 	}
-
+ 
 	for(i <- 0 until readPorts)
 		io.rdata(i) := 0.U
 
@@ -118,8 +118,8 @@ class DecodeStage extends Module{
 	}
 
 	//gpr_ptr向外同步的时机依靠时钟，所以要向外输出时钟
-	//gpr_ptr.io.clock := clock
-	//gpr_ptr.io.reset := reset
+	gpr_ptr.io.clock := clock
+	gpr_ptr.io.reset := reset
 
 	control.io.inst := io.fd_pipe_reg.inst
 	io.csr_cmd := control.io.csr_cmd

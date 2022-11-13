@@ -298,6 +298,7 @@ class CSR extends Module{
 	val cause = Mux(hasInt, Cat(true.B, intCause),
 							Cat(false.B, excCause))
 	
+	//printf(p"trap_cause:${Hexadecimal(cause)}\n")
 	val excValue = Mux((excCause === EXC_LOAD_ADDR) || (excCause === EXC_STORE_ADDR) ,io.alu_out,
 							Mux((excCause === EXC_BRK_POINT) || (excCause === EXC_INST_ADDR), io.excPC,
 									Mux(excCause === EXC_ILL_INST, io.inst, 0.U))

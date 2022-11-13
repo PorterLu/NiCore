@@ -214,7 +214,18 @@ class Datapath extends Module{
 	io.pc := memory_stage.io.mw_pipe_reg.pc
 	io.inst := execute_stage.io.em_pipe_reg.inst
 	io.commit_inst := memory_stage.io.mw_pipe_reg.inst
-	//printf(p"mw dest: ${memory_stage.io.mw_pipe_reg.dest}\n\n")
+}
+
+class S011HD1P_X32Y2D128_BW extends BlackBox{
+	val io = IO(new Bundle{
+		val CLK = Input(Clock())
+		val CEN = Input(Bool())
+		val WEN = Input(Bool())
+		val BWEN = Input(UInt(128.W))
+		val A 	= Input(UInt(6.W))
+		val D 	= Input(UInt(128.W))
+		val Q 	= Output(UInt(128.W))
+	})
 }
 
 class myCPU extends Module{
@@ -360,6 +371,16 @@ class myCPU extends Module{
 	val icache = Module(new Cache("inst_cache"))
 	val dcache = Module(new Cache("data_cache"))
 	val arb = Module(new CacheArbiter) 
+
+	val sram0 = Module(new S011HD1P_X32Y2D128_BW)
+	val sram1 = Module(new S011HD1P_X32Y2D128_BW)
+	val sram2 = Module(new S011HD1P_X32Y2D128_BW)
+	val sram3 = Module(new S011HD1P_X32Y2D128_BW)
+	val sram4 = Module(new S011HD1P_X32Y2D128_BW)
+	val sram5 = Module(new S011HD1P_X32Y2D128_BW)
+	val sram6 = Module(new S011HD1P_X32Y2D128_BW)
+	val sram7 = Module(new S011HD1P_X32Y2D128_BW)
+
 	datapath.io.icache.cpu_request <> icache.io.cpu_request
 	datapath.io.dcache.cpu_request <> dcache.io.cpu_request
 	datapath.io.icache.cpu_response <> icache.io.cpu_response
@@ -371,7 +392,71 @@ class myCPU extends Module{
 	dcache.io.accessType := datapath.io.dcache.accessType
 	icache.io.mem_io <> arb.io.icache
 	dcache.io.mem_io <> arb.io.dcache
-	
+
+	sram0.io.A := icache.io.sram0_addr
+	sram0.io.CEN := icache.io.sram0_cen
+	sram0.io.WEN := icache.io.sram0_wen
+	sram0.io.BWEN := icache.io.sram0_wmask
+	sram0.io.D 	  := icache.io.sram0_wdata
+	icache.io.sram0_rdata := sram0.io.Q
+	sram0.io.CLK := clock 
+
+	sram1.io.A := icache.io.sram1_addr
+	sram1.io.CEN := icache.io.sram1_cen
+	sram1.io.WEN := icache.io.sram1_wen
+	sram1.io.BWEN := icache.io.sram1_wmask
+	sram1.io.D 	  := icache.io.sram1_wdata
+	icache.io.sram1_rdata := sram1.io.Q
+	sram1.io.CLK := clock 
+
+	sram2.io.A := icache.io.sram2_addr
+	sram2.io.CEN := icache.io.sram2_cen
+	sram2.io.WEN := icache.io.sram2_wen
+	sram2.io.BWEN := icache.io.sram2_wmask
+	sram2.io.D 	  := icache.io.sram2_wdata
+	icache.io.sram2_rdata := sram2.io.Q
+	sram2.io.CLK := clock 
+
+	sram3.io.A := icache.io.sram3_addr
+	sram3.io.CEN := icache.io.sram3_cen
+	sram3.io.WEN := icache.io.sram3_wen
+	sram3.io.BWEN := icache.io.sram3_wmask
+	sram3.io.D 	  := icache.io.sram3_wdata
+	icache.io.sram3_rdata := sram3.io.Q
+	sram3.io.CLK := clock
+
+	sram4.io.A := dcache.io.sram0_addr
+	sram4.io.CEN := dcache.io.sram0_cen
+	sram4.io.WEN := dcache.io.sram0_wen
+	sram4.io.BWEN := dcache.io.sram0_wmask
+	sram4.io.D 	  := dcache.io.sram0_wdata
+	dcache.io.sram0_rdata := sram4.io.Q
+	sram4.io.CLK := clock 
+
+	sram5.io.A := dcache.io.sram1_addr
+	sram5.io.CEN := dcache.io.sram1_cen
+	sram5.io.WEN := dcache.io.sram1_wen
+	sram5.io.BWEN := dcache.io.sram1_wmask
+	sram5.io.D 	  := dcache.io.sram1_wdata
+	dcache.io.sram1_rdata := sram5.io.Q
+	sram5.io.CLK := clock 
+
+	sram6.io.A := dcache.io.sram2_addr
+	sram6.io.CEN := dcache.io.sram2_cen
+	sram6.io.WEN := dcache.io.sram2_wen
+	sram6.io.BWEN := dcache.io.sram2_wmask
+	sram6.io.D 	  := dcache.io.sram2_wdata
+	dcache.io.sram2_rdata := sram6.io.Q
+	sram6.io.CLK := clock
+
+	sram7.io.A := dcache.io.sram3_addr
+	sram7.io.CEN := dcache.io.sram3_cen
+	sram7.io.WEN := dcache.io.sram3_wen
+	sram7.io.BWEN := dcache.io.sram3_wmask
+	sram7.io.D 	  := dcache.io.sram3_wdata
+	dcache.io.sram3_rdata := sram7.io.Q
+	sram7.io.CLK := clock 
+
 	arb.io.axi_out.aw.ready := io.master_awready
 	io.master_awvalid := arb.io.axi_out.aw.valid
 	io.master_awaddr := arb.io.axi_out.aw.bits.addr

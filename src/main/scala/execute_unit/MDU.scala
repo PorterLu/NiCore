@@ -34,9 +34,9 @@ class Multiplier extends Module{
 	val multiplier_reg = RegInit(0.U(64.W))
 	//val result = RegInit(0.U(128.W))
 	val mid_result = RegInit(VecInit(Seq.fill(4)(0.U(64.W))))
-	val out_sign = Reg(Bool())
-	val out_high = Reg(Bool())
-	val is_w = Reg(Bool())
+	val out_sign = RegInit(false.B)
+	val out_high = RegInit(false.B)
+	val is_w = RegInit(false.B)
 	val (index, last) = Counter(mul_state === sCalc, 32)
 
 	val next_state = WireInit(sIdle)
@@ -178,14 +178,14 @@ class Divider extends Module{
 
 	import DivState._ 
 
-	val dividend = Reg(UInt(128.W))
-	val divisor  = Reg(UInt(128.W))
-	val result = Reg(UInt(64.W))
-	val sign_a = Reg(Bool())
-	val sign_b = Reg(Bool())
+	val dividend = RegInit(0.U(128.W))
+	val divisor  = RegInit(0.U(128.W))
+	val result = RegInit(0.U(64.W))
+	val sign_a = RegInit(false.B)
+	val sign_b = RegInit(false.B)
 	val div_state = RegInit(sIdle)
-	val is_w = Reg(Bool())
-	val is_sign = Reg(Bool())
+	val is_w = RegInit(false.B)
+	val is_sign = RegInit(false.B)
 	val next_state = WireInit(sIdle)
 
 	io.div_ready := div_state === sIdle

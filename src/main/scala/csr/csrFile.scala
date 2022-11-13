@@ -9,10 +9,15 @@ import chisel3.util._
 object CSR_OP{
 	val CSR_OP_WIDTH = log2Ceil(4)
 	
-	val CSR_NOP = 0.U(CSR_OP_WIDTH.W)	//nop
+	/*val CSR_NOP = 0.U(CSR_OP_WIDTH.W)	//nop
 	val CSR_RW  = 1.U(CSR_OP_WIDTH.W)	//read and write
 	val CSR_RS 	= 2.U(CSR_OP_WIDTH.W)	//read and set
-	val CSR_RC 	= 3.U(CSR_OP_WIDTH.W)	//read and clear
+	val CSR_RC 	= 3.U(CSR_OP_WIDTH.W)	//read and clear*/
+
+	val CSR_NOP = 0.U(3.W)	//nop
+	val CSR_RW  = 1.U(3.W)	//read and write
+	val CSR_RS 	= 2.U(3.W)	//read and set
+	val CSR_RC 	= 3.U(3.W)	//read and clear
 }
 
 abstract class CSR_Bundle extends Bundle{

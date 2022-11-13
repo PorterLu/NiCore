@@ -3,97 +3,145 @@
     "class":"firrtl.transforms.DedupedResult",
     "original":"~myCPU|tag_cache",
     "duplicate":"~myCPU|ysyx_22041812_myCPU/icache:ysyx_22041812_Cache/tag_mem_0:ysyx_22041812_tag_cache",
-    "index":0.45714285714285713
+    "index":0.37209302325581395
   },
   {
     "class":"firrtl.transforms.DedupedResult",
     "original":"~myCPU|tag_cache_1",
     "duplicate":"~myCPU|ysyx_22041812_myCPU/icache:ysyx_22041812_Cache/tag_mem_1:ysyx_22041812_tag_cache",
-    "index":0.4857142857142857
+    "index":0.3953488372093023
   },
   {
     "class":"firrtl.transforms.DedupedResult",
     "original":"~myCPU|tag_cache_2",
     "duplicate":"~myCPU|ysyx_22041812_myCPU/icache:ysyx_22041812_Cache/tag_mem_2:ysyx_22041812_tag_cache",
-    "index":0.5142857142857142
+    "index":0.4186046511627907
   },
   {
     "class":"firrtl.transforms.DedupedResult",
     "original":"~myCPU|tag_cache_3",
     "duplicate":"~myCPU|ysyx_22041812_myCPU/icache:ysyx_22041812_Cache/tag_mem_3:ysyx_22041812_tag_cache",
-    "index":0.5428571428571428
+    "index":0.4418604651162791
   },
   {
     "class":"firrtl.transforms.DedupedResult",
     "original":"~myCPU|data_cache",
     "duplicate":"~myCPU|ysyx_22041812_myCPU/icache:ysyx_22041812_Cache/data_mem_0:ysyx_22041812_data_cache",
-    "index":0.5714285714285714
+    "index":0.46511627906976744
   },
   {
     "class":"firrtl.transforms.DedupedResult",
     "original":"~myCPU|data_cache_1",
     "duplicate":"~myCPU|ysyx_22041812_myCPU/icache:ysyx_22041812_Cache/data_mem_1:ysyx_22041812_data_cache",
-    "index":0.6
+    "index":0.4883720930232558
   },
   {
     "class":"firrtl.transforms.DedupedResult",
     "original":"~myCPU|data_cache_2",
     "duplicate":"~myCPU|ysyx_22041812_myCPU/icache:ysyx_22041812_Cache/data_mem_2:ysyx_22041812_data_cache",
-    "index":0.6285714285714286
+    "index":0.5116279069767442
   },
   {
     "class":"firrtl.transforms.DedupedResult",
     "original":"~myCPU|data_cache_3",
     "duplicate":"~myCPU|ysyx_22041812_myCPU/icache:ysyx_22041812_Cache/data_mem_3:ysyx_22041812_data_cache",
-    "index":0.6571428571428571
+    "index":0.5348837209302325
   },
   {
     "class":"firrtl.transforms.DedupedResult",
     "original":"~myCPU|tag_cache_4",
     "duplicate":"~myCPU|ysyx_22041812_myCPU/dcache:ysyx_22041812_Cache_1/tag_mem_0:ysyx_22041812_tag_cache",
-    "index":0.7142857142857143
+    "index":0.5813953488372093
   },
   {
     "class":"firrtl.transforms.DedupedResult",
     "original":"~myCPU|tag_cache_5",
     "duplicate":"~myCPU|ysyx_22041812_myCPU/dcache:ysyx_22041812_Cache_1/tag_mem_1:ysyx_22041812_tag_cache",
-    "index":0.7428571428571429
+    "index":0.6046511627906976
   },
   {
     "class":"firrtl.transforms.DedupedResult",
     "original":"~myCPU|tag_cache_6",
     "duplicate":"~myCPU|ysyx_22041812_myCPU/dcache:ysyx_22041812_Cache_1/tag_mem_2:ysyx_22041812_tag_cache",
-    "index":0.7714285714285715
+    "index":0.627906976744186
   },
   {
     "class":"firrtl.transforms.DedupedResult",
     "original":"~myCPU|tag_cache_7",
     "duplicate":"~myCPU|ysyx_22041812_myCPU/dcache:ysyx_22041812_Cache_1/tag_mem_3:ysyx_22041812_tag_cache",
-    "index":0.8
+    "index":0.6511627906976745
   },
   {
     "class":"firrtl.transforms.DedupedResult",
     "original":"~myCPU|data_cache_4",
     "duplicate":"~myCPU|ysyx_22041812_myCPU/dcache:ysyx_22041812_Cache_1/data_mem_0:ysyx_22041812_data_cache",
-    "index":0.8285714285714286
+    "index":0.6744186046511628
   },
   {
     "class":"firrtl.transforms.DedupedResult",
     "original":"~myCPU|data_cache_5",
     "duplicate":"~myCPU|ysyx_22041812_myCPU/dcache:ysyx_22041812_Cache_1/data_mem_1:ysyx_22041812_data_cache",
-    "index":0.8571428571428571
+    "index":0.6976744186046512
   },
   {
     "class":"firrtl.transforms.DedupedResult",
     "original":"~myCPU|data_cache_6",
     "duplicate":"~myCPU|ysyx_22041812_myCPU/dcache:ysyx_22041812_Cache_1/data_mem_2:ysyx_22041812_data_cache",
-    "index":0.8857142857142857
+    "index":0.7209302325581395
   },
   {
     "class":"firrtl.transforms.DedupedResult",
     "original":"~myCPU|data_cache_7",
     "duplicate":"~myCPU|ysyx_22041812_myCPU/dcache:ysyx_22041812_Cache_1/data_mem_3:ysyx_22041812_data_cache",
-    "index":0.9142857142857143
+    "index":0.7441860465116279
+  },
+  {
+    "class":"firrtl.transforms.DedupedResult",
+    "original":"~myCPU|S011HD1P_X32Y2D128_BW",
+    "duplicate":"~myCPU|ysyx_22041812_myCPU/sram0:S011HD1P_X32Y2D128_BW",
+    "index":0.813953488372093
+  },
+  {
+    "class":"firrtl.transforms.DedupedResult",
+    "original":"~myCPU|S011HD1P_X32Y2D128_BW_1",
+    "duplicate":"~myCPU|ysyx_22041812_myCPU/sram1:S011HD1P_X32Y2D128_BW",
+    "index":0.8372093023255814
+  },
+  {
+    "class":"firrtl.transforms.DedupedResult",
+    "original":"~myCPU|S011HD1P_X32Y2D128_BW_2",
+    "duplicate":"~myCPU|ysyx_22041812_myCPU/sram2:S011HD1P_X32Y2D128_BW",
+    "index":0.8604651162790697
+  },
+  {
+    "class":"firrtl.transforms.DedupedResult",
+    "original":"~myCPU|S011HD1P_X32Y2D128_BW_3",
+    "duplicate":"~myCPU|ysyx_22041812_myCPU/sram3:S011HD1P_X32Y2D128_BW",
+    "index":0.8837209302325582
+  },
+  {
+    "class":"firrtl.transforms.DedupedResult",
+    "original":"~myCPU|S011HD1P_X32Y2D128_BW_4",
+    "duplicate":"~myCPU|ysyx_22041812_myCPU/sram4:S011HD1P_X32Y2D128_BW",
+    "index":0.9069767441860465
+  },
+  {
+    "class":"firrtl.transforms.DedupedResult",
+    "original":"~myCPU|S011HD1P_X32Y2D128_BW_5",
+    "duplicate":"~myCPU|ysyx_22041812_myCPU/sram5:S011HD1P_X32Y2D128_BW",
+    "index":0.9302325581395349
+  },
+  {
+    "class":"firrtl.transforms.DedupedResult",
+    "original":"~myCPU|S011HD1P_X32Y2D128_BW_6",
+    "duplicate":"~myCPU|ysyx_22041812_myCPU/sram6:S011HD1P_X32Y2D128_BW",
+    "index":0.9534883720930233
+  },
+  {
+    "class":"firrtl.transforms.DedupedResult",
+    "original":"~myCPU|S011HD1P_X32Y2D128_BW_7",
+    "duplicate":"~myCPU|ysyx_22041812_myCPU/sram7:S011HD1P_X32Y2D128_BW",
+    "index":0.9767441860465116
   },
   {
     "class":"myCPU.ModulePrefixAnnotation",
@@ -140,21 +188,23 @@
       "sRefill":8,
       "sWriteAck":11,
       "sIdle":0,
-      "sFlush":13,
-      "sFlushMatch":14,
+      "sWait_a_cycle_refill":14,
+      "sWait_a_cycle_r":12,
+      "sFlush":15,
+      "sFlushMatch":16,
       "sWriteAddr":10,
       "sMatch":6,
+      "sWait_a_cycle_w":13,
       "sReadAddr":9,
       "sUnCacheWriteAck":5,
-      "sFlushAck":17,
-      "sFlushWrite":15,
+      "sFlushAck":19,
+      "sFlushWrite":17,
       "sUnCacheReadData":3,
       "sUnCacheWriteAddr":2,
       "sUnCacheReadAddr":1,
       "sUnCacheWriteData":4,
-      "sFlushAddr":16,
-      "sWriteback":7,
-      "sWait_a_cycle":12
+      "sFlushAddr":18,
+      "sWriteback":7
     }
   },
   {

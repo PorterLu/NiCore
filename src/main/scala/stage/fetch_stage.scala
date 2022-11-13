@@ -58,6 +58,8 @@ class FetchStage extends Module{
 		)
 	)
 
+	//printf(p"next_pc_state: ${!io.started && io.stall} ${(io.csr_trap)} ${(((io.de_pipe_reg_pc_sel === PC_ALU) && io.de_pipe_reg_enable) || io.brCond_taken)} ${io.csr_atomic}\n")
+	//printf(p"next_pc:${Hexadecimal(next_pc)}\n")
 	val inst = Mux(io.started, Instructions.NOP, Mux(pc(2).asBool, io.icache.cpu_response.data(63, 32), io.icache.cpu_response.data(31, 0)))
 	
 	pc := next_pc

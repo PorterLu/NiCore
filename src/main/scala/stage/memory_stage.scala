@@ -117,7 +117,7 @@ class MemoryStage extends Module{
 						) 
 
 	io.dcache.cpu_request.mask := Mux(st_mask === "b11111111".U, st_mask(7, 0), Mux(io.stall, (st_mask << io.em_pipe_reg.alu_out(2,0))(7, 0), (st_mask << io.alu_out(2,0))(7, 0)))
-	val load_data = Mux(io.em_pipe_reg.is_clint, clint.io.r_data, io.data_cache_response_data >> ((io.em_pipe_reg.alu_out & "h07".U) << 3.U)) //(em_pipe_reg.alu_out >= "h2000000".U) && (em_pipe_reg.alu_out <= "h200ffff".U)
+	val load_data = Mux(io.em_pipe_reg.is_clint, clint.io.r_data, data_cache_response_data >> ((io.em_pipe_reg.alu_out & "h07".U) << 3.U)) //(em_pipe_reg.alu_out >= "h2000000".U) && (em_pipe_reg.alu_out <= "h200ffff".U)
 	val load_data_ext = Mux(io.em_pipe_reg.ld_type === LD_LW, Cat(Mux(load_data(31).asBool, "hffffffff".U, 0.U(32.W)), load_data(31, 0)),
 							Mux(io.em_pipe_reg.ld_type === LD_LWU, Cat(Fill(32, 0.U), load_data(31, 0)),
 								Mux(io.em_pipe_reg.ld_type === LD_LH, Cat(Mux(load_data(15).asBool, "hffffffffffff".U, 0.U(48.W)), load_data(15, 0)),
