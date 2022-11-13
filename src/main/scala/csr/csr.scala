@@ -274,7 +274,8 @@ class CSR extends Module{
 	//判断中断的flag位是否能生效
 	val hasIntS  = Mux(mode < CSR_MODE_S || (mode === CSR_MODE_S && mstatus.sie), (flagIntS & mideleg.asUInt).orR, false.B)
 	val hasIntM	 = Mux(mode <= CSR_MODE_S || mstatus.mie, (flagIntM & ~mideleg.asUInt).orR, false.B)
-	val hasInt = (hasIntM || hasIntS) && (io.fd_enable || io.de_enable || (io.em_enable && (hasExc || io.jump_taken))) && !writeEn && !io.stall
+	val hasInt = (hasIntM || hasIntS) &&  io.de_enable && !writeEn && !io.stall // && (hasExc || io.jump_taken || io.isSret || io.isMret)
+
 	//是否是S模式的中断
 	val handIntS = hasInt && !hasIntM 
 
@@ -349,12 +350,10 @@ class CSR extends Module{
 	//根据情况刷新不同阶段的流水线
 	io.flush_mask := 0.U
 	when(!io.stall && !writeEn){
-		when(hasInt && !hasExc && !io.isMret && !io.isSret){
-			io.flush_mask := "b0111".U
-		}.elsewhen(hasInt && (hasExc || io.isMret || io.isSret)){
+		when(hasInt && !hasExc && !io.isSret && !io.isMret){
+			io.flush_mask := "b0111".U	
+		}.elsewhen(hasInt && (hasExc || io.isMret || io.isSret)){											//&& !hasExc && !io.isMret && !io.isSret
 			io.flush_mask := "b1111".U
-		}.elsewhen(io.inst === Instructions.ECALL || io.inst === Instructions.EBREAK){
-			io.flush_mask := "b0111".U
 		}.elsewhen(hasExc){
 			io.flush_mask := "b1111".U
 		}.elsewhen(io.isSret || io.isMret){
@@ -363,11 +362,8 @@ class CSR extends Module{
 	}
 
 	//exceptions and interrupts handling
-	val interrupt_return_addr = Mux(io.jump_taken && io.em_enable, io.jump_addr,
-									Mux(io.de_enable, io.de_pipe_reg_pc,
-										Mux(io.fd_enable, io.fd_pipe_reg_pc, io.excPC)
-									)
-								)
+	val interrupt_return_addr = Mux(io.em_enable && !hasExc && !io.isSret && !io.isMret && io.jump_taken, io.jump_addr,
+									Mux(io.em_enable && (hasExc || io.isSret || io.isMret), io.excPC, io.de_pipe_reg_pc))
 
 	when(!io.stall){
 		when(writeEn){
@@ -392,14 +388,14 @@ class CSR extends Module{
 			when(io.w_addr === CSR_MCAUSE){ mcause <= writeData }
 			when(io.w_addr === CSR_MTVAL){ mtval <= writeData }
 		}.elsewhen(handIntS){
-			sepc 	<= Mux(hasExc || io.isSret || io.isMret, io.excPC,  interrupt_return_addr)	//考虑跳转指令时发生中断的情况
+			sepc 	<= 	interrupt_return_addr//考虑跳转指令时发生中断的情况,Mux((hasExc || io.isSret || io.isMret) && io.em_enable, io.excPC,  interrupt_return_addr)
 			scause 	<= cause
 			stval 	<= excValue
 			mstatus.spie := mstatus.sie					
 			mstatus.sie := false.B
 			mstatus.spp := mode(0)
 		}.elsewhen(hasInt){
-			mepc 	<=  Mux(hasExc || io.isSret || io.isMret, io.excPC,  interrupt_return_addr)
+			mepc 	<=  interrupt_return_addr
 			mcause  <= cause
 			mtval 	<= excValue
 			mstatus.mpie := mstatus.mie
