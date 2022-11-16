@@ -4,7 +4,7 @@ import chisel3._
 import chisel3.util._ 
 
 class TlbEntry extends Bundle{
-	val ppn = UInt(PPN_WIDTH.W)
+	val ppn = UInt(44.W)
 	val d	= Bool()			//dirty
 	val a 	= Bool()			//access
 	val g 	= Bool()			//global
@@ -12,6 +12,7 @@ class TlbEntry extends Bundle{
 	val x	= Bool()			//execute
 	val w	= Bool()			//write
 	val	r	= Bool()			//read
+	val v	= Bool()
 	val rsw = UInt(2.W)
 }
 
