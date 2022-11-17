@@ -21,6 +21,7 @@ import pageSize._
 class PTE extends Bundle{
 	val reserved = UInt(10.W)
 	val ppn 	 = UInt(44.W)
+	val RSW 	 = UInt(2.W)
 	val D 		 = Bool()
 	val A 		 = Bool()
 	val G 		 = Bool()
@@ -29,6 +30,44 @@ class PTE extends Bundle{
 	val w		 = Bool()
 	val R 		 = Bool()
 	val V 		 = Bool() 
+
+	def fetchCheck(priv: UInt, sum: Bool) : Bool = {
+		val priv_ok = WireDefault(false.B)
+		switch(priv){
+			is(CSR_MODE_U){
+				priv_ok := U
+			}
+
+			is(CSR_MODE_S){
+				priv_ok := sum && !U || !sum
+			}
+
+			is(CSR_MODE_M){
+				priv_ok := true.B
+			}
+		}
+
+		priv_ok && X 
+	}
+
+	def lsCheck(priv: UInt, sum: Bool, is_load: Bool, mxr: Bool) : Bool = {
+		val priv_ok = WireDefault(false.B)
+		switch(priv){
+			is(CSR_MODE_U){
+				priv_ok := U
+			}
+
+			is(CSR_MODE_S){
+				priv_ok := sum && !U || !sum
+			}
+
+			is(CSR_MODE_M){
+				priv_ok := true.B 
+			}
+		}
+
+		priv_ok && ((is_load &&((R && !X)|| (mxr && (R || X)))) || (!is_load && W)) 
+	} 
 }
 
 class TLBEntry extends Bundle{
@@ -255,7 +294,7 @@ object Page_fault extends ChiselEnum{
 }
 
 object TLB_state extends ChiselEnum{
-	val sIdle, sMatch, sFlush, sFirstLevel, sSecondLevel, sThridLevel = Value
+	val sIdle, sMatch, sFlush, sFirstLevel, sSecondLevel, sThridLevel, sData = Value
 }
 
 import Page_fault._ 
@@ -266,11 +305,14 @@ class TLB(tlb_name: String)extends Moudle{
 		val mprv = Input(Bool())
 		val sum	  = Input(Bool())
 		val mxr   = Input(Bool())
+		val wen   = Input(Bool())
 		val satp  = Input(UInt(64.W))
 		val va 	  = Input(UInt(64.W))
+		val mask  = Input(UInt(8.W))
 
 		val paddr  = Output(UInt(64.W))
 		val fault  = Ouput(UInt(2.W))
+		val tlb_ready = Output(Bool())
 
 		val tlb_request = Output(new CPU_Request)
 		val cache_response = Input(new CPU_Response)
@@ -288,11 +330,13 @@ class TLB(tlb_name: String)extends Moudle{
 	val asid = io.satp(60, 44)
 	val matchList = VecInit(Seq.fill(16)(false.B))
 	val faultList = VecInit(Seq.fill(16)(false.B))
-	val pte 	= WireInit(0.U.asTypeOf(new PTE))
+	val pte 	= WireInit(0.U(new PTE))
+	val pte_reg = RegInit(0.U(new PTE))
 	val ppn_base = Cat(io.satp(43, 0), 0.U(12.W)).asSInt.asUInt
 	val ppn2 	= vpn(26, 18)
 	val ppn1 	= vpn(17, 9)
 	val ppn0	= vpn(8, 0)
+	val pageSize = RegInit(PG_4K)
 	io.tlb_request.addr  := 0.U 
 	io.tlb_request.data  := 0.U 
 	io.tlb_request.mask  := 0.U 
@@ -306,6 +350,12 @@ class TLB(tlb_name: String)extends Moudle{
 
 	tlb_state := next_state
 	io.fault := no_page_falut
+
+	io.tlb_request.valid := false.B 
+	io.tlb_request.data := 0.U 
+	io.tlb_request.mask := 0.U 
+	io.tlb_request.rw := false.B
+	io.tlb_request.addr := "h80000000".U 
 
 	switch(tlb_state){
 		is(sIdle){
@@ -355,6 +405,7 @@ class TLB(tlb_name: String)extends Moudle{
 					}
 				}
 				next_state := sIdle
+				tlb_ready := true.B
 			}
 		}
 		is(sMatch){
@@ -402,19 +453,121 @@ class TLB(tlb_name: String)extends Moudle{
 						}
 					}
 					next_state := sIdle
+					tlb_ready  := true.B
 				}.otherwise{				//TLB未名中,未命中需要读些内存，只需要向cache输出访存信号即可
 					next_state := sThridLevel	
 				}	
 			}
 		}
 		is(sThridLevel){
-			tlb_request.addr := Mux(translationLevel === 3.U, )
+			next_state := sThridLevel
+			tlb_request.addr := io.va
+			tlb_request.valid := true.B 
+			tlb_request.rw := false.B
+			tlb_request.mask := 0.U
+			when(!io.stall && cache_response.ready){
+				pte := cache_response.data.asTypeOf(pte)
+				pte_reg := cache_response.data.asTypeOf(pte)
+				next_state := sSecondLevel
+				when(!pte.V || (!pte.R && pte.W)){
+					when(tlb_type){
+						io.fault := inst_page_fault
+					}.otherwise{
+						when(io.wen){
+							io.fault := store_page_fault
+						}.otherwise{
+							io.fault := load_page_fault
+						}
+					}
+					next_state := sIdle
+				}.elsewhen(pte.V && (pte.R || pte.X)){
+					pageSize := PG_1G
+					next_state := sData
+				}
+				
+			}
 		}
 		is(sSecondLevel){
-
+			next_state := sSecondLevel
+			tlb_request.addr := Cat(pte.ppn, 0.U(12.W)).asSInt.asUInt
+			tlb_request.valid := true.B 
+			tlb_request.rw 	:= false.B 
+			tlb_request.mask := 0.U 			
+			when(!io.stall && cache_response.ready){
+				pte := cache_response.data.asTypeOf(pte)
+				pte_reg := cache_response.data.asTypeOf(pte)
+				next_state := sFirstLevel
+				when(!pte.V || (!pte.R && pte.W)){
+					when(tlb_type){
+						io.fault := inst_page_fault
+					}.otherwise{
+						when(io.wen){
+							io.fault := store_page_fault
+						}.otherwise{
+							io.fault := load_page_fault
+						}
+					}
+					next_state := sIdle
+				}.elsewhen(pte.V && (pte.R || pte.X)){
+					pageSize := PG_2M
+					next_state := sData
+				}
+			} 
 		}
 		is(sFirstLevel){
+			next_state := sFirstLevel
+			tlb_request.addr := Cat(pte.ppn, 0.U(12.W)).asSInt.asUInt
+			tlb_request.valid := true.B 
+			tlb_request.rw 	  := false.B
+			tlb_request.mask  := 0.U
+			when(!io.stall && cache_response.ready){
+				pte := cache_response.data.asTypeOf(pte)
+				pte_reg := cache_response.data.asTypeOf(pte)
+				next_state := sData
+				when(!pte.V || (!pte.R && pte.W)){
+					when(tlb_type){
+						io.fault := inst_page_fault
+					}.otherwise{
+						when(io.wen){
+							io.fault := store_page_fault
+						}.otherwise{
+							io.fault := load_page_fault
+						}
+					}
+					next_state := sIdle
+				}.otherwise{
+					when(pte.R || pte.X){
+						next_state := sData
+						pageSize := PG_4K
+					}.otherwise{
+						when(tlb_type){
+							io.fault := inst_page_fault
+						}.otherwise{
+							when(io.wen){
+								io.fault := store_page_fault
+							}.otherwise{
+								io.fault := load_page_fault
+							}
+						}
+						next_state := sIdle
+					}
+				}
+			}
+		}
+		is(sData){					//检查访问的合法性
+			next_state := sData
+			when(tlb_type){
 
+			}.otherwise{
+				when(io.wen){
+
+				}.otherwise{
+					
+				}
+			}
+			when(!io.stall){
+				next_state := sIdle
+			} 
 		}
 	}
 }
