@@ -294,7 +294,7 @@ object Page_fault extends ChiselEnum{
 }
 
 object TLB_state extends ChiselEnum{
-	val sIdle, sMatch, sFlush, sFirstLevel, sSecondLevel, sThridLevel, sData = Value
+	val sIdle, sMatch, sFlush, sFirstLevel, sSecondLevel, sThridLevel, sPrivCheck, sData, sWrite = Value
 }
 
 import Page_fault._ 
@@ -310,7 +310,7 @@ class TLB(tlb_name: String)extends Moudle{
 		val va 	  = Input(UInt(64.W))
 		val mask  = Input(UInt(8.W))
 
-		val paddr  = Output(UInt(64.W))
+		val r_data  = Output(UInt(64.W))
 		val fault  = Ouput(UInt(2.W))
 		val tlb_ready = Output(Bool())
 
@@ -356,6 +356,19 @@ class TLB(tlb_name: String)extends Moudle{
 	io.tlb_request.mask := 0.U 
 	io.tlb_request.rw := false.B
 	io.tlb_request.addr := "h80000000".U 
+
+	
+	def raise_fault(tlb_type: Bool, wen:Bool): UInt = {
+		when(tlb_type){
+			inst_page_fault
+		}.otherwise{
+			when(io.wen){
+				store_page_fault
+			}.otherwise{
+				load_page_fault
+			}
+		}
+	}
 
 	switch(tlb_state){
 		is(sIdle){
@@ -461,7 +474,7 @@ class TLB(tlb_name: String)extends Moudle{
 		}
 		is(sThridLevel){
 			next_state := sThridLevel
-			tlb_request.addr := io.va
+			tlb_request.addr := ppn_base + ppn2<<3.U
 			tlb_request.valid := true.B 
 			tlb_request.rw := false.B
 			tlb_request.mask := 0.U
@@ -469,27 +482,25 @@ class TLB(tlb_name: String)extends Moudle{
 				pte := cache_response.data.asTypeOf(pte)
 				pte_reg := cache_response.data.asTypeOf(pte)
 				next_state := sSecondLevel
+
 				when(!pte.V || (!pte.R && pte.W)){
-					when(tlb_type){
-						io.fault := inst_page_fault
-					}.otherwise{
-						when(io.wen){
-							io.fault := store_page_fault
-						}.otherwise{
-							io.fault := load_page_fault
-						}
-					}
+					io.fault := raise_fault(tlb_type, io.wen)
 					next_state := sIdle
 				}.elsewhen(pte.V && (pte.R || pte.X)){
 					pageSize := PG_1G
 					next_state := sData
+
+					//这里还要进行巨页的非对齐检查
+					when(pte(27, 10) =/= 0.U){
+						io.fault := raise_fault(tlb_type, io.wen)
+						next_state := sIdle
+					}
 				}
-				
 			}
 		}
 		is(sSecondLevel){
 			next_state := sSecondLevel
-			tlb_request.addr := Cat(pte.ppn, 0.U(12.W)).asSInt.asUInt
+			tlb_request.addr := Cat(pte.ppn, 0.U(12.W)).asSInt.asUInt + ppn1<<3.U 
 			tlb_request.valid := true.B 
 			tlb_request.rw 	:= false.B 
 			tlb_request.mask := 0.U 			
@@ -498,25 +509,23 @@ class TLB(tlb_name: String)extends Moudle{
 				pte_reg := cache_response.data.asTypeOf(pte)
 				next_state := sFirstLevel
 				when(!pte.V || (!pte.R && pte.W)){
-					when(tlb_type){
-						io.fault := inst_page_fault
-					}.otherwise{
-						when(io.wen){
-							io.fault := store_page_fault
-						}.otherwise{
-							io.fault := load_page_fault
-						}
-					}
+					io.fault := raise_fault(tlb_type, io.wen)
 					next_state := sIdle
 				}.elsewhen(pte.V && (pte.R || pte.X)){
 					pageSize := PG_2M
 					next_state := sData
+
+					//这里要对大页的非对奇进行检查
+					when(pte(18, 10) =/= 0.U){
+						io.fault := raise_fault(tlb_type, io.wen)
+						next_state := sIdle
+					}
 				}
 			} 
 		}
 		is(sFirstLevel){
 			next_state := sFirstLevel
-			tlb_request.addr := Cat(pte.ppn, 0.U(12.W)).asSInt.asUInt
+			tlb_request.addr := Cat(pte.ppn, 0.U(12.W)).asSInt.asUInt + ppn0<<3.U
 			tlb_request.valid := true.B 
 			tlb_request.rw 	  := false.B
 			tlb_request.mask  := 0.U
@@ -524,49 +533,80 @@ class TLB(tlb_name: String)extends Moudle{
 				pte := cache_response.data.asTypeOf(pte)
 				pte_reg := cache_response.data.asTypeOf(pte)
 				next_state := sData
+
 				when(!pte.V || (!pte.R && pte.W)){
-					when(tlb_type){
-						io.fault := inst_page_fault
-					}.otherwise{
-						when(io.wen){
-							io.fault := store_page_fault
-						}.otherwise{
-							io.fault := load_page_fault
-						}
-					}
+					io.fault := raise_fault(tlb_type, io.wen)
 					next_state := sIdle
 				}.otherwise{
 					when(pte.R || pte.X){
 						next_state := sData
 						pageSize := PG_4K
 					}.otherwise{
-						when(tlb_type){
-							io.fault := inst_page_fault
-						}.otherwise{
-							when(io.wen){
-								io.fault := store_page_fault
-							}.otherwise{
-								io.fault := load_page_fault
-							}
-						}
+						io.fault := raise_fault(tlb_type, io.wen)
 						next_state := sIdle
 					}
 				}
 			}
 		}
-		is(sData){					//检查访问的合法性
-			next_state := sData
+		is(sPrivCheck){
+			next_state := sPrivCheck
 			when(tlb_type){
-
+				when(!pte_reg.fetchCheck(io.priv, io.sum)){
+					io.fault := inst_page_fault
+					next_state := sIdle
+				}.otherwise{
+					next_state := sData
+					when(!pte_reg.A || (io.wen && !pte_reg.D)){
+						io.fault := raise_fault(tlb_type, io.wen)
+						next_state := sIdle
+					}
+				}
 			}.otherwise{
 				when(io.wen){
-
+					when(!pte_reg.lsCheck(io.priv, io.sum, false.B, io.mxr)){
+						io.fault := store_page_fault
+						next_state := sIdle
+					}.otherwise{
+						next_state := sData
+						when(!pte_reg.A || (io.wen && !pte_reg.D)){
+							io.fault := raise_fault(tlb_type, io.wen)
+							next_state := sIdle
+						}
+					}
 				}.otherwise{
-					
+					when(!pte_reg.lsCheck(io.priv, io.sum, true.B, io.mxr)){
+						io.fault := load_page_fault
+						next_state := sIdle
+					}.otherwise{
+						next_state := sData
+						when(!pte_reg.A || (io.wen && !pte_reg.D)){
+							io.fault := raise_fault(tlb_type, io.wen)
+							next_state := sIdle
+						}
+					}
 				}
 			}
-			when(!io.stall){
+		}
+		is(sData){						//检查访问的合法性
+			next_state := sData 
+			tlb_request.valid := true.B 
+			tlb_request.rw 	  := io.wen
+			tlb_request.mask  := io.mask
+			switch(pageSize){
+				is(PG_1G){
+					tlb_request.addr := Cat(pte_reg(53, 28), ppn1, ppn0, 0.U(12.W)).asSInt(64.W).asUInt + io.va(11, 0)
+				}
+				is(PG_2M){
+					tlb_request.addr := Cat(pte_reg(53, 19), ppn0, 0.U(12.W)).asSInt(64.W).asUInt + io.va(11, 0)
+				}
+				is(PG_4K){
+					tlb_request.addr := Cat(pte_reg(53, 12), 0.U(12.W)).asSInt(64.W).asUInt + io.va(11, 0)	
+				}
+			}
+
+			when(!io.stall && io.cache_response.ready){
 				next_state := sIdle
+				io.r_data := io.cache_response.data
 			} 
 		}
 	}
