@@ -101,6 +101,7 @@ class DecodeStage extends Module{
 			_.csr_inst_mode -> CSR_MODE_U,
 			_.csr_is_illegal -> false.B,
 			_.csr_inst_misalign -> false.B,
+			_.iTLB_fault -> false.B,
 			_.enable -> false.B
 		)
 	)
@@ -186,6 +187,7 @@ class DecodeStage extends Module{
 		de_pipe_reg.csr_inst_mode := CSR_MODE_U
 		de_pipe_reg.csr_is_illegal := false.B
 		de_pipe_reg.csr_inst_misalign := false.B
+		de_pipe_reg.iTLB_fault := 0.U
 		de_pipe_reg.enable := false.B
 	}.elsewhen(!io.stall && !io.flush_de){			//&& !load_stall
 		de_pipe_reg.inst := io.fd_pipe_reg.inst
@@ -220,6 +222,7 @@ class DecodeStage extends Module{
 		de_pipe_reg.csr_inst_mode := control.io.prv
 		de_pipe_reg.csr_is_illegal := control.io.is_illegal || mode_illegal || io.csr_accessType_illegal || (control.io.prv > io.csr_mode)
 		de_pipe_reg.csr_inst_misalign := ((io.fd_pipe_reg.pc & 3.U) =/= 0.U) && io.fd_pipe_reg.enable
+		de_pipe_reg.iTLB_fault := io.fd_pipe_reg.iTLB_fault
 		de_pipe_reg.enable := io.fd_pipe_reg.enable
 	}
 

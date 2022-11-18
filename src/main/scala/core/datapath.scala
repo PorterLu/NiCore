@@ -43,6 +43,14 @@ class Datapath extends Module{
 	val memory_stage = Module(new MemoryStage)
 	val writeback_stage = Module(new WritebackStage)
 
+	val csr = Module(new CSR)							//csr寄存器文件，同时可以用于特权判断，中断和异常处理
+	val satp = csr.io.satp
+	val mstatus = csr.io.mstatus
+	val sstatus = csr.io.sstatus
+	val sum = sstatus(18)
+	val mxr = sstatus(19)
+	val is_page = !csr.io.mode(1) && !satp(63, 60)
+
 	//必须使得enable信号为false时，对应的流水线寄存器中输出的内容不对CPU状态机的运行产生影响
 	val icache_flush_tag = fetch_stage.io.icache_flush_tag
 	val dcache_flush_tag = execute_stage.io.dcache_flush_tag
@@ -54,10 +62,12 @@ class Datapath extends Module{
 	val dcache_stall = (execute_stage.io.em_pipe_reg.ld_type.orR || execute_stage.io.em_pipe_reg.st_type.orR || 
 						execute_stage.io.em_pipe_reg.inst === FENCE_I) && 
 						execute_stage.io.em_pipe_reg.enable && !data_cache_tag && !(execute_stage.io.em_pipe_reg.is_clint) 
-	val icache_stall = !io.icache.cpu_response.ready
-	val stall = icache_stall || dcache_stall || mul_stall || div_stall						//stall暂时设置为false
+	val icache_stall = !io.icache.cpu_response.ready && fetch_stage.io.icache.cpu_request.valid
+	val itlb_stall = !fetch_stage.io.tlb_ready
+	val dtlb_stall = !memory_stage.io.tlb_ready
+	val stall = icache_stall || dcache_stall || mul_stall || div_stall || itlb_stall || dtlb_stall		//stall暂时设置为false
+	val pipeline_stall = icache_stall || dcache_stall || mul_stall || div_stall
 
-	val csr = Module(new CSR)							//csr寄存器文件，同时可以用于特权判断，中断和异常处理
 	val jump_addr = WireInit(0.U(64.W))					//要跳转的地址
 	val br_flush = WireInit(false.B)
 	val jmp_flush = WireInit(false.B)
@@ -80,7 +90,7 @@ class Datapath extends Module{
 	csr.io.int_timer := memory_stage.io.clint_timer_valid
 	csr.io.int_soft  := memory_stage.io.clint_soft_valid
 	csr.io.extern    := io.interrupt
-	io.stall := stall	
+	io.stall := stall
 
 	csr.io.de_enable := decode_stage.io.de_pipe_reg.enable
 	csr.io.de_pipe_reg_pc := decode_stage.io.de_pipe_reg.pc
@@ -112,6 +122,12 @@ class Datapath extends Module{
 
 	fetch_stage.io.started := started
 	fetch_stage.io.stall := stall 
+	fetch_stage.io.pipeline_stall := pipeline_stall
+	fetch_stage.io.tlb_valid := is_page
+	fetch_stage.io.sum := sum
+	fetch_stage.io.mxr := mxr
+	fetch_stage.io.mode := csr.io.mode
+	fetch_stage.io.satp := satp
 	fetch_stage.io.csr_trap := csr.io.trap
 	fetch_stage.io.csr_trapVec := csr.io.trapVec
 	fetch_stage.io.csr_next_fetch := csr_next_fetch
@@ -151,7 +167,6 @@ class Datapath extends Module{
 	decode_stage.io.mw_pipe_reg_wb_sel := memory_stage.io.mw_pipe_reg.wb_sel
 	decode_stage.io.fd_pipe_reg <> fetch_stage.io.fd_pipe_reg
 
-
 	execute_stage.io.de_pipe_reg <> decode_stage.io.de_pipe_reg
 	mul_stall := execute_stage.io.mul_stall
 	div_stall := execute_stage.io.div_stall
@@ -177,6 +192,12 @@ class Datapath extends Module{
 	execute_stage.io.mw_pipe_reg_wb_sel := memory_stage.io.mw_pipe_reg.wb_sel
 
 	memory_stage.io.stall := stall
+	memory_stage.io.pipeline_stall := pipeline_stall
+	memory_stage.io.tlb_valid := is_page
+	memory_stage.io.sum := sum
+	memory_stage.io.mxr := mxr 
+	memory_stage.io.mode := csr.io.mode
+	memory_stage.io.satp := satp
 	memory_stage.io.flush_mw := flush_mw
 	memory_stage.io.flush_em := flush_em
 	memory_stage.io.alu_out := execute_stage.io.alu_out
@@ -201,6 +222,8 @@ class Datapath extends Module{
 	csr.io.store_misalign := memory_stage.io.csr_store_misalign
 	csr.io.load_misalign := memory_stage.io.csr_load_misalign
 	csr.io.em_enable := memory_stage.io.em_enable
+	csr.io.iTLB_fault := memory_stage.io.iTLB_fault
+	csr.io.dTLB_fault := memory_stage.io.dTLB_fault
 	memory_stage.io.dcache_flush_tag := dcache_flush_tag
 
 	writeback_stage.io.mw_pipe_reg <> memory_stage.io.mw_pipe_reg

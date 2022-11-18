@@ -65,6 +65,7 @@ class ExecuteStage extends Module{
 			_.csr_inst_misalign -> false.B,
 			_.csr_load_misalign -> false.B,
 			_.csr_store_misalign -> false.B,
+			_.iTLB_fault -> 0.U,
 			_.enable -> false.B
 		)
 	)
@@ -249,6 +250,7 @@ class ExecuteStage extends Module{
 		em_pipe_reg.csr_inst_misalign := false.B
 		em_pipe_reg.csr_store_misalign := false.B
 		em_pipe_reg.csr_load_misalign := false.B
+		em_pipe_reg.iTLB_fault := 0.U
 		em_pipe_reg.enable := false.B
 	}.elsewhen(!io.stall && !io.flush_em){
 		em_pipe_reg.inst := io.de_pipe_reg.inst
@@ -290,6 +292,7 @@ class ExecuteStage extends Module{
 													(io.de_pipe_reg.ld_type === LD_LD) -> (alu_out(2,0) =/= 0.U)
 												)
 											) 
+		em_pipe_reg.iTLB_fault := io.de_pipe_reg.iTLB_fault
 		em_pipe_reg.enable := io.de_pipe_reg.enable
 	}
 

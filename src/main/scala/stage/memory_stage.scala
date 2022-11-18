@@ -11,6 +11,8 @@ import AccessType._
 class MemoryStage extends Module{
 	val io = IO(new Bundle{
 		val stall = Input(Bool())
+		val pipeline_stall = Input(Bool())
+
 		val flush_mw = Input(Bool())
 		val flush_em = Input(Bool())
 		val data_cache_tag = Output(Bool())
@@ -34,6 +36,8 @@ class MemoryStage extends Module{
 		val csr_excPC = Output(UInt(64.W)) 
 		val csr_jump_taken = Output(Bool()) 
 		val csr_is_illegal = Output(Bool()) 
+		val csr_iTLB_fault = Output(UInt(2.W))
+		val csr_dTLB_fault = Output(UInt(2.W))
 		val csr_inst_misalign = Output(Bool())
 		val csr_store_misalign = Output(Bool())
 		val csr_load_misalign = Output(Bool())
@@ -41,6 +45,14 @@ class MemoryStage extends Module{
 		val clint_soft_clear = Output(Bool())
 		val clint_timer_valid = Output(Bool())
 		val clint_soft_valid = Output(Bool())
+
+		val tlb_valid = Input(Bool())
+		val tlb_ready = Output(Bool())
+		val tlb_data = Output(UInt(64.W))
+		val sum 	 = Input(Bool())
+		val mxr 	 = Input(Bool())
+		val mode 	 = Input(UInt(2.W))
+		val satp 	 = Input(UInt(64.W))
 	})
 
 	val mw_pipe_reg = RegInit(
@@ -60,6 +72,27 @@ class MemoryStage extends Module{
 		)
 	)
 
+	val dTLB = Module(new TLB("dTLB"))
+	val tlb_store_mask = WireInit(0.U(8.W))
+	dTLB.io.stall := io.pipeline_stall
+	dTLB.io.valid := io.tlb.valid
+	dTLB.io.priv  := io.mode
+	dTLB.io.mpriv := false.B 
+	dTLB.io.sum	  := io.sum
+	dTLB.io.mxr   := io.mxr
+	dTLB.io.wen   := Mux(io.stall, io.em_pipe_reg.st_type.orR && io.em_pipe_reg.enable, io.de_pipe_reg_st_type.orR && io.de_pipe_reg_enable) 
+	dTLB.io.satp  := io.satp
+	dTLB.io.va	  := Mux(io.stall, io.em_pipe_reg.alu_out, io.alu_out)
+	dTLB.io.mask  := tlb_store_mask
+	dTLB.io.cache_response <> io.dcache
+	
+	val tlb_tag = RegInit(false.B)
+	when(!io.tlb_valid){
+		tlb_tag := true.B
+	}.otherwise{
+		tlb_tag := dTLB.io.tlb_ready
+	}
+	io.tlb_ready := tlb_tag
 
 	val data_cache_tag = RegInit(false.B)
 	val clint = Module(new clint)
@@ -71,12 +104,13 @@ class MemoryStage extends Module{
 		data_cache_tag := true.B
 		data_cache_response_data := io.dcache.cpu_response.data
 	} 
+
 	io.data_cache_response_data := data_cache_response_data
 	io.data_cache_tag := data_cache_tag
 
-	clint.io.addr := io.em_pipe_reg.alu_out
+	clint.io.addr := Mux(io.tlb_valid, dTLB.io.tlb_request.addr, Mux(io.stall, io.em_pipe_reg.alu_out, io.alu_out)) //io.em_pipe_reg.alu_out
 	clint.io.w_data := io.em_pipe_reg.st_data
-	clint.io.wen := io.em_pipe_reg.st_type.orR && io.em_pipe_reg.enable && io.em_pipe_reg.is_clint
+	clint.io.wen := Mux(io.tlb_valid, dTLB.io.tlb_request.wen, io.em_pipe_reg.st_type.orR && io.em_pipe_reg.enable && io.em_pipe_reg.is_clint)
 	io.clint_r_data := clint.io.r_data
 	io.clint_timer_clear := clint.io.timer_clear
 	io.clint_soft_clear := clint.io.soft_clear
@@ -85,11 +119,11 @@ class MemoryStage extends Module{
 
 	io.em_enable := io.em_pipe_reg.enable
 	io.dcache.flush := io.dcache_flush_tag
-	io.dcache.cpu_request.valid := (Mux(io.stall, (io.em_pipe_reg.ld_type.orR || io.em_pipe_reg.st_type.orR) && io.em_pipe_reg.enable && (!io.em_pipe_reg.is_clint), 
-										(io.de_pipe_reg_ld_type.orR || io.de_pipe_reg_st_type.orR) && io.de_pipe_reg_enable && !io.is_clint && !io.flush_em) || 
-										(io.dcache_flush_tag)) && (!data_cache_tag)
-	io.dcache.cpu_request.rw := Mux(io.stall, io.em_pipe_reg.st_type.orR && io.em_pipe_reg.enable, io.de_pipe_reg_st_type.orR && io.de_pipe_reg_enable) 
-	io.dcache.cpu_request.addr := Mux(io.stall, io.em_pipe_reg.alu_out, io.alu_out)
+	val ls_stall = Mux(io.stall, (io.em_pipe_reg.ld_type.orR || io.em_pipe_reg.st_type.orR) && io.em_pipe_reg.enable && (!io.em_pipe_reg.is_clint), 
+										(io.de_pipe_reg_ld_type.orR || io.de_pipe_reg_st_type.orR) && io.de_pipe_reg_enable && !io.is_clint && !io.flush_em)
+	io.dcache.cpu_request.valid := Mux(io.is_page, (ls_stall && !dTLB.io.tlb_ready) || (io.dcache_flush_tag)&&(!data_cache_tag) ,(ls_stall || (io.dcache_flush_tag)) && (!data_cache_tag))
+	io.dcache.cpu_request.rw := Mux(io.tlb_valid, dTLB.io.tlb_request.wen, Mux(io.stall, io.em_pipe_reg.st_type.orR && io.em_pipe_reg.enable, io.de_pipe_reg_st_type.orR && io.de_pipe_reg_enable))
+	io.dcache.cpu_request.addr := Mux(io.tlb_valid, dTLB.io.tlb_request.addr, Mux(io.stall, io.em_pipe_reg.alu_out, io.alu_out))
 	io.dcache.cpu_request.data := Mux(io.stall, io.em_pipe_reg.st_data << (io.em_pipe_reg.alu_out(2, 0) << 3.U), io.src2_data << (io.alu_out(2, 0) << 3.U))(63, 0)
 	val accessType_stall = Mux((io.em_pipe_reg.ld_type === 7.U) || (io.em_pipe_reg.st_type === 4.U), double.asUInt, 
 								Mux((io.em_pipe_reg.ld_type === 1.U) || (io.em_pipe_reg.ld_type === 6.U) || (io.em_pipe_reg.st_type === 1.U), word.asUInt, 
@@ -115,6 +149,7 @@ class MemoryStage extends Module{
 								)
 							)
 						) 
+	tlb_store_mask := st_mask
 
 	io.dcache.cpu_request.mask := Mux(st_mask === "b11111111".U, st_mask(7, 0), Mux(io.stall, (st_mask << io.em_pipe_reg.alu_out(2,0))(7, 0), (st_mask << io.alu_out(2,0))(7, 0)))
 	val load_data = Mux(io.em_pipe_reg.is_clint, clint.io.r_data, data_cache_response_data >> ((io.em_pipe_reg.alu_out & "h07".U) << 3.U)) //(em_pipe_reg.alu_out >= "h2000000".U) && (em_pipe_reg.alu_out <= "h200ffff".U)
@@ -139,6 +174,8 @@ class MemoryStage extends Module{
 	io.csr_inst_misalign := io.em_pipe_reg.csr_inst_misalign
 	io.csr_store_misalign := io.em_pipe_reg.csr_store_misalign
 	io.csr_load_misalign := io.em_pipe_reg.csr_load_misalign
+	io.csr_iTLB_fault := io.em_pipe_reg.iTLB_fault
+	io.csr_dTLB_fault := dTLB.io.fault
 	io.csr_alu_out := io.em_pipe_reg.alu_out
 	
 	when(io.flush_mw && !io.stall){

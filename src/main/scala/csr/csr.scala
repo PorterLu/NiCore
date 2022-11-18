@@ -3,7 +3,7 @@ import chisel3._
 import chisel3.util._ 
 import Control._
 import CSR_OP._ 
-
+import Page_fault._ 
 //design new exception and interrupt response order
 object ExceptCause{
 	val EXC_S_SOFT_INT = 1.U(63.W)		//s模式软件中断
@@ -21,6 +21,9 @@ object ExceptCause{
 	val EXC_U_ECALL = 8.U(63.W)			//ecall异常
 	val EXC_S_ECALL	= 9.U(63.W)
 	val EXC_M_ECALL = 11.U(63.W)
+	val EXC_INST_PAGE = 12.U(63.W)
+	val EXC_LOAD_PAGE = 13.U(63.W)
+	val EXC_STORE_PAGE = 15.U(63.W)
 }
 
 object CSR{
@@ -127,6 +130,9 @@ class CSR extends Module{
 		val de_pipe_reg_pc = Input(UInt(64.W))
 		val excPC = Input(UInt(64.W))		//异常pc的输入
 
+		val mstatus = Output(UInt(64.W))
+		val sstatus = Output(UInt(64.W))
+		val satp    = Output(UInt(64.W))
 		val trapVec = Output(UInt(64.W))
 		val stall = Input(Bool())
 		val trap = Output(Bool())
@@ -137,6 +143,8 @@ class CSR extends Module{
 		val inst_misalign = Input(Bool())
 		val store_misalign = Input(Bool())
 		val load_misalign = Input(Bool())
+		val iTLB_fault = Input(UInt(2.W))
+		val dTLB_fault = Input(UInt(2.W))
 		val alu_out = Input(UInt(64.W))
 		val mw_enable = Input(Bool())
 		val em_enable = Input(Bool())
@@ -208,6 +216,9 @@ class CSR extends Module{
 	)
 
 	io.mode := mode
+	io.mstatus := mstatus.asUInt
+	io.sstatus := sstatus.asUInt
+	io.satp    := satp
 	//csr这里要处理enable信号用于提示哪些流水寄存器中的信息不可用，下面每一个从io中得到的信息都要进行有效性判断
 	//从csrTable获取，寄存器中存储的信息，并且得知是否可读可写
 	val data :: (readable: Bool)  :: (writable: Bool) :: Nil = ListLookup(io.r_addr, default, csrTable)		//读这里不判断有效性，因为不影响之后运行流的处理
@@ -241,21 +252,25 @@ class CSR extends Module{
 	*/
 
 	//异常具体判断
-	val hasExc 	= (io.is_illegal || io.inst_misalign || io.store_misalign ||
+	val hasExc 	= (io.is_illegal || io.inst_misalign || io.store_misalign || io.iTLB_fault || io.dTLB_fault ||
 					 io.load_misalign || (io.inst === Instructions.ECALL) || (io.inst === Instructions.EBREAK)) && io.em_enable && !io.stall && !writeEn
 
-	val excCause = Mux(io.inst_misalign, EXC_INST_ADDR, 
-						Mux(io.is_illegal, EXC_ILL_INST, 
-							Mux(io.load_misalign, EXC_LOAD_ADDR,
-								Mux(io.store_misalign, EXC_STORE_ADDR, 
-									Mux(io.inst === Instructions.EBREAK, EXC_BRK_POINT,
-										Mux(mode === 0.U, EXC_U_ECALL,
-											Mux(mode === 1.U, EXC_S_ECALL, EXC_M_ECALL)
+	val excCause = Mux(io.iTLB_fault(0), EXC_INST_PAGE,
+						Mux(io.inst_misalign, EXC_INST_ADDR, 
+							Mux(io.is_illegal, EXC_ILL_INST, 
+								Mux(io.load_misalign, EXC_LOAD_ADDR,
+									Mux(io.store_misalign, EXC_STORE_ADDR, 
+										Mux(io.dTLB_fault =/= 0.U, Mux(io.dTLB_fault === load_page_fault, store_page_fault), 
+											Mux(io.inst === Instructions.EBREAK, EXC_BRK_POINT,
+												Mux(mode === 0.U, EXC_U_ECALL,
+													Mux(mode === 1.U, EXC_S_ECALL, EXC_M_ECALL)
+												)
+											)
 										)
 									)
 								)
-							)
-						)	
+							)	
+						)
 					)
 
 	val hasExcS = hasExc && medeleg.asUInt(excCause(3,0))
@@ -377,6 +392,7 @@ class CSR extends Module{
 			when(io.w_addr === CSR_SEPC){ sepc <= writeData }
 			when(io.w_addr === CSR_SCAUSE){ scause <= writeData }
 			when(io.w_addr === CSR_STVAL){ stval <= writeData }
+			when(io.w_addr === CSR_SATP){ satp <= writeData }
 			when(io.w_addr === CSR_MSTATUS){ mstatus <= writeData }
 			when(io.w_addr === CSR_MEDELEG){ medeleg <= writeData }
 			when(io.w_addr === CSR_MIDELEG){ mideleg <= writeData }

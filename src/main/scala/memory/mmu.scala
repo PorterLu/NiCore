@@ -301,6 +301,8 @@ import Page_fault._
 import TLB_state._ 
 class TLB(tlb_name: String)extends Moudle{
 	val io = IO(new Bundle{
+		val stall = Input(Bool())
+		val valid = Input(Bool())
 		val priv  = Input(UInt(2.W))
 		val mprv = Input(Bool())
 		val sum	  = Input(Bool())
@@ -356,7 +358,7 @@ class TLB(tlb_name: String)extends Moudle{
 	io.tlb_request.mask := 0.U 
 	io.tlb_request.rw := false.B
 	io.tlb_request.addr := "h80000000".U 
-
+	io.tlb_ready := false.B
 	
 	def raise_fault(tlb_type: Bool, wen:Bool): UInt = {
 		when(tlb_type){
@@ -607,6 +609,7 @@ class TLB(tlb_name: String)extends Moudle{
 			when(!io.stall && io.cache_response.ready){
 				next_state := sIdle
 				io.r_data := io.cache_response.data
+				io.tlb_ready := true.B
 			} 
 		}
 	}
