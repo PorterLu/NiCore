@@ -21,6 +21,8 @@ class clint extends Module{
 	val msip = RegInit(0.U(64.W))
 	val mtimecmp = RegInit(0.U(64.W))
 	val mtime = RegInit(0.U(64.W))
+	val addr_reg = RegInit(0.U(64.W))
+	addr_reg := io.addr
 
 	io.r_data := 0.U 
 	io.soft_valid := false.B 
@@ -29,22 +31,22 @@ class clint extends Module{
 	io.soft_clear := false.B
 
 	when(io.wen){
-		when(io.addr === "h2000000".U){
+		when(addr_reg === "h2000000".U){
 			msip := io.w_data
 		}
 		
-		when(io.addr === "h2004000".U){
+		when(addr_reg === "h2004000".U){
 			mtimecmp := io.w_data
 			io.timer_clear := true.B	
 		}
 
-		when(io.addr === "h200bff8".U){
+		when(addr_reg === "h200bff8".U){
 			mtime := io.w_data
 		}
 	}.otherwise{
-		io.r_data := Mux(io.addr === "h2000000".U , msip,
-						Mux(io.addr === "h2004000".U, mtimecmp, 
-							Mux(io.addr === "h200bff8".U, mtime, 0.U)))
+		io.r_data := Mux(addr_reg === "h2000000".U , msip,
+						Mux(addr_reg === "h2004000".U, mtimecmp, 
+							Mux(addr_reg === "h200bff8".U, mtime, 0.U)))
 	}
 
 	//如果软件中断的寄存器中存有一个值，那么

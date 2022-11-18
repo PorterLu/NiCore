@@ -218,7 +218,7 @@ class CSR extends Module{
 	io.mode := mode
 	io.mstatus := mstatus.asUInt
 	io.sstatus := sstatus.asUInt
-	io.satp    := satp
+	io.satp    := satp.asUInt
 	//csr这里要处理enable信号用于提示哪些流水寄存器中的信息不可用，下面每一个从io中得到的信息都要进行有效性判断
 	//从csrTable获取，寄存器中存储的信息，并且得知是否可读可写
 	val data :: (readable: Bool)  :: (writable: Bool) :: Nil = ListLookup(io.r_addr, default, csrTable)		//读这里不判断有效性，因为不影响之后运行流的处理
@@ -252,7 +252,7 @@ class CSR extends Module{
 	*/
 
 	//异常具体判断
-	val hasExc 	= (io.is_illegal || io.inst_misalign || io.store_misalign || io.iTLB_fault || io.dTLB_fault ||
+	val hasExc 	= (io.is_illegal || io.inst_misalign || io.store_misalign || (io.iTLB_fault =/= 0.U)|| (io.dTLB_fault =/= 0.U)||
 					 io.load_misalign || (io.inst === Instructions.ECALL) || (io.inst === Instructions.EBREAK)) && io.em_enable && !io.stall && !writeEn
 
 	val excCause = Mux(io.iTLB_fault(0), EXC_INST_PAGE,
@@ -260,7 +260,7 @@ class CSR extends Module{
 							Mux(io.is_illegal, EXC_ILL_INST, 
 								Mux(io.load_misalign, EXC_LOAD_ADDR,
 									Mux(io.store_misalign, EXC_STORE_ADDR, 
-										Mux(io.dTLB_fault =/= 0.U, Mux(io.dTLB_fault === load_page_fault, store_page_fault), 
+										Mux(io.dTLB_fault =/= 0.U, Mux(io.dTLB_fault === load_page_fault.asUInt, EXC_LOAD_PAGE, EXC_STORE_PAGE), 
 											Mux(io.inst === Instructions.EBREAK, EXC_BRK_POINT,
 												Mux(mode === 0.U, EXC_U_ECALL,
 													Mux(mode === 1.U, EXC_S_ECALL, EXC_M_ECALL)

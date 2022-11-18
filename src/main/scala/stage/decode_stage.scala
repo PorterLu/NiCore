@@ -101,7 +101,7 @@ class DecodeStage extends Module{
 			_.csr_inst_mode -> CSR_MODE_U,
 			_.csr_is_illegal -> false.B,
 			_.csr_inst_misalign -> false.B,
-			_.iTLB_fault -> false.B,
+			_.iTLB_fault -> 0.U,
 			_.enable -> false.B
 		)
 	)

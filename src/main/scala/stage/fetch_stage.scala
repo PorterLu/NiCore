@@ -39,7 +39,7 @@ class FetchStage extends Module{
 
 		val tlb_valid = Input(Bool())
 		val tlb_ready = Output(Bool())
-		val tlb_data = Output(UInt(64.W))
+		//val tlb_data = Output(UInt(64.W))
 		val sum 	= Input(Bool())
 		val mxr 	= Input(Bool())
 		val mode 	= Input(UInt(2.W))
@@ -73,6 +73,7 @@ class FetchStage extends Module{
 	//printf(p"next_pc:${Hexadecimal(next_pc)}\n")
 
 	val iTLB = Module(new TLB("iTLB"))
+	iTLB.io.flush := false.B
 	iTLB.io.stall := io.pipeline_stall
 	iTLB.io.valid := io.tlb_valid
 	iTLB.io.priv := io.mode
@@ -83,11 +84,11 @@ class FetchStage extends Module{
 	iTLB.io.satp := io.satp
 	iTLB.io.va := next_pc
 	iTLB.io.mask := 0.U 
-	iTLB.io.cache_response <> io.icache
+	iTLB.io.cache_response <> io.icache.cpu_response
 	//io.tlb_fault := iTLB.io.
 
 	//io.tlb_ready := iTLB.io.tlb_ready
-	io.tlb_data  := iTLB.io.r_data
+	//io.tlb_data  := iTLB.io.r_data
 	when(!io.tlb_valid){
 		io.tlb_ready := true.B
 	}.otherwise{
