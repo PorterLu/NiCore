@@ -120,7 +120,7 @@ class TLBEntry extends Bundle{
 			R := pte(1)
 			V := pte(0)
 			ppn := pte(53, 10)
-			size := pgsize
+			size := pgsize.asUInt
 			asid := satp_asid
 			switch(pgsize){
 				is(pg_4k){
@@ -136,14 +136,14 @@ class TLBEntry extends Bundle{
 		}
 	}
 
-	def checkHit(va: UInt): Bool = {
+	def checkHit(va: UInt, access_asid: UInt): Bool = {
 		val ok = WireDefault(false.B)
 		when(size === pg_4k.asUInt){
-			ok := va(63,12).asSInt === vpn.asSInt
+			ok := va(63,12).asSInt === vpn.asSInt && asid === access_asid
 		}.elsewhen(size === pg_2m.asUInt){
-			ok := va(63, 21).asSInt === vpn(26, 9).asSInt
+			ok := va(63, 21).asSInt === vpn(26, 9).asSInt && asid === access_asid
 		}.elsewhen(size === pg_1g.asUInt){
-			ok := va(63, 30).asSInt === vpn(26, 18).asSInt
+			ok := va(63, 30).asSInt === vpn(26, 18).asSInt && asid === access_asid
 		}
 		ok && V
 	}
@@ -227,16 +227,17 @@ class TLB(tlb_name: String) extends Module{
 		val va 	  = Input(UInt(64.W))
 		val mask  = Input(UInt(8.W))
 
-		val r_data  = Output(UInt(64.W))
+		//val r_data  = Output(UInt(64.W))
 		val fault  = Output(UInt(2.W))
 		val tlb_ready = Output(Bool())
+		val tlb_flush_asid = Input(UInt(16.W))
+		val tlb_flush_vpn = Input(UInt(27.W))
 
 		val flush = Input(Bool())
 		val tlb_request = Output(new CPU_Request)
 		val cache_response = Input(new CPU_Response)
 	})
 
-	val translationLevel = RegInit(3.U(2.W))
 	val tlb_type = if(tlb_name == "iTLB") true.B else false.B
  	val tlb_state = RegInit(sIdle)
 	val next_state = WireDefault(sIdle)
@@ -275,7 +276,7 @@ class TLB(tlb_name: String) extends Module{
 	io.tlb_request.rw := false.B
 	io.tlb_request.addr := "h80000000".U 
 	io.tlb_ready := false.B
-	io.r_data := 0.U
+//	io.r_data := 0.U
 	
 	def raise_fault(tlb_type: Bool, wen:Bool): UInt = {
 		when(tlb_type){
@@ -297,7 +298,7 @@ class TLB(tlb_name: String) extends Module{
 				when(io.flush && io.valid){
 					next_state := sFlush
 				}.elsewhen(io.valid){
-					matchList := tlbe.map{k => k.checkHit(io.va)}
+					matchList := tlbe.map{k => k.checkHit(io.va, asid)}
 					next_state := sMatch
 				}.otherwise{
 					next_state := sIdle
@@ -308,23 +309,23 @@ class TLB(tlb_name: String) extends Module{
 			next_state := sFlush
 			when(!io.stall){
 				for(i <- 0 until 16){
-					when(tlbe(i.U).asid === asid || asid === 0.U){
+					when(tlbe(i.U).asid === io.tlb_flush_asid || io.tlb_flush_asid === 0.U){
 						asid_match(i.U) := true.B
 					}
 					
-					when(vpn === 0.U && !tlbe(i.U).G){
+					when(io.tlb_flush_vpn === 0.U && !tlbe(i.U).G){
 						vpn_match(i.U) := 0.U
 					}.elsewhen(!tlbe(i.U).G){
 						when(tlbe(i.U).size === pg_4k.asUInt){
-							when(vpn === tlbe(i.U).vpn){
+							when(io.tlb_flush_vpn === tlbe(i.U).vpn){
 								vpn_match(i.U) := true.B
 							}
 						}.elsewhen(tlbe(i.U).size === pg_2m.asUInt){
-							when(vpn(26, 10) === tlbe(i.U).vpn(26, 10)){
+							when(io.tlb_flush_vpn(26, 10) === tlbe(i.U).vpn(26, 10)){
 								vpn_match(i.U) := true.B 
 							}
 						}.elsewhen(tlbe(i.U).size === pg_1g.asUInt){
-							when(vpn(26, 18) === tlbe(i.U).vpn(26, 18)){
+							when(io.tlb_flush_vpn(26, 18) === tlbe(i.U).vpn(26, 18)){
 								vpn_match(i.U) := true.B
 							}
 						}
@@ -528,9 +529,11 @@ class TLB(tlb_name: String) extends Module{
 				io.tlb_request.addr := Cat(pte_reg.asUInt(53, 10), 0.U(12.W)).asSInt.asUInt + io.va(11, 0)	
 			}
 
+			//	def fromPTE(pte: UInt, va: UInt, satp_asid: UInt, pgsize:  pageSize.Type): Unit = {
+			tlbe(random.value).fromPTE(io.cache_response.data, io.va, asid, page_size_reg.asTypeOf(pg_4k))
 			when(!io.stall && io.cache_response.ready){
 				next_state := sIdle
-				io.r_data := io.cache_response.data
+				//io.r_data := io.cache_response.data
 				io.tlb_ready := true.B
 			} 
 		}

@@ -37,8 +37,11 @@ class FetchStage extends Module{
 		val fd_pipe_reg = Output(new fetch_decode_pipeline_reg)
 		val icache_flush_tag = Output(Bool())
 
+		val sfence_rs1 = Input(UInt(64.W))
+		val sfence_rs2 = Input(UInt(64.W))
 		val tlb_valid = Input(Bool())
 		val tlb_ready = Output(Bool())
+		val iTLB_flush_tag = Output(Bool())
 		//val tlb_data = Output(UInt(64.W))
 		val sum 	= Input(Bool())
 		val mxr 	= Input(Bool())
@@ -57,6 +60,8 @@ class FetchStage extends Module{
 	)
 
 	val icache_flush_tag = RegInit(false.B)
+	val iTLB_flush_tag = RegInit(false.B)
+
 	val pc = RegInit("h80000000".U(64.W) - 4.U)
 	val next_pc = MuxCase(
 		pc + 4.U,
@@ -73,7 +78,9 @@ class FetchStage extends Module{
 	//printf(p"next_pc:${Hexadecimal(next_pc)}\n")
 
 	val iTLB = Module(new TLB("iTLB"))
-	iTLB.io.flush := false.B
+	iTLB.io.tlb_flush_vpn   := io.sfence_rs1(38, 12)
+	iTLB.io.tlb_flush_asid  := io.sfence_rs2
+	iTLB.io.flush := iTLB_flush_tag 	//false.B
 	iTLB.io.stall := io.pipeline_stall
 	iTLB.io.valid := io.tlb_valid
 	iTLB.io.priv := io.mode
@@ -111,12 +118,23 @@ class FetchStage extends Module{
 		}
 	}
 
+	when(!io.stall && io.flush_em){
+		iTLB_flush_tag   := false.B
+	}.elsewhen(io.de_pipe_reg_inst === SFENCE_VMA && !io.stall){
+		iTLB_flush_tag   := true.B 
+	}.otherwise{
+		when(iTLB.io.tlb_ready){
+			iTLB_flush_tag := false.B
+		}
+	}
+
+	io.iTLB_flush_tag   := iTLB_flush_tag
 	io.icache_flush_tag := icache_flush_tag
 
 	io.icache.accessType := word.asUInt
 	io.icache.flush := icache_flush_tag
 	io.icache.cpu_request.addr := Mux(io.tlb_valid, iTLB.io.tlb_request.addr, next_pc)
-	io.icache.cpu_request.valid := Mux(io.tlb_valid, iTLB.io.tlb_request.valid, true.B) 
+	io.icache.cpu_request.valid := Mux(io.tlb_valid, iTLB.io.tlb_request.valid , true.B) 
 	io.icache.cpu_request.data := 0.U 
 	io.icache.cpu_request.rw := false.B 
 	io.icache.cpu_request.mask := 0.U

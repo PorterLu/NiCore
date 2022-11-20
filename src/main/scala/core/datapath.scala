@@ -124,6 +124,8 @@ class Datapath extends Module{
 	fetch_stage.io.stall := stall 
 	fetch_stage.io.pipeline_stall := pipeline_stall
 	fetch_stage.io.tlb_valid := is_page
+	fetch_stage.io.sfence_rs1 := execute_stage.io.em_pipe_reg.sfence_rs1
+	fetch_stage.io.sfence_rs2 := execute_stage.io.em_pipe_reg.sfence_rs2
 	fetch_stage.io.sum := sum
 	fetch_stage.io.mxr := mxr
 	fetch_stage.io.mode := csr.io.mode
@@ -190,6 +192,7 @@ class Datapath extends Module{
 	execute_stage.io.mw_pipe_reg_csr_read_data := memory_stage.io.mw_pipe_reg.csr_read_data
 	execute_stage.io.mw_pipe_reg_load_data := memory_stage.io.mw_pipe_reg.load_data
 	execute_stage.io.mw_pipe_reg_wb_sel := memory_stage.io.mw_pipe_reg.wb_sel
+	execute_stage.io.dTLB_ready := memory_stage.io.tlb_ready
 
 	memory_stage.io.stall := stall
 	memory_stage.io.pipeline_stall := pipeline_stall
@@ -225,6 +228,7 @@ class Datapath extends Module{
 	csr.io.iTLB_fault := memory_stage.io.iTLB_fault
 	csr.io.dTLB_fault := memory_stage.io.dTLB_fault
 	memory_stage.io.dcache_flush_tag := dcache_flush_tag
+	memory_stage.io.dTLB_flush_tag := execute_stage.io.dTLB_flush_tag
 
 	writeback_stage.io.mw_pipe_reg <> memory_stage.io.mw_pipe_reg
 	writeback_stage.io.stall := stall

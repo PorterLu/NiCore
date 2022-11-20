@@ -40,6 +40,8 @@ class ExecuteStage extends Module{
 		val mw_pipe_reg_pc = Input(UInt(64.W))
 		val mw_pipe_reg_csr_read_data = Input(UInt(64.W))
 		val mw_pipe_reg_load_data = Input(UInt(64.W))
+		val dTLB_ready = Input(Bool())
+		val dTLB_flush_tag = Output(Bool())
 	})
 
 	val em_pipe_reg = RegInit(
@@ -66,6 +68,8 @@ class ExecuteStage extends Module{
 			_.csr_load_misalign -> false.B,
 			_.csr_store_misalign -> false.B,
 			_.iTLB_fault -> 0.U,
+			_.sfence_rs1 -> 0.U,
+			_.sfence_rs2 -> 0.U,
 			_.enable -> false.B
 		)
 	)
@@ -75,6 +79,7 @@ class ExecuteStage extends Module{
 	val multiplier = Module(new Multiplier)
 	val divider = Module(new Divider)
 	val dcache_flush_tag = RegInit(false.B)	
+	val dTLB_flush_tag = RegInit(false.B)
 	val alu_out = alu.io.out
 	val alu_sum = alu.io.sum
 
@@ -90,6 +95,17 @@ class ExecuteStage extends Module{
 		}
 	}
 	io.dcache_flush_tag := dcache_flush_tag
+
+	when(!io.stall && io.flush_em){
+		dTLB_flush_tag := false.B
+	}.elsewhen(io.de_pipe_reg.inst === SFENCE_VMA && !io.stall){
+		dTLB_flush_tag := true.B
+	}.otherwise{
+		when(io.dTLB_ready){
+			dTLB_flush_tag := false.B
+		}
+	}
+	io.dTLB_flush_tag := dTLB_flush_tag
 
 	val computation_result = WireInit(0.U(64.W))
 	val src1_data = WireInit(0.U(64.W))
@@ -293,6 +309,8 @@ class ExecuteStage extends Module{
 												)
 											) 
 		em_pipe_reg.iTLB_fault := io.de_pipe_reg.iTLB_fault
+		em_pipe_reg.sfence_rs1 := src1_data
+		em_pipe_reg.sfence_rs2 := src2_data
 		em_pipe_reg.enable := io.de_pipe_reg.enable
 	}
 

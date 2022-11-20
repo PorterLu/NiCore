@@ -46,6 +46,7 @@ class MemoryStage extends Module{
 
 		val tlb_valid = Input(Bool())
 		val tlb_ready = Output(Bool())
+		val dTLB_flush_tag = Input(Bool())
 		//val tlb_data = Output(UInt(64.W))
 		val sum 	 = Input(Bool())
 		val mxr 	 = Input(Bool())
@@ -74,9 +75,14 @@ class MemoryStage extends Module{
 
 	val dTLB = Module(new TLB("dTLB"))
 	val tlb_store_mask = WireInit(0.U(8.W))
-	dTLB.io.flush := false.B
+	val ls_stall = Mux(io.stall, (io.em_pipe_reg.ld_type.orR || io.em_pipe_reg.st_type.orR) && io.em_pipe_reg.enable && (!io.em_pipe_reg.is_clint), 
+										(io.de_pipe_reg_ld_type.orR || io.de_pipe_reg_st_type.orR) && io.de_pipe_reg_enable && !io.is_clint && !io.flush_em)
+
+	dTLB.io.tlb_flush_vpn   := io.em_pipe_reg.sfence_rs1(38, 12)
+	dTLB.io.tlb_flush_asid  := io.em_pipe_reg.sfence_rs2
+	dTLB.io.flush := io.dTLB_flush_tag
 	dTLB.io.stall := io.pipeline_stall
-	dTLB.io.valid := io.tlb_valid
+	dTLB.io.valid := io.tlb_valid && ls_stall
 	dTLB.io.priv  := io.mode
 	dTLB.io.mprv := false.B 
 	dTLB.io.sum	  := io.sum
@@ -86,7 +92,7 @@ class MemoryStage extends Module{
 	dTLB.io.va	  := Mux(io.stall, io.em_pipe_reg.alu_out, io.alu_out)
 	dTLB.io.mask  := tlb_store_mask
 	dTLB.io.cache_response <> io.dcache.cpu_response
-	
+
 	val tlb_tag = RegInit(false.B)
 	when(!io.tlb_valid){
 		tlb_tag := true.B
@@ -120,8 +126,6 @@ class MemoryStage extends Module{
 
 	io.em_enable := io.em_pipe_reg.enable
 	io.dcache.flush := io.dcache_flush_tag
-	val ls_stall = Mux(io.stall, (io.em_pipe_reg.ld_type.orR || io.em_pipe_reg.st_type.orR) && io.em_pipe_reg.enable && (!io.em_pipe_reg.is_clint), 
-										(io.de_pipe_reg_ld_type.orR || io.de_pipe_reg_st_type.orR) && io.de_pipe_reg_enable && !io.is_clint && !io.flush_em)
 	io.dcache.cpu_request.valid := Mux(io.tlb_valid, (ls_stall && !dTLB.io.tlb_ready && dTLB.io.tlb_request.valid) || (io.dcache_flush_tag)&&(!data_cache_tag) ,(ls_stall || (io.dcache_flush_tag)) && (!data_cache_tag))
 	io.dcache.cpu_request.rw := Mux(io.tlb_valid, dTLB.io.tlb_request.rw, Mux(io.stall, io.em_pipe_reg.st_type.orR && io.em_pipe_reg.enable, io.de_pipe_reg_st_type.orR && io.de_pipe_reg_enable))
 	io.dcache.cpu_request.addr := Mux(io.tlb_valid, dTLB.io.tlb_request.addr, Mux(io.stall, io.em_pipe_reg.alu_out, io.alu_out))

@@ -261,6 +261,15 @@
     "enumTypeName":"mdu.MulState"
   },
   {
+    "class":"chisel3.experimental.EnumAnnotations$EnumDefAnnotation",
+    "typeName":"myCPU.pageSize",
+    "definition":{
+      "pg_4k":0,
+      "pg_2m":1,
+      "pg_1g":2
+    }
+  },
+  {
     "class":"chisel3.experimental.EnumAnnotations$EnumComponentAnnotation",
     "target":"myCPU.ysyx_22041812_TLB.next_state",
     "enumTypeName":"myCPU.TLB_state"
