@@ -62,7 +62,7 @@ class Datapath extends Module{
 	val data_cache_response_data = WireInit(0.U(64.W))
 	val dcache_stall = (execute_stage.io.em_pipe_reg.ld_type.orR || execute_stage.io.em_pipe_reg.st_type.orR || 
 						execute_stage.io.em_pipe_reg.inst === FENCE_I) && 
-						execute_stage.io.em_pipe_reg.enable && !data_cache_tag && !(execute_stage.io.em_pipe_reg.is_clint) &&
+						execute_stage.io.em_pipe_reg.enable && (!data_cache_tag || memory_stage.io.amo_busy) && !(execute_stage.io.em_pipe_reg.is_clint) &&
 						(memory_stage.io.dTLB_fault === 0.U)
 	val icache_stall = !io.icache.cpu_response.ready && fetch_stage.io.icache.cpu_request.valid
 	val itlb_stall = !fetch_stage.io.tlb_ready

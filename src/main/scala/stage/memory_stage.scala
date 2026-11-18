@@ -48,6 +48,7 @@ class MemoryStage extends Module{
 		val tlb_ready = Output(Bool())
 		val tlb_flush = Input(Bool())
 		val tlb_flush_all = Input(Bool())
+		val amo_busy = Output(Bool())
 		//val tlb_data = Output(UInt(64.W))
 		val sum 	 = Input(Bool())
 		val mxr 	 = Input(Bool())
@@ -74,6 +75,49 @@ class MemoryStage extends Module{
 		)
 	)
 
+	// ---------------- AMO / LR-SC ----------------
+	// single core, in-order: an AMO is a load followed by a store while the
+	// pipeline stays stalled (dcache_stall held via amo_busy), which also makes
+	// it atomic w.r.t. interrupts. SC succeeds only with a valid reservation.
+	val is_amo = io.em_pipe_reg.amo_op =/= AMO_NONE && io.em_pipe_reg.enable
+	val is_lr  = io.em_pipe_reg.amo_op === AMO_LR
+	val is_sc  = io.em_pipe_reg.amo_op === AMO_SC
+
+	val resv_valid = RegInit(false.B)   // reservation set by LR, cleared by any store / SC
+	val amo_second = RegInit(false.B)   // true during the store phase of a true AMO
+	val amo_old    = RegInit(0.U(64.W)) // old value read by the AMO load phase
+
+	val sc_fire = is_sc && resv_valid
+	// latched SC outcome: resv_valid is cleared by the time rd is sampled
+	val sc_success = RegInit(false.B)
+
+	// effective write-enable of the current memory transaction:
+	//   LR: never writes; SC: writes only with a valid reservation;
+	//   AMO: load phase writes nothing, store phase writes the result
+	val mem_wen = Mux(io.stall, io.em_pipe_reg.st_type.orR && io.em_pipe_reg.enable,
+								 io.de_pipe_reg_st_type.orR && io.de_pipe_reg_enable)
+	val wen_final = Mux(is_amo, Mux(is_sc, sc_fire, amo_second), mem_wen)
+
+	// AMO read-modify-write
+	val amo_is_word = io.em_pipe_reg.ld_type === LD_LW
+	val a1 = Mux(amo_is_word, amo_old(31, 0), amo_old)
+	val a2 = Mux(amo_is_word, io.em_pipe_reg.st_data(31, 0), io.em_pipe_reg.st_data)
+	val lt_s  = Mux(amo_is_word, a1(31, 0).asSInt < a2(31, 0).asSInt, a1.asSInt < a2.asSInt)
+	val gt_s  = Mux(amo_is_word, a1(31, 0).asSInt > a2(31, 0).asSInt, a1.asSInt > a2.asSInt)
+	val amo_result = MuxLookup(io.em_pipe_reg.amo_op, 0.U, Seq(
+		AMO_SWAP -> io.em_pipe_reg.st_data,
+		AMO_ADD  -> (a1 + a2),
+		AMO_XOR  -> (a1 ^ a2),
+		AMO_AND  -> (a1 & a2),
+		AMO_OR   -> (a1 | a2),
+		AMO_MIN  -> Mux(lt_s, a1, a2),
+		AMO_MAX  -> Mux(gt_s, a1, a2),
+		AMO_MINU -> Mux(a1 < a2, a1, a2),
+		AMO_MAXU -> Mux(a1 > a2, a1, a2)
+	))
+	val amo_store_data = (Mux(amo_is_word, amo_result(31, 0), amo_result) << (io.em_pipe_reg.alu_out(2, 0) << 3.U))(63, 0)
+	io.amo_busy := amo_second
+
 	val dTLB = Module(new TLB("dTLB"))
 	val tlb_store_mask = WireInit(0.U(8.W))
 	val ls_stall = Mux(io.stall, (io.em_pipe_reg.ld_type.orR || io.em_pipe_reg.st_type.orR) && io.em_pipe_reg.enable && (!io.em_pipe_reg.is_clint), 
@@ -88,7 +132,7 @@ class MemoryStage extends Module{
 	dTLB.io.mprv := false.B 
 	dTLB.io.sum	  := io.sum
 	dTLB.io.mxr   := io.mxr
-	dTLB.io.wen   := Mux(io.stall, io.em_pipe_reg.st_type.orR && io.em_pipe_reg.enable, io.de_pipe_reg_st_type.orR && io.de_pipe_reg_enable) 
+	dTLB.io.wen   := wen_final
 	dTLB.io.satp  := io.satp
 	dTLB.io.va	  := Mux(io.stall, io.em_pipe_reg.alu_out, io.alu_out)
 	dTLB.io.mask  := tlb_store_mask
@@ -115,11 +159,33 @@ class MemoryStage extends Module{
 	val clint = Module(new clint)
 	val data_cache_response_data = RegInit(0.U(64.W))
 
+	val mem_response = io.dcache.cpu_response.ready && Mux(io.tlb_valid, dTLB.io.tlb_request.valid, io.dcache.cpu_request.valid)
 	when(!io.stall){
 		data_cache_tag := false.B
-	}.elsewhen(io.dcache.cpu_response.ready && Mux(io.tlb_valid, dTLB.io.tlb_request.valid, io.dcache.cpu_request.valid)){
+	}.elsewhen(mem_response){
 		data_cache_tag := true.B
 		data_cache_response_data := io.dcache.cpu_response.data
+	}
+
+	when(mem_response){
+		when(wen_final){						// any committed store clears the reservation
+			resv_valid := false.B
+			when(amo_second){
+				amo_second := false.B
+			}
+		}.elsewhen(is_lr){						// LR sets the reservation
+			resv_valid := true.B
+		}.elsewhen(is_amo && !is_sc){			// AMO load phase done -> store phase
+			amo_old := io.dcache.cpu_response.data >> (io.em_pipe_reg.alu_out(2, 0) << 3.U)
+			amo_second := true.B
+		}
+		when(is_sc){							// SC always consumes the reservation
+			resv_valid := false.B
+			sc_success := sc_fire
+		}
+	}
+	when(!io.stall){
+		amo_second := false.B
 	}
 
 	io.data_cache_response_data := data_cache_response_data
@@ -136,10 +202,11 @@ class MemoryStage extends Module{
 
 	io.em_enable := io.em_pipe_reg.enable
 	io.dcache.flush := io.dcache_flush_tag
-	io.dcache.cpu_request.valid := Mux(io.tlb_valid, (ls_stall && !dTLB.io.tlb_ready && dTLB.io.tlb_request.valid) || (io.dcache_flush_tag)&&(!data_cache_tag) ,(ls_stall || (io.dcache_flush_tag)) && (!data_cache_tag))
-	io.dcache.cpu_request.rw := Mux(io.tlb_valid, dTLB.io.tlb_request.rw, Mux(io.stall, io.em_pipe_reg.st_type.orR && io.em_pipe_reg.enable, io.de_pipe_reg_st_type.orR && io.de_pipe_reg_enable))
+	io.dcache.cpu_request.valid := Mux(io.tlb_valid, (ls_stall && !dTLB.io.tlb_ready && dTLB.io.tlb_request.valid) || (io.dcache_flush_tag)&&(!data_cache_tag) ,(ls_stall || (io.dcache_flush_tag)) && (!data_cache_tag || (is_amo && amo_second)))
+	io.dcache.cpu_request.rw := Mux(io.tlb_valid, dTLB.io.tlb_request.rw, wen_final)
 	io.dcache.cpu_request.addr := Mux(io.tlb_valid, dTLB.io.tlb_request.addr, Mux(io.stall, io.em_pipe_reg.alu_out, io.alu_out))
-	io.dcache.cpu_request.data := Mux(io.stall, io.em_pipe_reg.st_data << (io.em_pipe_reg.alu_out(2, 0) << 3.U), io.src2_data << (io.alu_out(2, 0) << 3.U))(63, 0)
+	io.dcache.cpu_request.data := Mux(amo_second && is_amo, amo_store_data,
+									Mux(io.stall, io.em_pipe_reg.st_data << (io.em_pipe_reg.alu_out(2, 0) << 3.U), io.src2_data << (io.alu_out(2, 0) << 3.U))(63, 0))
 	val accessType_stall = Mux((io.em_pipe_reg.ld_type === 7.U) || (io.em_pipe_reg.st_type === 4.U), double.asUInt, 
 								Mux((io.em_pipe_reg.ld_type === 1.U) || (io.em_pipe_reg.ld_type === 6.U) || (io.em_pipe_reg.st_type === 1.U), word.asUInt, 
 									Mux((io.em_pipe_reg.ld_type === 4.U) || (io.em_pipe_reg.ld_type === 2.U) || (io.em_pipe_reg.st_type === 2.U), half.asUInt, byte.asUInt)
@@ -167,7 +234,12 @@ class MemoryStage extends Module{
 	tlb_store_mask := st_mask
 
 	io.dcache.cpu_request.mask := Mux(st_mask === "b11111111".U, st_mask(7, 0), Mux(io.stall, (st_mask << io.em_pipe_reg.alu_out(2,0))(7, 0), (st_mask << io.alu_out(2,0))(7, 0)))
-	val load_data = Mux(io.em_pipe_reg.is_clint, clint.io.r_data, data_cache_response_data >> ((io.em_pipe_reg.alu_out & "h07".U) << 3.U)) //(em_pipe_reg.alu_out >= "h2000000".U) && (em_pipe_reg.alu_out <= "h200ffff".U)
+	// LR returns the loaded value; a true AMO returns the old value captured in
+	// its load phase; SC returns 0 on success and 1 on failure (unshifted)
+	// amo_old is latched already aligned to the access; LR shifts the raw response
+	val shift = (io.em_pipe_reg.alu_out & "h07".U) << 3.U
+	val raw_shifted = Mux(is_amo && !is_sc, Mux(is_lr, data_cache_response_data >> shift, amo_old), data_cache_response_data >> shift)
+	val load_data = Mux(io.em_pipe_reg.is_clint, clint.io.r_data, Mux(is_sc && is_amo, Mux(sc_success, 0.U, 1.U), raw_shifted)) //(em_pipe_reg.alu_out >= "h2000000".U) && (em_pipe_reg.alu_out <= "h200ffff".U)
 	val load_data_ext = Mux(io.em_pipe_reg.ld_type === LD_LW, Cat(Mux(load_data(31).asBool, "hffffffff".U, 0.U(32.W)), load_data(31, 0)),
 							Mux(io.em_pipe_reg.ld_type === LD_LWU, Cat(Fill(32, 0.U), load_data(31, 0)),
 								Mux(io.em_pipe_reg.ld_type === LD_LH, Cat(Mux(load_data(15).asBool, "hffffffffffff".U, 0.U(48.W)), load_data(15, 0)),

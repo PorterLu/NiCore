@@ -59,6 +59,19 @@ object Control{
 	val LD_LWU = 6.U(3.W)
 	val LD_LD = 7.U(3.W)
 
+	val AMO_NONE = 0.U(4.W)
+	val AMO_LR   = 1.U(4.W)
+	val AMO_SC   = 2.U(4.W)
+	val AMO_SWAP = 3.U(4.W)
+	val AMO_ADD  = 4.U(4.W)
+	val AMO_XOR  = 5.U(4.W)
+	val AMO_AND  = 6.U(4.W)
+	val AMO_OR   = 7.U(4.W)
+	val AMO_MIN  = 8.U(4.W)
+	val AMO_MAX  = 9.U(4.W)
+	val AMO_MINU = 10.U(4.W)
+	val AMO_MAXU = 11.U(4.W)
+
 	val WB_ALU = 0.U(2.W)
 	val WB_MEM = 1.U(2.W)
 	val WB_PC4 = 2.U(2.W)
@@ -93,6 +106,29 @@ object Control{
 		SH 		->	List(PC_4, 		A_RS1,	B_IMM,	 W_D,	IMM_S,		ALU_ADD,		BR_XXX,		ST_SH,		LD_XXX,		WB_ALU,		N,		CSR_MODE_U,	CSR_NOP,		N,		N),
 		SW 		->	List(PC_4,		A_RS1,	B_IMM,	 W_D,	IMM_S,		ALU_ADD,		BR_XXX,		ST_SW,		LD_XXX,		WB_ALU,		N,		CSR_MODE_U,	CSR_NOP,		N,		N),
 		SD 		->	List(PC_4,		A_RS1,	B_IMM,	 W_D,	IMM_S,		ALU_ADD,		BR_XXX,		ST_SD,		LD_XXX,		WB_ALU,		N,		CSR_MODE_U,	CSR_NOP, 		N,		N),
+		// RV64A: address = rs1, rs2 in st_data; old value -> rd
+		LR_W 	->	List(PC_4,		A_RS1,	B_XXX,	 W_D,	IMM_X,		ALU_COPY_A,	BR_XXX, 	ST_XXX, 	LD_LW,		WB_MEM,		Y,		CSR_MODE_U,	CSR_NOP, 		N,		N),
+		LR_D 	->	List(PC_4,		A_RS1,	B_XXX,	 W_D,	IMM_X,		ALU_COPY_A,	BR_XXX, 	ST_XXX, 	LD_LD,		WB_MEM,		Y,		CSR_MODE_U,	CSR_NOP, 		N,		N),
+		SC_W 	->	List(PC_4,		A_RS1,	B_RS2,	 W_D,	IMM_X,		ALU_COPY_A,	BR_XXX, 	ST_SW,		LD_LW,		WB_MEM,		Y,		CSR_MODE_U,	CSR_NOP, 		N,		N),
+		SC_D 	->	List(PC_4,		A_RS1,	B_RS2,	 W_D,	IMM_X,		ALU_COPY_A,	BR_XXX, 	ST_SD,		LD_LD,		WB_MEM,		Y,		CSR_MODE_U,	CSR_NOP, 		N,		N),
+		AMOSWAP_W ->	List(PC_4,	A_RS1,	B_RS2,	 W_D,	IMM_X,		ALU_COPY_A,	BR_XXX, 	ST_SW,		LD_LW,		WB_MEM,		Y,		CSR_MODE_U,	CSR_NOP, 		N,		N),
+		AMOSWAP_D ->	List(PC_4,	A_RS1,	B_RS2,	 W_D,	IMM_X,		ALU_COPY_A,	BR_XXX, 	ST_SD,		LD_LD,		WB_MEM,		Y,		CSR_MODE_U,	CSR_NOP, 		N,		N),
+		AMOADD_W  ->	List(PC_4,	A_RS1,	B_RS2,	 W_D,	IMM_X,		ALU_COPY_A,	BR_XXX, 	ST_SW,		LD_LW,		WB_MEM,		Y,		CSR_MODE_U,	CSR_NOP, 		N,		N),
+		AMOADD_D  ->	List(PC_4,	A_RS1,	B_RS2,	 W_D,	IMM_X,		ALU_COPY_A,	BR_XXX, 	ST_SD,		LD_LD,		WB_MEM,		Y,		CSR_MODE_U,	CSR_NOP, 		N,		N),
+		AMOXOR_W  ->	List(PC_4,	A_RS1,	B_RS2,	 W_D,	IMM_X,		ALU_COPY_A,	BR_XXX, 	ST_SW,		LD_LW,		WB_MEM,		Y,		CSR_MODE_U,	CSR_NOP, 		N,		N),
+		AMOXOR_D  ->	List(PC_4,	A_RS1,	B_RS2,	 W_D,	IMM_X,		ALU_COPY_A,	BR_XXX, 	ST_SD,		LD_LD,		WB_MEM,		Y,		CSR_MODE_U,	CSR_NOP, 		N,		N),
+		AMOAND_W  ->	List(PC_4,	A_RS1,	B_RS2,	 W_D,	IMM_X,		ALU_COPY_A,	BR_XXX, 	ST_SW,		LD_LW,		WB_MEM,		Y,		CSR_MODE_U,	CSR_NOP, 		N,		N),
+		AMOAND_D  ->	List(PC_4,	A_RS1,	B_RS2,	 W_D,	IMM_X,		ALU_COPY_A,	BR_XXX, 	ST_SD,		LD_LD,		WB_MEM,		Y,		CSR_MODE_U,	CSR_NOP, 		N,		N),
+		AMOOR_W   ->	List(PC_4,	A_RS1,	B_RS2,	 W_D,	IMM_X,		ALU_COPY_A,	BR_XXX, 	ST_SW,		LD_LW,		WB_MEM,		Y,		CSR_MODE_U,	CSR_NOP, 		N,		N),
+		AMOOR_D   ->	List(PC_4,	A_RS1,	B_RS2,	 W_D,	IMM_X,		ALU_COPY_A,	BR_XXX, 	ST_SD,		LD_LD,		WB_MEM,		Y,		CSR_MODE_U,	CSR_NOP, 		N,		N),
+		AMOMIN_W  ->	List(PC_4,	A_RS1,	B_RS2,	 W_D,	IMM_X,		ALU_COPY_A,	BR_XXX, 	ST_SW,		LD_LW,		WB_MEM,		Y,		CSR_MODE_U,	CSR_NOP, 		N,		N),
+		AMOMIN_D  ->	List(PC_4,	A_RS1,	B_RS2,	 W_D,	IMM_X,		ALU_COPY_A,	BR_XXX, 	ST_SD,		LD_LD,		WB_MEM,		Y,		CSR_MODE_U,	CSR_NOP, 		N,		N),
+		AMOMAX_W  ->	List(PC_4,	A_RS1,	B_RS2,	 W_D,	IMM_X,		ALU_COPY_A,	BR_XXX, 	ST_SW,		LD_LW,		WB_MEM,		Y,		CSR_MODE_U,	CSR_NOP, 		N,		N),
+		AMOMAX_D  ->	List(PC_4,	A_RS1,	B_RS2,	 W_D,	IMM_X,		ALU_COPY_A,	BR_XXX, 	ST_SD,		LD_LD,		WB_MEM,		Y,		CSR_MODE_U,	CSR_NOP, 		N,		N),
+		AMOMINU_W ->	List(PC_4,	A_RS1,	B_RS2,	 W_D,	IMM_X,		ALU_COPY_A,	BR_XXX, 	ST_SW,		LD_LW,		WB_MEM,		Y,		CSR_MODE_U,	CSR_NOP, 		N,		N),
+		AMOMINU_D ->	List(PC_4,	A_RS1,	B_RS2,	 W_D,	IMM_X,		ALU_COPY_A,	BR_XXX, 	ST_SD,		LD_LD,		WB_MEM,		Y,		CSR_MODE_U,	CSR_NOP, 		N,		N),
+		AMOMAXU_W ->	List(PC_4,	A_RS1,	B_RS2,	 W_D,	IMM_X,		ALU_COPY_A,	BR_XXX, 	ST_SW,		LD_LW,		WB_MEM,		Y,		CSR_MODE_U,	CSR_NOP, 		N,		N),
+		AMOMAXU_D ->	List(PC_4,	A_RS1,	B_RS2,	 W_D,	IMM_X,		ALU_COPY_A,	BR_XXX, 	ST_SD,		LD_LD,		WB_MEM,		Y,		CSR_MODE_U,	CSR_NOP, 		N,		N),
 		ADDI	->	List(PC_4,		A_RS1,	B_IMM,	 W_D,	IMM_I,		ALU_ADD,		BR_XXX,		ST_XXX,		LD_XXX,		WB_ALU,		Y,		CSR_MODE_U,	CSR_NOP,		N,		N),
 		ADDIW	->  List(PC_4,		A_RS1,	B_IMM,	 W_W,	IMM_I,		ALU_ADD,		BR_XXX,		ST_XXX,		LD_XXX,		WB_ALU,		Y,		CSR_MODE_U,	CSR_NOP,		N,		N),
 		SLTI	->	List(PC_4,		A_RS1,	B_IMM,	 W_D,	IMM_I,		ALU_SLT,		BR_XXX,		ST_XXX,		LD_XXX,		WB_ALU,		Y,		CSR_MODE_U,	CSR_NOP,		N,		N),

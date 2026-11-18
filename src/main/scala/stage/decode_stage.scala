@@ -102,6 +102,7 @@ class DecodeStage extends Module{
 			_.csr_is_illegal -> false.B,
 			_.csr_inst_misalign -> false.B,
 			_.iTLB_fault -> 0.U,
+			_.amo_op -> AMO_NONE,
 			_.enable -> false.B
 		)
 	)
@@ -152,6 +153,23 @@ class DecodeStage extends Module{
 	io.csr_r_addr := io.fd_pipe_reg.inst(31, 20)
 	val mode_illegal = io.fd_pipe_reg.inst(29, 28) > io.csr_mode && (csr_op =/= CSR.N)
 
+	// decode the A-extension operation from funct5(31:27) + funct3(14:12)
+	val amo_key = Cat(io.fd_pipe_reg.inst(31, 27), io.fd_pipe_reg.inst(14, 12))
+	val amo_op = MuxLookup(amo_key, AMO_NONE, Seq(
+		"b00010_010".U -> AMO_LR,   "b00010_011".U -> AMO_LR,
+		"b00011_010".U -> AMO_SC,   "b00011_011".U -> AMO_SC,
+		"b00001_010".U -> AMO_SWAP, "b00001_011".U -> AMO_SWAP,
+		"b00000_010".U -> AMO_ADD,  "b00000_011".U -> AMO_ADD,
+		"b00100_010".U -> AMO_XOR,  "b00100_011".U -> AMO_XOR,
+		"b01100_010".U -> AMO_AND,  "b01100_011".U -> AMO_AND,
+		"b01000_010".U -> AMO_OR,   "b01000_011".U -> AMO_OR,
+		"b10000_010".U -> AMO_MIN,  "b10000_011".U -> AMO_MIN,
+		"b10100_010".U -> AMO_MAX,  "b10100_011".U -> AMO_MAX,
+		"b11000_010".U -> AMO_MINU, "b11000_011".U -> AMO_MINU,
+		"b11100_010".U -> AMO_MAXU, "b11100_011".U -> AMO_MAXU
+	))
+	val is_amo_inst = (io.fd_pipe_reg.inst(6, 0) === "b0101111".U)
+
 	val csr_data = io.csr_r_data
 	val csr_write_data = Mux(io.mw_pipe_reg_enable && (io.mw_pipe_reg_dest === src1_addr) && io.mw_pipe_reg_wb_en && (src1_addr =/= 0.U), 
 							Mux(io.mw_pipe_reg_wb_sel === WB_ALU, io.mw_pipe_reg_alu_out,
@@ -188,6 +206,7 @@ class DecodeStage extends Module{
 		de_pipe_reg.csr_is_illegal := false.B
 		de_pipe_reg.csr_inst_misalign := false.B
 		de_pipe_reg.iTLB_fault := 0.U
+		de_pipe_reg.amo_op := AMO_NONE
 		de_pipe_reg.enable := false.B
 	}.elsewhen(!io.stall && !io.flush_de){			//&& !load_stall
 		de_pipe_reg.inst := io.fd_pipe_reg.inst
@@ -223,6 +242,7 @@ class DecodeStage extends Module{
 		de_pipe_reg.csr_is_illegal := control.io.is_illegal || mode_illegal || io.csr_accessType_illegal || (control.io.prv > io.csr_mode)
 		de_pipe_reg.csr_inst_misalign := ((io.fd_pipe_reg.pc & 3.U) =/= 0.U) && io.fd_pipe_reg.enable
 		de_pipe_reg.iTLB_fault := io.fd_pipe_reg.iTLB_fault
+		de_pipe_reg.amo_op := Mux(is_amo_inst, amo_op, AMO_NONE)
 		de_pipe_reg.enable := io.fd_pipe_reg.enable
 	}
 

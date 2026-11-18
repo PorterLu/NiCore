@@ -69,6 +69,7 @@ class ExecuteStage extends Module{
 			_.iTLB_fault -> 0.U,
 			_.sfence_rs1 -> 0.U,
 			_.sfence_rs2 -> 0.U,
+			_.amo_op -> AMO_NONE,
 			_.enable -> false.B
 		)
 	)
@@ -254,6 +255,7 @@ class ExecuteStage extends Module{
 		em_pipe_reg.csr_store_misalign := false.B
 		em_pipe_reg.csr_load_misalign := false.B
 		em_pipe_reg.iTLB_fault := 0.U
+		em_pipe_reg.amo_op := AMO_NONE
 		em_pipe_reg.enable := false.B
 	}.elsewhen(!io.stall && !io.flush_em){
 		em_pipe_reg.inst := io.de_pipe_reg.inst
@@ -298,6 +300,7 @@ class ExecuteStage extends Module{
 		em_pipe_reg.iTLB_fault := io.de_pipe_reg.iTLB_fault
 		em_pipe_reg.sfence_rs1 := src1_data
 		em_pipe_reg.sfence_rs2 := src2_data
+		em_pipe_reg.amo_op := io.de_pipe_reg.amo_op
 		em_pipe_reg.enable := io.de_pipe_reg.enable
 	}
 

@@ -179,7 +179,7 @@ class StageSpec extends AnyFreeSpec with ChiselScalatestTester {
       _.is_clint -> false.B, _.csr_inst_mode -> 0.U, _.csr_is_illegal -> false.B,
       _.csr_inst_misalign -> false.B, _.csr_load_misalign -> false.B,
       _.csr_store_misalign -> false.B, _.iTLB_fault -> 0.U,
-      _.sfence_rs1 -> 0.U, _.sfence_rs2 -> 0.U, _.enable -> true.B)
+      _.sfence_rs1 -> 0.U, _.sfence_rs2 -> 0.U, _.amo_op -> Control.AMO_NONE, _.enable -> true.B)
     lit
   }
 

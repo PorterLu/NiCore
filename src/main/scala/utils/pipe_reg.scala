@@ -37,6 +37,7 @@ class decode_execute_pipeline_reg extends Bundle{
 	val csr_is_illegal = Bool()
 	val csr_inst_misalign = Bool()
 	val iTLB_fault = UInt(2.W)
+	val amo_op = UInt(4.W)
 	val enable = Bool()
 }
 
@@ -63,6 +64,7 @@ class  execute_mem_pipeline_reg extends Bundle{
 	val csr_load_misalign = Bool()
 	val csr_store_misalign = Bool()
 	val iTLB_fault = UInt(2.W)
+	val amo_op = UInt(4.W)
 	val sfence_rs1 = UInt(64.W)
 	val sfence_rs2 = UInt(64.W)
 	val enable = Bool()
