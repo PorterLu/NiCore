@@ -189,7 +189,10 @@ class TLB(tlb_name: String) extends Module{
 	val tlb_type = if(tlb_name == "iTLB") true.B else false.B
  	val tlb_state = RegInit(sIdle)
 	val next_state = WireDefault(sIdle)
-	val vpn 	= io.va(38, 12)
+	// latch the virtual address when the translation starts; io.va may change
+	// (e.g. fetch redirect) while the walk is in progress
+	val va_reg = RegInit(0.U(64.W))
+	val vpn 	= va_reg(38, 12)
 	val tlbe 	= RegInit(0.U.asTypeOf(Vec(16, new TLBEntry)))
 	val random 	= Counter(16)
 	val asid = io.satp(60, 44)
@@ -229,6 +232,7 @@ class TLB(tlb_name: String) extends Module{
 				when(io.flush){
 					next_state := sFlush
 				}.elsewhen(io.valid){
+					va_reg := io.va
 					matchList := tlbe.map{k => k.checkHit(io.va, asid)}
 					next_state := sMatch
 				}
@@ -374,17 +378,17 @@ class TLB(tlb_name: String) extends Module{
 			io.tlb_request.mask  := io.mask
 			val pa = WireDefault(0.U(56.W))
 			when(page_size_reg === pg_1g.asUInt){
-				pa := Cat(pte_reg.ppn(43, 18), io.va(29, 0))
+				pa := Cat(pte_reg.ppn(43, 18), va_reg(29, 0))
 			}.elsewhen(page_size_reg === pg_2m.asUInt){
-				pa := Cat(pte_reg.ppn(43, 9), io.va(20, 0))
+				pa := Cat(pte_reg.ppn(43, 9), va_reg(20, 0))
 			}.elsewhen(page_size_reg === pg_4k.asUInt){
-				pa := Cat(pte_reg.ppn, io.va(11, 0))
+				pa := Cat(pte_reg.ppn, va_reg(11, 0))
 			}
 			io.tlb_request.addr := pa(31, 0)
 
 			// only refill after a page walk; use the PTE from the walk, not the data response
 			when(walked){
-				tlbe(random.value).fromPTE(pte_reg, io.va, asid, page_size_reg)
+				tlbe(random.value).fromPTE(pte_reg, va_reg, asid, page_size_reg)
 			}
 			when(!io.stall && io.cache_response.ready){
 				next_state := sIdle
@@ -393,10 +397,15 @@ class TLB(tlb_name: String) extends Module{
 		}
 	}
 
-	// the request was squashed (e.g. exception/redirect in the pipeline): abandon it
+	// the request was squashed (e.g. exception/redirect in the pipeline): abandon it.
+	// the dTLB must release its stall so the (flushed) pipeline can move on;
+	// the iTLB must NOT pulse ready, otherwise fetch would advance pc past the
+	// redirect target without fetching it.
 	when(!io.valid && tlb_state =/= sIdle && tlb_state =/= sFlush){
 		next_state := sIdle
-		io.tlb_ready := true.B
+		if(tlb_name != "iTLB"){
+			io.tlb_ready := true.B
+		}
 		io.fault := no_page_falut.asUInt
 		io.tlb_request.valid := false.B
 	}
