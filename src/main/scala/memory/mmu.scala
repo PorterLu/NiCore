@@ -10,8 +10,8 @@ import CSR._
 /*
 *	SATP of RV64
 *	*****************************************************
-*	* 	MODE 	* 	ASID  *  			PPN				*
-* 	*****************************************************
+*	* 	MODE 	* 	ASID 	*  			PPN				*
+*	*****************************************************
 * 		4			16					44
 */
 
@@ -34,42 +34,21 @@ class PTE extends Bundle{
 	val R 		 = Bool()
 	val V 		 = Bool() 
 
+	def privCheck(priv: UInt, sum: Bool) : Bool = {
+		// S mode can access supervisor pages always, and user pages only when SUM is set
+		MuxLookup(priv, true.B, Seq(
+			CSR_MODE_U -> U,
+			CSR_MODE_S -> (!U || sum),
+			CSR_MODE_M -> true.B
+		))
+	}
+
 	def fetchCheck(priv: UInt, sum: Bool) : Bool = {
-		val priv_ok = WireDefault(false.B)
-		switch(priv){
-			is(CSR_MODE_U){
-				priv_ok := U
-			}
-
-			is(CSR_MODE_S){
-				priv_ok := sum && !U || !sum
-			}
-
-			is(CSR_MODE_M){
-				priv_ok := true.B
-			}
-		}
-
-		priv_ok && X 
+		privCheck(priv, sum) && X 
 	}
 
 	def lsCheck(priv: UInt, sum: Bool, is_load: Bool, mxr: Bool) : Bool = {
-		val priv_ok = WireDefault(false.B)
-		switch(priv){
-			is(CSR_MODE_U){
-				priv_ok := U
-			}
-
-			is(CSR_MODE_S){
-				priv_ok := sum && !U || !sum
-			}
-
-			is(CSR_MODE_M){
-				priv_ok := true.B 
-			}
-		}
-
-		priv_ok && ((is_load &&((R && !X)|| (mxr && (R || X)))) || (!is_load && W)) 
+		privCheck(priv, sum) && Mux(is_load, R || (mxr && X), W)
 	} 
 }
 
@@ -103,47 +82,39 @@ class TLBEntry extends Bundle{
 	val A		= Bool()
 	val G 		= Bool()
 	val U 		= Bool()
-	val X		= Bool()
-	val W		= Bool()
+	val X 		= Bool()
+	val W 		= Bool()
 	val R 		= Bool()
 	val V 		= Bool()
 
-	def fromPTE(pte: UInt, va: UInt, satp_asid: UInt, pgsize:  pageSize.Type): Unit = {
-		when(pte(0)){													//该页表项是有效的
-			RSW := pte(9, 8)
-			D := pte(7)													//dirty
-			A := pte(6)													//access
-			G := pte(5)
-			U := pte(4)													
-			X := pte(3)
-			W := pte(2)
-			R := pte(1)
-			V := pte(0)
-			ppn := pte(53, 10)
-			size := pgsize.asUInt
+	def fromPTE(src: PTE, va: UInt, satp_asid: UInt, pgsize:  UInt): Unit = {
+		when(src.V){												// only fill valid entries
+			RSW := src.RSW
+			D := src.D
+			A := src.A
+			G := src.G
+			U := src.U
+			X := src.X
+			W := src.W
+			R := src.R
+			V := src.V
+			ppn := src.ppn
+			size := pgsize
 			asid := satp_asid
-			switch(pgsize){
-				is(pg_4k){
-					vpn := va(38, 12)
-				}
-				is(pg_2m){
-					vpn := Cat(va(38, 21), 0.U(9.W))
-				}
-				is(pg_1g){
-					vpn := Cat(va(38, 30), 0.U(18.W))
-				}
-			}
+			vpn := Mux(pgsize === pg_4k.asUInt, va(38, 12),
+					Mux(pgsize === pg_2m.asUInt, Cat(va(38, 21), 0.U(9.W)),
+						Cat(va(38, 30), 0.U(18.W))))
 		}
 	}
 
 	def checkHit(va: UInt, access_asid: UInt): Bool = {
 		val ok = WireDefault(false.B)
 		when(size === pg_4k.asUInt){
-			ok := va(63,12).asSInt === vpn.asSInt && asid === access_asid
+			ok := va(63,12).asSInt === vpn.asSInt && (asid === access_asid || G)
 		}.elsewhen(size === pg_2m.asUInt){
-			ok := va(63, 21).asSInt === vpn(26, 9).asSInt && asid === access_asid
+			ok := va(63, 21).asSInt === vpn(26, 9).asSInt && (asid === access_asid || G)
 		}.elsewhen(size === pg_1g.asUInt){
-			ok := va(63, 30).asSInt === vpn(26, 18).asSInt && asid === access_asid
+			ok := va(63, 30).asSInt === vpn(26, 18).asSInt && (asid === access_asid || G)
 		}
 		ok && V
 	}
@@ -165,41 +136,19 @@ class TLBEntry extends Bundle{
 	}
 
 	def fetchCheck(priv: UInt, sum: Bool) : Bool = {
-		val priv_ok = WireDefault(false.B)
-		switch(priv){
-			is(CSR_MODE_U){
-				priv_ok := U
-			}
-
-			is(CSR_MODE_S){
-				priv_ok := sum && !U || !sum
-			}
-
-			is(CSR_MODE_M){
-				priv_ok := true.B
-			}
-		}
-
-		priv_ok && X 
+		privCheck(priv, sum) && X 
 	}
 
 	def lsCheck(priv: UInt, sum: Bool, is_load: Bool, mxr: Bool) : Bool = {
-		val priv_ok = WireDefault(false.B)
-		switch(priv){
-			is(CSR_MODE_U){
-				priv_ok := U
-			}
+		privCheck(priv, sum) && Mux(is_load, R || (mxr && X), W)
+	}
 
-			is(CSR_MODE_S){
-				priv_ok := sum && !U || !sum
-			}
-
-			is(CSR_MODE_M){
-				priv_ok := true.B 
-			}
-		}
-
-		priv_ok && ((is_load &&((R && !X)|| (mxr && (R || X)))) || (!is_load && W)) 
+	def privCheck(priv: UInt, sum: Bool) : Bool = {
+		MuxLookup(priv, true.B, Seq(
+			CSR_MODE_U -> U,
+			CSR_MODE_S -> (!U || sum),
+			CSR_MODE_M -> true.B
+		))
 	}
 }
 
@@ -227,7 +176,6 @@ class TLB(tlb_name: String) extends Module{
 		val va 	  = Input(UInt(64.W))
 		val mask  = Input(UInt(8.W))
 
-		//val r_data  = Output(UInt(64.W))
 		val fault  = Output(UInt(2.W))
 		val tlb_ready = Output(Bool())
 		val tlb_flush_asid = Input(UInt(16.W))
@@ -244,298 +192,214 @@ class TLB(tlb_name: String) extends Module{
 	val vpn 	= io.va(38, 12)
 	val tlbe 	= RegInit(0.U.asTypeOf(Vec(16, new TLBEntry)))
 	val random 	= Counter(16)
-	val vpn_match = VecInit(Seq.fill(16)(false.B))
-	val asid_match = VecInit(Seq.fill(16)(false.B))
 	val asid = io.satp(60, 44)
 	val matchList = RegInit(VecInit(Seq.fill(16)(false.B)))
-	val faultList = VecInit(Seq.fill(16)(false.B))
-	val pte 	= WireInit(0.U.asTypeOf(new PTE))
 	val pte_reg = RegInit(0.U.asTypeOf(new PTE))
-	val ppn_base = Cat(io.satp(43, 0), 0.U(12.W)).asSInt.asUInt
+	// PTE freshly read from memory this cycle (combinational view of cache_response.data)
+	val pte_in = io.cache_response.data.asTypeOf(new PTE)
+	val ppn_base = Cat(io.satp(43, 0), 0.U(12.W)).asUInt
 	val ppn2 	= vpn(26, 18)
 	val ppn1 	= vpn(17, 9)
 	val ppn0	= vpn(8, 0)
 	val page_size_reg = RegInit(0.U(2.W))
+	// whether the current translation came from a page walk (and hence should be filled into the TLB)
+	val walked = RegInit(false.B)
+
 	io.tlb_request.addr  := 0.U 
 	io.tlb_request.data  := 0.U 
 	io.tlb_request.mask  := 0.U 
 	io.tlb_request.rw 	 := false.B 
 	io.tlb_request.valid := false.B
+	io.fault := no_page_falut.asUInt
+	io.tlb_ready := false.B
 
-	for(i <- 0 until 16){
-		vpn_match(i.U) := false.B 
-		asid_match(i.U) := false.B
+	def raise_fault(): UInt = {
+		Mux(tlb_type, inst_page_fault.asUInt, Mux(io.wen, store_page_fault.asUInt, load_page_fault.asUInt))
 	}
 
-	tlb_state := next_state
-	io.fault := no_page_falut.asUInt
-
-	io.tlb_request.valid := false.B 
-	io.tlb_request.data := 0.U 
-	io.tlb_request.mask := 0.U 
-	io.tlb_request.rw := false.B
-	io.tlb_request.addr := "h80000000".U 
-	io.tlb_ready := false.B
-//	io.r_data := 0.U
-	
-	def raise_fault(tlb_type: Bool, wen:Bool): UInt = {
-		when(tlb_type){
-			inst_page_fault.asUInt
-		}.otherwise{
-			when(wen){
-				store_page_fault.asUInt
-			}.otherwise{
-				load_page_fault.asUInt
-			}
-		}
-		no_page_falut.asUInt
+	def permCheck(p : PTE) : Bool = {
+		Mux(tlb_type, p.fetchCheck(io.priv, io.sum), p.lsCheck(io.priv, io.sum, !io.wen, io.mxr))
 	}
 
 	switch(tlb_state){
 		is(sIdle){
 			next_state := sIdle
+			io.tlb_ready := !io.valid
 			when(!io.stall){
-				when(io.flush && io.valid){
+				when(io.flush){
 					next_state := sFlush
 				}.elsewhen(io.valid){
 					matchList := tlbe.map{k => k.checkHit(io.va, asid)}
 					next_state := sMatch
-				}.otherwise{
-					next_state := sIdle
 				}
 			}
 		}
 		is(sFlush){
 			next_state := sFlush
-			when(!io.stall){
-				for(i <- 0 until 16){
-					when(tlbe(i.U).asid === io.tlb_flush_asid || io.tlb_flush_asid === 0.U){
-						asid_match(i.U) := true.B
-					}
-					
-					when(io.tlb_flush_vpn === 0.U && !tlbe(i.U).G){
-						vpn_match(i.U) := 0.U
-					}.elsewhen(!tlbe(i.U).G){
-						when(tlbe(i.U).size === pg_4k.asUInt){
-							when(io.tlb_flush_vpn === tlbe(i.U).vpn){
-								vpn_match(i.U) := true.B
-							}
-						}.elsewhen(tlbe(i.U).size === pg_2m.asUInt){
-							when(io.tlb_flush_vpn(26, 10) === tlbe(i.U).vpn(26, 10)){
-								vpn_match(i.U) := true.B 
-							}
-						}.elsewhen(tlbe(i.U).size === pg_1g.asUInt){
-							when(io.tlb_flush_vpn(26, 18) === tlbe(i.U).vpn(26, 18)){
-								vpn_match(i.U) := true.B
-							}
-						}
-					}
-				}
-
-				//when(vpn_match(i.U) && asid_match(i.U)){
-				for(i <- 0 until 16){
-					when(vpn_match(i.U) && asid_match(i.U)){
-						tlbe(i.U).V := false.B
-					}
-				}
-				//}
-			}
-			next_state := sIdle
 			io.tlb_ready := true.B
+			when(!io.stall){
+				val flush_all_vpn = io.tlb_flush_vpn === 0.U		// sfence rs1 == x0
+				val flush_all_asid = io.tlb_flush_asid === 0.U	// sfence rs2 == x0
+				for(i <- 0 until 16){
+					val e = tlbe(i.U)
+					val vpn_cover = Mux(e.size === pg_4k.asUInt, e.vpn === io.tlb_flush_vpn,
+									Mux(e.size === pg_2m.asUInt, e.vpn(26, 9) === io.tlb_flush_vpn(26, 9),
+										e.vpn(26, 18) === io.tlb_flush_vpn(26, 18)))
+					// global entries are only flushed when rs2 == x0 (all ASIDs)
+					val asid_cover = flush_all_asid || (e.asid === io.tlb_flush_asid && !e.G)
+					when((flush_all_vpn || vpn_cover) && asid_cover){
+						e.invalidate()
+					}
+				}
+				next_state := sIdle
+			}
 		}
 		is(sMatch){
 			next_state := sMatch
 			when(!io.stall){
 				when(matchList.reduce(_|_)){
-					when(!io.wen){
-						when(tlb_type){
-							faultList := tlbe.map{k => k.fetchCheck(io.priv, io.sum)}
-							when(faultList.reduce(_|_)){
-								io.fault := inst_page_fault.asUInt
-								//next_state := sIdle
-							}.otherwise{
-								for(i <- 0 until 16){
-									when(matchList(i)){
-										//io.paddr := tlbe(i).va2pa(io.va)
-										//pte := cache_response.data.asTypeOf(pte)
-										pte_reg := Cat(0.U(10.W), tlbe(i.U).ppn, tlbe(i.U)asUInt(9, 0)).asTypeOf(pte)
-										page_size_reg := tlbe(i.U).size
-										next_state := sPrivCheck 
-									}
-								}
-							}
-						}.otherwise{
-							faultList := tlbe.map{k => k.lsCheck(io.priv, io.sum, true.B, io.mxr)}
-							when(faultList.reduce(_|_)){
-								io.fault := load_page_fault.asUInt
-								//next_state := sIdle
-							}.otherwise{
-								for(i <- 0 until 16){
-									when(matchList(i)){
-										pte_reg := Cat(0.U(10.W), tlbe(i.U).ppn, tlbe(i.U)asUInt(9, 0)).asTypeOf(pte)
-										page_size_reg := tlbe(i.U).size
-										next_state := sPrivCheck 
-									}
-								}
-							}
-						}
-					}.otherwise{
-						faultList := tlbe.map{k => k.lsCheck(io.priv, io.sum, false.B, io.mxr)}
-						when(faultList.reduce(_|_)){
-							io.fault := store_page_fault.asUInt
-							//next_state := sIdle
-						}.otherwise{
-							for(i <- 0 until 16){
-								when(matchList(i)){
-									pte_reg := Cat(0.U(10.W), tlbe(i.U).ppn, tlbe(i.U)asUInt(9, 0)).asTypeOf(pte)
-									page_size_reg := tlbe(i.U).size
-									next_state := sPrivCheck 
-								}
-							}
-						}
+					// check the permission of the matched entries only
+					val permList = for(i <- 0 until 16) yield {
+						matchList(i) && Mux(tlb_type, tlbe(i.U).fetchCheck(io.priv, io.sum), 
+													tlbe(i.U).lsCheck(io.priv, io.sum, !io.wen, io.mxr))
 					}
-					next_state := sIdle
-					io.tlb_ready  := true.B
-				}.otherwise{				//TLB未名中,未命中需要读些内存，只需要向cache输出访存信号即可
+					when(!permList.reduce(_|_)){
+						io.fault := raise_fault()
+						io.tlb_ready := true.B
+						next_state := sIdle
+					}.otherwise{
+						walked := false.B
+						for(i <- 0 until 16){
+							when(matchList(i)){
+								pte_reg := Cat(0.U(10.W), tlbe(i.U).ppn, tlbe(i.U).asUInt(9, 0)).asTypeOf(new PTE)
+								page_size_reg := tlbe(i.U).size
+							}
+						}
+						next_state := sPrivCheck 
+					}
+				}.otherwise{				// TLB miss, walk the page table in memory
+					walked := true.B
 					next_state := sThridLevel	
 				}	
 			}
 		}
 		is(sThridLevel){
 			next_state := sThridLevel
-			io.tlb_request.addr := ppn_base + ppn2<<3.U
+			io.tlb_request.addr := (ppn_base + (ppn2 << 3.U))(31, 0)
 			io.tlb_request.valid := true.B 
 			io.tlb_request.rw := false.B
 			io.tlb_request.mask := 0.U
 			when(!io.stall && io.cache_response.ready){
-				pte := io.cache_response.data.asTypeOf(pte)
-				pte_reg := io.cache_response.data.asTypeOf(pte)
-				next_state := sSecondLevel
-
-				when(!pte.V || (!pte.R && pte.W)){
-					io.fault := raise_fault(tlb_type, io.wen)
+				pte_reg := pte_in
+				when(!pte_in.V || (!pte_in.R && pte_in.W)){
+					io.fault := raise_fault()
+					io.tlb_ready := true.B
 					next_state := sIdle
-				}.elsewhen(pte.V && (pte.R || pte.X)){
+				}.elsewhen(pte_in.R || pte_in.X){			// 1G leaf
 					page_size_reg := pg_1g.asUInt
-					next_state := sData
-
-					//这里还要进行巨页的非对齐检查
-					when(pte.asUInt(27, 10) =/= 0.U){
-						io.fault := raise_fault(tlb_type, io.wen)
+					when(pte_in.asUInt(27, 10) =/= 0.U){	// superpage must be aligned
+						io.fault := raise_fault()
+						io.tlb_ready := true.B
 						next_state := sIdle
+					}.otherwise{
+						next_state := sPrivCheck
 					}
+				}.otherwise{
+					next_state := sSecondLevel
 				}
 			}
 		}
 		is(sSecondLevel){
 			next_state := sSecondLevel
-			io.tlb_request.addr := Cat(pte.ppn, 0.U(12.W)).asSInt.asUInt + ppn1<<3.U 
+			io.tlb_request.addr := (Cat(pte_reg.ppn, 0.U(12.W)) + (ppn1 << 3.U))(31, 0)
 			io.tlb_request.valid := true.B 
 			io.tlb_request.rw 	:= false.B 
 			io.tlb_request.mask := 0.U 			
 			when(!io.stall && io.cache_response.ready){
-				pte := io.cache_response.data.asTypeOf(pte)
-				pte_reg := io.cache_response.data.asTypeOf(pte)
-				next_state := sFirstLevel
-				when(!pte.V || (!pte.R && pte.W)){
-					io.fault := raise_fault(tlb_type, io.wen)
+				pte_reg := pte_in
+				when(!pte_in.V || (!pte_in.R && pte_in.W)){
+					io.fault := raise_fault()
+					io.tlb_ready := true.B
 					next_state := sIdle
-				}.elsewhen(pte.V && (pte.R || pte.X)){
+				}.elsewhen(pte_in.R || pte_in.X){			// 2M leaf
 					page_size_reg := pg_2m.asUInt
-					next_state := sData
-
-					//这里要对大页的非对奇进行检查
-					when(pte.asUInt(18, 10) =/= 0.U){
-						io.fault := raise_fault(tlb_type, io.wen)
+					when(pte_in.asUInt(18, 10) =/= 0.U){	// superpage must be aligned
+						io.fault := raise_fault()
+						io.tlb_ready := true.B
 						next_state := sIdle
+					}.otherwise{
+						next_state := sPrivCheck
 					}
+				}.otherwise{
+					next_state := sFirstLevel
 				}
 			} 
 		}
 		is(sFirstLevel){
 			next_state := sFirstLevel
-			io.tlb_request.addr := Cat(pte.ppn, 0.U(12.W)).asSInt.asUInt + ppn0<<3.U
+			io.tlb_request.addr := (Cat(pte_reg.ppn, 0.U(12.W)) + (ppn0 << 3.U))(31, 0)
 			io.tlb_request.valid := true.B 
 			io.tlb_request.rw 	  := false.B
 			io.tlb_request.mask  := 0.U
 			when(!io.stall && io.cache_response.ready){
-				pte := io.cache_response.data.asTypeOf(pte)
-				pte_reg := io.cache_response.data.asTypeOf(pte)
-				next_state := sData
-
-				when(!pte.V || (!pte.R && pte.W)){
-					io.fault := raise_fault(tlb_type, io.wen)
+				pte_reg := pte_in
+				when(!pte_in.V || (!pte_in.R && pte_in.W) || !(pte_in.R || pte_in.X)){	// leaf required at level 0
+					io.fault := raise_fault()
+					io.tlb_ready := true.B
 					next_state := sIdle
 				}.otherwise{
-					when(pte.R || pte.X){
-						next_state := sData
-						page_size_reg := pg_4k.asUInt
-					}.otherwise{
-						io.fault := raise_fault(tlb_type, io.wen)
-						next_state := sIdle
-					}
+					page_size_reg := pg_4k.asUInt
+					next_state := sPrivCheck
 				}
 			}
 		}
 		is(sPrivCheck){
 			next_state := sPrivCheck
-			when(tlb_type){
-				when(!pte_reg.fetchCheck(io.priv, io.sum)){
-					io.fault := inst_page_fault.asUInt
-					next_state := sIdle
-				}.otherwise{
-					next_state := sData
-					when(!pte_reg.A || (io.wen && !pte_reg.D)){
-						io.fault := raise_fault(tlb_type, io.wen)
-						next_state := sIdle
-					}
-				}
+			when(!permCheck(pte_reg)){
+				io.fault := raise_fault()
+				io.tlb_ready := true.B
+				next_state := sIdle
+			}.elsewhen(!pte_reg.A || (io.wen && !pte_reg.D)){
+				io.fault := raise_fault()
+				io.tlb_ready := true.B
+				next_state := sIdle
 			}.otherwise{
-				when(io.wen){
-					when(!pte_reg.lsCheck(io.priv, io.sum, false.B, io.mxr)){
-						io.fault := store_page_fault.asUInt
-						next_state := sIdle
-					}.otherwise{
-						next_state := sData
-						when(!pte_reg.A || (io.wen && !pte_reg.D)){
-							io.fault := raise_fault(tlb_type, io.wen)
-							next_state := sIdle
-						}
-					}
-				}.otherwise{
-					when(!pte_reg.lsCheck(io.priv, io.sum, true.B, io.mxr)){
-						io.fault := load_page_fault.asUInt
-						next_state := sIdle
-					}.otherwise{
-						next_state := sData
-						when(!pte_reg.A || (io.wen && !pte_reg.D)){
-							io.fault := raise_fault(tlb_type, io.wen)
-							next_state := sIdle
-						}
-					}
-				}
+				next_state := sData
 			}
 		}
-		is(sData){						//检查访问的合法性
+		is(sData){						// issue the translated memory access
 			next_state := sData 
 			io.tlb_request.valid := true.B 
 			io.tlb_request.rw 	  := io.wen
 			io.tlb_request.mask  := io.mask
+			val pa = WireDefault(0.U(56.W))
 			when(page_size_reg === pg_1g.asUInt){
-				io.tlb_request.addr := Cat(pte_reg.asUInt(53, 28), ppn1, ppn0, 0.U(12.W)).asSInt.asUInt + io.va(11, 0)
+				pa := Cat(pte_reg.ppn(43, 18), io.va(29, 0))
 			}.elsewhen(page_size_reg === pg_2m.asUInt){
-				io.tlb_request.addr := Cat(pte_reg.asUInt(53, 19), ppn0, 0.U(12.W)).asSInt.asUInt + io.va(11, 0)
+				pa := Cat(pte_reg.ppn(43, 9), io.va(20, 0))
 			}.elsewhen(page_size_reg === pg_4k.asUInt){
-				io.tlb_request.addr := Cat(pte_reg.asUInt(53, 10), 0.U(12.W)).asSInt.asUInt + io.va(11, 0)	
+				pa := Cat(pte_reg.ppn, io.va(11, 0))
 			}
+			io.tlb_request.addr := pa(31, 0)
 
-			//	def fromPTE(pte: UInt, va: UInt, satp_asid: UInt, pgsize:  pageSize.Type): Unit = {
-			tlbe(random.value).fromPTE(io.cache_response.data, io.va, asid, page_size_reg.asTypeOf(pg_4k))
+			// only refill after a page walk; use the PTE from the walk, not the data response
+			when(walked){
+				tlbe(random.value).fromPTE(pte_reg, io.va, asid, page_size_reg)
+			}
 			when(!io.stall && io.cache_response.ready){
 				next_state := sIdle
-				//io.r_data := io.cache_response.data
 				io.tlb_ready := true.B
 			} 
 		}
 	}
+
+	// the request was squashed (e.g. exception/redirect in the pipeline): abandon it
+	when(!io.valid && tlb_state =/= sIdle && tlb_state =/= sFlush){
+		next_state := sIdle
+		io.tlb_ready := true.B
+		io.fault := no_page_falut.asUInt
+		io.tlb_request.valid := false.B
+	}
+
+	tlb_state := next_state
 }
