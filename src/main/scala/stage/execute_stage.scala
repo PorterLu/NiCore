@@ -225,7 +225,7 @@ class ExecuteStage extends Module{
 	alu.io.A := Mux(io.de_pipe_reg.wd_type === W_W, A_data(31, 0), A_data)
 	alu.io.B := Mux(io.de_pipe_reg.wd_type === W_W, B_data(31, 0), B_data)
 	
-	io.jmp_occur := io.de_pipe_reg.enable && (io.de_pipe_reg.pc_sel === PC_ALU)
+	io.jmp_occur := io.de_pipe_reg.enable && (io.de_pipe_reg.pc_sel === PC_ALU) && !io.stall
 	io.jmp_flush := io.jmp_occur
 	io.jump_addr := alu_out
 	brCond.io.br_type := io.de_pipe_reg.br_type 							//思考跳转发生时会发生什么？当跳转发生时，前一个周期的指令直接被刷新为nop
@@ -272,7 +272,7 @@ class ExecuteStage extends Module{
 		em_pipe_reg.csr_write_op := io.de_pipe_reg.csr_write_op
 		em_pipe_reg.csr_write_addr := io.de_pipe_reg.csr_write_addr
 		em_pipe_reg.csr_write_data := Mux(io.de_pipe_reg.imm_sel === IMM_Z, io.de_pipe_reg.imm, src1_data)
-		em_pipe_reg.jump_taken := brCond.io.taken || (io.de_pipe_reg.pc_sel === PC_ALU && io.de_pipe_reg.enable)
+		em_pipe_reg.jump_taken := io.brCond_taken || (io.de_pipe_reg.pc_sel === PC_ALU && io.de_pipe_reg.enable && !io.stall)
 		em_pipe_reg.st_data := src2_data
 		em_pipe_reg.st_type := io.de_pipe_reg.st_type
 		em_pipe_reg.ld_type := io.de_pipe_reg.ld_type

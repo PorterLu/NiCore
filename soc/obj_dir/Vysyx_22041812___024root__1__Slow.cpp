@@ -1710,7 +1710,7 @@ VL_ATTR_COLD void Vysyx_22041812___024root___stl_sequent__TOP__3(Vysyx_22041812_
                                                              & (~ (IData)(vlSelfRef.__VdfgRegularize_hebeb780c_0_0)))))))))))))))));
     vlSelfRef.ysyx_22041812__DOT__dcache__DOT___GEN_329 
         = ((0U == (IData)(vlSelfRef.ysyx_22041812__DOT__dcache__DOT__max))
-            ? ((IData)(vlSymsp->TOP__ysyx_22041812__DOT__dcache__DOT__tag_mem_0.__VdfgRegularize_hebeb780c_0_432)
+            ? ((IData)(vlSymsp->TOP__ysyx_22041812__DOT__dcache__DOT__tag_mem_0.__VdfgRegularize_hebeb780c_0_433)
                 ? ((vlSymsp->TOP__ysyx_22041812__DOT__dcache__DOT__tag_mem_0.io_tag_read_tag 
                     << 0x0000000aU) | (0x000003f0U 
                                        & vlSelfRef.ysyx_22041812__DOT__dcache__DOT__cpu_request_addr_reg))
@@ -1718,7 +1718,7 @@ VL_ATTR_COLD void Vysyx_22041812___024root___stl_sequent__TOP__3(Vysyx_22041812_
             : vlSelfRef.ysyx_22041812__DOT__dcache__DOT__writeback_addr);
     vlSelfRef.ysyx_22041812__DOT__dcache__DOT___GEN_338 
         = ((1U == (IData)(vlSelfRef.ysyx_22041812__DOT__dcache__DOT__max))
-            ? ((IData)(vlSymsp->TOP__ysyx_22041812__DOT__dcache__DOT__tag_mem_1.__VdfgRegularize_hebeb780c_0_431)
+            ? ((IData)(vlSymsp->TOP__ysyx_22041812__DOT__dcache__DOT__tag_mem_1.__VdfgRegularize_hebeb780c_0_432)
                 ? ((vlSymsp->TOP__ysyx_22041812__DOT__dcache__DOT__tag_mem_1.io_tag_read_tag 
                     << 0x0000000aU) | (0x000003f0U 
                                        & vlSelfRef.ysyx_22041812__DOT__dcache__DOT__cpu_request_addr_reg))
@@ -1726,7 +1726,7 @@ VL_ATTR_COLD void Vysyx_22041812___024root___stl_sequent__TOP__3(Vysyx_22041812_
             : vlSelfRef.ysyx_22041812__DOT__dcache__DOT___GEN_329);
     vlSelfRef.ysyx_22041812__DOT__dcache__DOT___GEN_347 
         = ((2U == (IData)(vlSelfRef.ysyx_22041812__DOT__dcache__DOT__max))
-            ? ((IData)(vlSymsp->TOP__ysyx_22041812__DOT__dcache__DOT__tag_mem_2.__VdfgRegularize_hebeb780c_0_430)
+            ? ((IData)(vlSymsp->TOP__ysyx_22041812__DOT__dcache__DOT__tag_mem_2.__VdfgRegularize_hebeb780c_0_431)
                 ? ((vlSymsp->TOP__ysyx_22041812__DOT__dcache__DOT__tag_mem_2.io_tag_read_tag 
                     << 0x0000000aU) | (0x000003f0U 
                                        & vlSelfRef.ysyx_22041812__DOT__dcache__DOT__cpu_request_addr_reg))
@@ -8937,29 +8937,30 @@ VL_ATTR_COLD void Vysyx_22041812___024root___ctor_var_reset(Vysyx_22041812___024
     vlSelf->__VdfgRegularize_hebeb780c_0_218 = 0;
     vlSelf->__VdfgRegularize_hebeb780c_0_300 = 0;
     vlSelf->__VdfgRegularize_hebeb780c_0_303 = 0;
-    vlSelf->__VdfgRegularize_hebeb780c_0_305 = 0;
+    vlSelf->__VdfgRegularize_hebeb780c_0_304 = 0;
     vlSelf->__VdfgRegularize_hebeb780c_0_306 = 0;
-    vlSelf->__VdfgRegularize_hebeb780c_0_310 = 0;
-    vlSelf->__VdfgRegularize_hebeb780c_0_319 = 0;
-    vlSelf->__VdfgRegularize_hebeb780c_0_321 = 0;
-    vlSelf->__VdfgRegularize_hebeb780c_0_329 = 0;
-    vlSelf->__VdfgRegularize_hebeb780c_0_331 = 0;
-    vlSelf->__VdfgRegularize_hebeb780c_0_338 = 0;
-    vlSelf->__VdfgRegularize_hebeb780c_0_396 = 0;
+    vlSelf->__VdfgRegularize_hebeb780c_0_307 = 0;
+    vlSelf->__VdfgRegularize_hebeb780c_0_311 = 0;
+    vlSelf->__VdfgRegularize_hebeb780c_0_320 = 0;
+    vlSelf->__VdfgRegularize_hebeb780c_0_322 = 0;
+    vlSelf->__VdfgRegularize_hebeb780c_0_330 = 0;
+    vlSelf->__VdfgRegularize_hebeb780c_0_332 = 0;
+    vlSelf->__VdfgRegularize_hebeb780c_0_339 = 0;
     vlSelf->__VdfgRegularize_hebeb780c_0_397 = 0;
     vlSelf->__VdfgRegularize_hebeb780c_0_398 = 0;
     vlSelf->__VdfgRegularize_hebeb780c_0_399 = 0;
-    vlSelf->__VdfgRegularize_hebeb780c_0_401 = 0;
-    vlSelf->__VdfgRegularize_hebeb780c_0_406 = 0;
+    vlSelf->__VdfgRegularize_hebeb780c_0_400 = 0;
+    vlSelf->__VdfgRegularize_hebeb780c_0_402 = 0;
     vlSelf->__VdfgRegularize_hebeb780c_0_407 = 0;
     vlSelf->__VdfgRegularize_hebeb780c_0_408 = 0;
-    vlSelf->__VdfgRegularize_hebeb780c_0_410 = 0;
-    vlSelf->__VdfgRegularize_hebeb780c_0_412 = 0;
+    vlSelf->__VdfgRegularize_hebeb780c_0_409 = 0;
+    vlSelf->__VdfgRegularize_hebeb780c_0_411 = 0;
     vlSelf->__VdfgRegularize_hebeb780c_0_413 = 0;
     vlSelf->__VdfgRegularize_hebeb780c_0_414 = 0;
-    vlSelf->__VdfgRegularize_hebeb780c_0_426 = 0;
+    vlSelf->__VdfgRegularize_hebeb780c_0_415 = 0;
     vlSelf->__VdfgRegularize_hebeb780c_0_427 = 0;
     vlSelf->__VdfgRegularize_hebeb780c_0_428 = 0;
+    vlSelf->__VdfgRegularize_hebeb780c_0_429 = 0;
     for (int __Vi0 = 0; __Vi0 < 1; ++__Vi0) {
         vlSelf->__VstlTriggered[__Vi0] = 0;
     }

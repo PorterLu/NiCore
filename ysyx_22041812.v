@@ -4358,7 +4358,7 @@ module ysyx_22041812_ExecuteStage(
   assign io_div_stall = io_de_pipe_reg_enable & ~div_result_enable & _io_div_stall_T_8; // @[execute_stage.scala 131:70]
   assign io_jump_addr = alu_io_out; // @[execute_stage.scala 230:22]
   assign io_jmp_flush = io_jmp_occur; // @[execute_stage.scala 229:22]
-  assign io_jmp_occur = io_de_pipe_reg_enable & io_de_pipe_reg_pc_sel == 2'h1; // @[execute_stage.scala 228:47]
+  assign io_jmp_occur = io_de_pipe_reg_enable & io_de_pipe_reg_pc_sel == 2'h1 & _T; // @[execute_stage.scala 228:85]
   assign io_br_flush = io_brCond_taken; // @[execute_stage.scala 237:21]
   assign io_brCond_taken = brCond_io_taken & io_de_pipe_reg_enable & _T; // @[execute_stage.scala 236:69]
   assign io_dcache_flush_tag = dcache_flush_tag; // @[execute_stage.scala 97:29]
@@ -4467,7 +4467,7 @@ module ysyx_22041812_ExecuteStage(
     end else if (io_flush_em & _T) begin // @[execute_stage.scala 239:39]
       em_pipe_reg_jump_taken <= 1'h0; // @[execute_stage.scala 248:40]
     end else if (_T & ~io_flush_em) begin // @[execute_stage.scala 264:46]
-      em_pipe_reg_jump_taken <= brCond_io_taken | _io_jmp_occur_T & io_de_pipe_reg_enable; // @[execute_stage.scala 275:40]
+      em_pipe_reg_jump_taken <= io_brCond_taken | _io_jmp_occur_T & io_de_pipe_reg_enable & _T; // @[execute_stage.scala 275:40]
     end
     if (reset) begin // @[execute_stage.scala 47:34]
       em_pipe_reg_st_data <= 64'h0; // @[execute_stage.scala 47:34]
