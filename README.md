@@ -10,12 +10,12 @@ as a functional reference model for differential testing.
 #### Setup
 
 ```bash
-# 1. Clone sustemu
-git clone https://github.com/PorterLu/sustemu.git /tmp/sustemu
+# 1. Initialize the pinned SUSTemu submodule
+git submodule update --init third_party/sustemu
+git -C third_party/sustemu checkout nicore
 
-# 2. Build sustemu difftest shared library
-cd /tmp/sustemu
-# See doc/soc/README for build instructions (or copy from NiCore doc)
+# 2. Build SUSTemu and its difftest library following that repository's README
+make -C third_party/sustemu
 ```
 
 #### Usage
@@ -26,7 +26,7 @@ cd soc
 ./obj_dir/Vnicore firmware.bin
 
 # With difftest (optional)
-DIFFTEST=/tmp/sustemu-difftest.so ./obj_dir/Vnicore test.bin
+DIFFTEST=../third_party/sustemu/build/sustemu-difftest.so ./obj_dir/Vnicore test.bin
 ```
 
 ### Features
