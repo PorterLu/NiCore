@@ -773,14 +773,15 @@ void Vysyx_22041812___024root___nba_sequent__TOP__1(Vysyx_22041812___024root* vl
         = (((QData)((IData)(vlSelfRef.ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__immGen__DOT___Iimm_T_1)) 
             << 0x0000000cU) | (QData)((IData)((vlSelfRef.ysyx_22041812__DOT__datapath__DOT__fetch_stage__DOT__fd_pipe_reg_inst 
                                                >> 0x00000014U))));
-    vlSelfRef.ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_1160 
+    vlSelfRef.ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_1173 
         = (1U & (~ ((0x30200073U == vlSelfRef.ysyx_22041812__DOT__datapath__DOT__fetch_stage__DOT__fd_pipe_reg_inst) 
                     | ((0x10200073U == vlSelfRef.ysyx_22041812__DOT__datapath__DOT__fetch_stage__DOT__fd_pipe_reg_inst) 
                        | ((0x00000073U == vlSelfRef.ysyx_22041812__DOT__datapath__DOT__fetch_stage__DOT__fd_pipe_reg_inst) 
                           | ((0x00100073U == vlSelfRef.ysyx_22041812__DOT__datapath__DOT__fetch_stage__DOT__fd_pipe_reg_inst) 
                              | ((0x0000100fU == vlSelfRef.ysyx_22041812__DOT__datapath__DOT__fetch_stage__DOT__fd_pipe_reg_inst) 
-                                | (IData)(vlSelfRef.ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_191))))))));
-    vlSelfRef.ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_1024 
+                                | ((IData)(vlSelfRef.ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_191) 
+                                   | (0x10500073U == vlSelfRef.ysyx_22041812__DOT__datapath__DOT__fetch_stage__DOT__fd_pipe_reg_inst)))))))));
+    vlSelfRef.ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_1035 
         = (7U & (- (IData)((IData)(vlSelfRef.ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_69))));
     vlSelfRef.__VdfgRegularize_hebeb780c_0_307 = ((0x00000033U 
                                                    == vlSelfRef.ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_102) 
@@ -1121,9 +1122,12 @@ void Vysyx_22041812___024root___nba_sequent__TOP__1(Vysyx_22041812___024root* vl
                                                                                 & ((- (IData)(
                                                                                 (0x0000100fU 
                                                                                 != vlSelfRef.ysyx_22041812__DOT__datapath__DOT__fetch_stage__DOT__fd_pipe_reg_inst))) 
-                                                                                & (- (IData)(
+                                                                                & ((- (IData)(
                                                                                 (1U 
-                                                                                & (~ (IData)(vlSelfRef.ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_191)))))))))))))) 
+                                                                                & (~ (IData)(vlSelfRef.ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_191))))) 
+                                                                                & (- (IData)(
+                                                                                (0x10500073U 
+                                                                                != vlSelfRef.ysyx_22041812__DOT__datapath__DOT__fetch_stage__DOT__fd_pipe_reg_inst))))))))))))) 
                                                                                 & (- (IData)(
                                                                                 (0x00003073U 
                                                                                 != vlSelfRef.ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_6))))))))))))))))))))))))))))))))))))))))))))))) 
@@ -4424,7 +4428,7 @@ void Vysyx_22041812___024root___eval(Vysyx_22041812___024root* vlSelf) {
 #ifdef VL_DEBUG
             Vysyx_22041812___024root___dump_triggers__ico(vlSelfRef.__VicoTriggered, "ico"s);
 #endif
-            VL_FATAL_MT("../ysyx_22041812.v", 15106, "", "DIDNOTCONVERGE: Input combinational region did not converge after '--converge-limit' of 10000 tries");
+            VL_FATAL_MT("../ysyx_22041812.v", 15110, "", "DIDNOTCONVERGE: Input combinational region did not converge after '--converge-limit' of 10000 tries");
         }
         __VicoIterCount = ((IData)(1U) + __VicoIterCount);
         vlSelfRef.__VicoPhaseResult = Vysyx_22041812___024root___eval_phase__ico(vlSelf);
@@ -4435,7 +4439,7 @@ void Vysyx_22041812___024root___eval(Vysyx_22041812___024root* vlSelf) {
 #ifdef VL_DEBUG
             Vysyx_22041812___024root___dump_triggers__act(vlSelfRef.__VnbaTriggered, "nba"s);
 #endif
-            VL_FATAL_MT("../ysyx_22041812.v", 15106, "", "DIDNOTCONVERGE: NBA region did not converge after '--converge-limit' of 10000 tries");
+            VL_FATAL_MT("../ysyx_22041812.v", 15110, "", "DIDNOTCONVERGE: NBA region did not converge after '--converge-limit' of 10000 tries");
         }
         __VnbaIterCount = ((IData)(1U) + __VnbaIterCount);
         vlSelfRef.__VactIterCount = 0U;
@@ -4444,7 +4448,7 @@ void Vysyx_22041812___024root___eval(Vysyx_22041812___024root* vlSelf) {
 #ifdef VL_DEBUG
                 Vysyx_22041812___024root___dump_triggers__act(vlSelfRef.__VactTriggered, "act"s);
 #endif
-                VL_FATAL_MT("../ysyx_22041812.v", 15106, "", "DIDNOTCONVERGE: Active region did not converge after '--converge-limit' of 10000 tries");
+                VL_FATAL_MT("../ysyx_22041812.v", 15110, "", "DIDNOTCONVERGE: Active region did not converge after '--converge-limit' of 10000 tries");
             }
             vlSelfRef.__VactIterCount = ((IData)(1U) 
                                          + vlSelfRef.__VactIterCount);

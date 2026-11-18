@@ -88,7 +88,8 @@ object Instructions {
 	def MRET 	= 	BitPat("b00110000001000000000000001110011")
 	def SRET 	= 	BitPat("b00010000001000000000000001110011")
 	def FENCE_I = 	BitPat("b00000000000000000001000000001111")
-	def FENCE   = 	BitPat("b?????????????????00000000000001111")	// fence rw,rw etc (fm/pred/succ ignored)
+	def FENCE   = 	BitPat("b?????????????????00000000000001111")
+	def WFI     = 	BitPat("b00010000010100000000000001110011")	// fence rw,rw etc (fm/pred/succ ignored)
 	def SFENCE_VMA = BitPat("b0001001??????????000000001110011")
 
 	// RV64A: funct5(31:27) aq(26) rl(25) rs2(24:20) rs1(19:15) funct3(14:12) rd(11:7) opcode(6:0)

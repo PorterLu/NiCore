@@ -8640,7 +8640,7 @@ void Vysyx_22041812___024root___nba_sequent__TOP__0(Vysyx_22041812___024root* vl
                                                                                 != vlSelfRef.ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_6) 
                                                                                 & ((0x00007073U 
                                                                                 != vlSelfRef.ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_6) 
-                                                                                & (IData)(vlSelfRef.ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_1160))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))) 
+                                                                                & (IData)(vlSelfRef.ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_1173))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))) 
                            | (((3U & (vlSelfRef.ysyx_22041812__DOT__datapath__DOT__fetch_stage__DOT__fd_pipe_reg_inst 
                                       >> 0x0000001cU)) 
                                > (IData)(vlSelfRef.ysyx_22041812__DOT__datapath__DOT__csr__DOT__mode)) 
@@ -10980,7 +10980,7 @@ void Vysyx_22041812___024root___nba_sequent__TOP__0(Vysyx_22041812___024root* vl
                                                                                  : 
                                                                                 (((IData)(vlSelfRef.ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_67)
                                                                                  ? 1U
-                                                                                 : (IData)(vlSelfRef.ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_1024)) 
+                                                                                 : (IData)(vlSelfRef.ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_1035)) 
                                                                                 | (- (IData)((IData)(vlSelfRef.ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_65))))) 
                                                                                 | (- (IData)((IData)(vlSelfRef.ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_61))))) 
                                                                                | (- (IData)((IData)(vlSelfRef.ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_57))))) 
@@ -11087,7 +11087,7 @@ void Vysyx_22041812___024root___nba_sequent__TOP__0(Vysyx_22041812___024root* vl
                                                                                  ? 1U
                                                                                  : 
                                                                                 (4U 
-                                                                                & (IData)(vlSelfRef.ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_1024))))))))))))) 
+                                                                                & (IData)(vlSelfRef.ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_1035))))))))))))) 
                                                                            & (- (IData)(
                                                                                 (0x1000302fU 
                                                                                 != vlSelfRef.ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_42))))))))) 
@@ -11394,7 +11394,11 @@ void Vysyx_22041812___024root___nba_sequent__TOP__0(Vysyx_22041812___024root* vl
                                                                                  : 
                                                                                 ((IData)(vlSelfRef.ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_191)
                                                                                  ? 0x11U
-                                                                                 : 0x0bU)))))))))))))))))))))))))))))))))))))) 
+                                                                                 : 
+                                                                                ((0x10500073U 
+                                                                                == vlSelfRef.ysyx_22041812__DOT__datapath__DOT__fetch_stage__DOT__fd_pipe_reg_inst)
+                                                                                 ? 0x11U
+                                                                                 : 0x0bU))))))))))))))))))))))))))))))))))))))) 
                                                                                 & (- (IData)(
                                                                                 (0x0000003bU 
                                                                                 != vlSelfRef.ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_102)))))))))))))))) 
@@ -11603,7 +11607,7 @@ void Vysyx_22041812___024root___nba_sequent__TOP__0(Vysyx_22041812___024root* vl
                                                                                 == vlSelfRef.ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_6) 
                                                                                 | ((0x00006073U 
                                                                                 == vlSelfRef.ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_6) 
-                                                                                | ((IData)(vlSelfRef.ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_1160) 
+                                                                                | ((IData)(vlSelfRef.ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_1173) 
                                                                                 | (0x00007073U 
                                                                                 == vlSelfRef.ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_6))))))))))))))))))))))))));
             vlSelfRef.ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__de_pipe_reg_enable 

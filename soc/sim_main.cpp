@@ -420,8 +420,11 @@ int main(int argc, char **argv) {
                 fprintf(stderr, "%08x\n", (uint32_t)top->io_pc_debug);
         }
         if ((sim_time & 0xfffff) == 0) {
-            fprintf(stderr, "[soc] %llu cycles, pc=%08llx\r", (unsigned long long)sim_time,
-                    (unsigned long long)top->io_pc_debug);
+            fprintf(stderr, "[soc] %llu cyc pc=%08llx mcause=%llx mepc=%llx\n",
+                (unsigned long long)sim_time,
+                (unsigned long long)top->io_pc_debug,
+                (unsigned long long)top->rootp->ysyx_22041812__DOT__datapath__DOT__csr__DOT__mcause_code,
+                (unsigned long long)top->rootp->ysyx_22041812__DOT__datapath__DOT__csr__DOT__mepc_data);
         }
     }
     // dump FDT magic check
