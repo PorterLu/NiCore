@@ -315,6 +315,105 @@ int main(int argc, char **argv) {
                 (unsigned long long)top->rootp->ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__regFile__DOT__reg_14,
                 (unsigned long long)top->rootp->ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__regFile__DOT__reg_15);
         }
+        if (getenv("SOC_DC") && top->rootp->ysyx_22041812__DOT__dcache__DOT__cache_state == 12) {
+            fprintf(stderr, "[dc-resp] addr=%08x data=%016llx\n",
+                (uint32_t)top->rootp->ysyx_22041812__DOT__dcache__DOT__cpu_request_addr_reg,
+                (unsigned long long)top->rootp->ysyx_22041812__DOT__dcache__DOT__tmp_response_data);
+        }
+        // dump regfile state when the LOAD is in FD (about to enter DE)
+        static int fdld_count = 0;
+        if (getenv("SOC_FDLD") && fdld_count < 5 &&
+            (uint32_t)top->rootp->ysyx_22041812__DOT__datapath__DOT__fetch_stage__DOT__fd_pipe_reg_pc == 0x80003928) {
+            fdld_count++;
+            fprintf(stderr, "[fdld %d] fd_pc=%08x fd_inst=%08x wire_inst=%08x ds_inst=%08x ds_raddr=%d raddrRF=%d rdata0=%016llx reg10=%016llx wen=%d waddr=%d wdata=%016llx stall=%d\n",
+                fdld_count,
+                (uint32_t)top->rootp->ysyx_22041812__DOT__datapath__DOT__fetch_stage__DOT__fd_pipe_reg_pc,
+                (uint32_t)top->rootp->ysyx_22041812__DOT__datapath__DOT__fetch_stage__DOT__fd_pipe_reg_inst,
+                (uint32_t)top->rootp->ysyx_22041812__DOT__datapath__DOT__decode_stage_io_fd_pipe_reg_inst,
+                (uint32_t)((top->rootp->ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__io_fd_pipe_reg_inst >> 15) & 0x1F),
+                (int)top->rootp->ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__regFile_io_raddr_0,
+                (int)top->rootp->ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__regFile__DOT__io_raddr_0,
+                (unsigned long long)top->rootp->ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__regFile__DOT__io_rdata_0,
+                (unsigned long long)top->rootp->ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__regFile__DOT__reg_10,
+                (int)top->rootp->ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__io_regFile_wen,
+                (int)top->rootp->ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__io_regFile_waddr,
+                (unsigned long long)top->rootp->ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__io_regFile_wdata,
+                (int)top->io_stall);
+        }
+        // watch ALL register file writes around the critical window
+        if (getenv("SOC_RF") && sim_time > 1200 && sim_time < 1400 &&
+            top->rootp->ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__io_regFile_wen) {
+            fprintf(stderr, "[rf-wr] cyc=%llu x%d <= %016llx (pc=%08x)\n",
+                (unsigned long long)sim_time,
+                (int)top->rootp->ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__io_regFile_waddr,
+                (unsigned long long)top->rootp->ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__io_regFile_wdata,
+                (uint32_t)top->rootp->ysyx_22041812__DOT__datapath__DOT__memory_stage__DOT__mw_pipe_reg_pc);
+        }
+        // dump a0/src1 when the LOAD (0x80003928) is in EX (de_pipe_reg)
+        static int load_count = 0;
+        if (getenv("SOC_LD") && load_count < 5 &&
+            (uint32_t)top->rootp->ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__de_pipe_reg_pc == 0x80003928) {
+            load_count++;
+            fprintf(stderr, "[ld %d] de_pc=%08x de_rs1=%016llx src1=%016llx src2=%016llx alu=%016llx | regfile a0=%016llx wire_inst=%08x ds_inst=%08x ds_raddr=%d raddrRF=%d rdata0=%016llx | EM dest=%d alu_out=%016llx | MW dest=%d wb_data=%016llx wen=%d\n",
+                load_count,
+                (uint32_t)top->rootp->ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__de_pipe_reg_pc,
+                (unsigned long long)top->rootp->ysyx_22041812__DOT__datapath__DOT__decode_stage_io_de_pipe_reg_rs1,
+                (unsigned long long)top->rootp->ysyx_22041812__DOT__datapath__DOT__execute_stage__DOT__src1_data,
+                (unsigned long long)top->rootp->ysyx_22041812__DOT__datapath__DOT__execute_stage__DOT__src2_data,
+                (unsigned long long)top->rootp->ysyx_22041812__DOT__datapath__DOT__execute_stage_io_alu_out,
+                (unsigned long long)top->rootp->ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__regFile__DOT__reg_10,
+                (int)top->rootp->ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__regFile__DOT__io_raddr_0,
+                (unsigned long long)top->rootp->ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__regFile__DOT__io_rdata_0,
+                (int)top->rootp->ysyx_22041812__DOT__datapath__DOT__execute_stage__DOT__em_pipe_reg_dest,
+                (unsigned long long)top->rootp->ysyx_22041812__DOT__datapath__DOT__execute_stage__DOT__em_pipe_reg_alu_out,
+                (int)top->rootp->ysyx_22041812__DOT__datapath__DOT__memory_stage__DOT__mw_pipe_reg_dest,
+                (unsigned long long)top->rootp->ysyx_22041812__DOT__datapath__DOT__memory_stage__DOT__mw_pipe_reg_alu_out,
+                (int)top->rootp->ysyx_22041812__DOT__datapath__DOT__writeback_stage__DOT__io_regFile_wen);
+        }
+        // dump forwarded src1 at beqz time (when branch is in EX, not committed yet)
+        static int fwd_count = 0;
+        if (getenv("SOC_FWD") && fwd_count < 100 &&
+            (uint32_t)top->rootp->ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__de_pipe_reg_pc == 0x8000392c) {
+            fwd_count++;
+            fprintf(stderr, "[fwd %d cyc=%llu] EX-stage: de_pc=%08x src1=%016llx brTaken=%d | EM: pc=%08x dest=%d wb_sel=%d | MW: dest=%d wb_sel=%d load_data=%016llx dc_resp=%016llx dc_tag=%d stall=%d de_en=%d dc_req_addr=%08x em_alu=%016llx\n",
+                fwd_count, (unsigned long long)sim_time,
+                (uint32_t)top->rootp->ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__de_pipe_reg_pc,
+                (unsigned long long)top->rootp->ysyx_22041812__DOT__datapath__DOT__decode_stage_io_de_pipe_reg_rs1,
+                (unsigned long long)top->rootp->ysyx_22041812__DOT__datapath__DOT__execute_stage__DOT__src1_data,
+                (int)top->rootp->ysyx_22041812__DOT__datapath__DOT__execute_stage__DOT__io_brCond_taken,
+                (uint32_t)top->rootp->ysyx_22041812__DOT__datapath__DOT__execute_stage__DOT__em_pipe_reg_pc,
+                (int)top->rootp->ysyx_22041812__DOT__datapath__DOT__execute_stage__DOT__em_pipe_reg_dest,
+                (int)top->rootp->ysyx_22041812__DOT__datapath__DOT__execute_stage__DOT__em_pipe_reg_wb_sel,
+                (int)top->rootp->ysyx_22041812__DOT__datapath__DOT__memory_stage__DOT__mw_pipe_reg_dest,
+                (int)top->rootp->ysyx_22041812__DOT__datapath__DOT__memory_stage__DOT__mw_pipe_reg_wb_sel,
+                (unsigned long long)top->rootp->ysyx_22041812__DOT__datapath__DOT__memory_stage__DOT__mw_pipe_reg_load_data,
+                (unsigned long long)top->rootp->ysyx_22041812__DOT__datapath__DOT__memory_stage__DOT__data_cache_response_data,
+                (int)top->rootp->ysyx_22041812__DOT__datapath__DOT__memory_stage__DOT__data_cache_tag,
+                (int)top->io_stall,
+                (int)top->rootp->ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__de_pipe_reg_enable,
+                (uint32_t)top->rootp->ysyx_22041812__DOT__datapath__DOT__memory_stage__DOT__io_dcache_cpu_request_addr,
+                (unsigned long long)top->rootp->ysyx_22041812__DOT__datapath__DOT__memory_stage_io_em_pipe_reg_alu_out);
+        }
+        // dump a5 at the beqz in sbi_strlen
+        static int beqz_count = 0;
+        if (getenv("SOC_A5") && mw_enable() &&
+            (uint32_t)top->io_pc_debug == 0x8000392c && beqz_count < 3) {
+            beqz_count++;
+            fprintf(stderr, "[beqz %d] a5(x15)=%016llx a0(x10)=%016llx\n",
+                beqz_count,
+                (unsigned long long)top->rootp->ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__regFile__DOT__reg_15,
+                (unsigned long long)top->rootp->ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__regFile__DOT__reg_10);
+        }
+        // dump a0 when sbi_strlen is entered (first few times)
+        static int strlen_count = 0;
+        if (getenv("SOC_A0") && mw_enable() &&
+            (uint32_t)top->io_pc_debug == 0x8000391c && strlen_count < 5) {
+            strlen_count++;
+            fprintf(stderr, "[strlen %d] a0(x10)=%016llx a1(x11)=%016llx\n",
+                strlen_count,
+                (unsigned long long)top->rootp->ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__regFile__DOT__reg_10,
+                (unsigned long long)top->rootp->ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__regFile__DOT__reg_11);
+        }
         if (top->io_commit_inst != 0 && mw_enable()) {
             committed++;
             if (getenv("SOC_DIFF"))
@@ -349,6 +448,11 @@ int main(int argc, char **argv) {
             if (v != 0) fprintf(stderr, "[fdt-check] %08llx = %016llx\n", (unsigned long long)a, (unsigned long long)v);
         }
     }
+    // check specific addresses
+    fprintf(stderr, "[mem] 0x800401f8 = %016llx (orig: 0000200000000080)\n",
+        (unsigned long long)rd64(0x800401f8));
+    fprintf(stderr, "[mem] 0x80024418 = %016llx (orig: 0000000000000000)\n",
+        (unsigned long long)rd64(0x80024418));
     fprintf(stderr, "\n[soc] stopped at %llu cycles, pc=%08llx, committed=%llu CPI=%.2f\n",
             (unsigned long long)sim_time, (unsigned long long)top->io_pc_debug,
             (unsigned long long)committed,
