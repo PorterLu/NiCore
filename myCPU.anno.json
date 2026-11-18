@@ -295,6 +295,14 @@
   },
   {
     "class":"firrtl.transforms.CombinationalPath",
+    "sink":"~myCPU|nicore_myCPU>io_commit_valid",
+    "sources":[
+      "~myCPU|nicore_myCPU>io_master_rvalid",
+      "~myCPU|nicore_myCPU>io_master_rdata"
+    ]
+  },
+  {
+    "class":"firrtl.transforms.CombinationalPath",
     "sink":"~myCPU|nicore_myCPU>io_master_wlast",
     "sources":[
       "~myCPU|nicore_myCPU>io_master_wready",

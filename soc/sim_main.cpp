@@ -133,20 +133,19 @@ int main(int argc, char **argv) {
         // write response
         if (top->io_master_bvalid && top->io_master_bready) top->io_master_bvalid = 0;
 
-        // Commit detection using dedicated retire signal
+        // Commit detection BEFORE tick: signals are now stable post-edge
         if (top->io_commit_valid) {
             uint32_t pc = (uint32_t)top->io_commit_pc;
             committed++;
-            // Difftest check at each commit (optional via DIFFTEST env var)
             if (diff_enabled && !diff_step(pc)) {
                 fprintf(stderr, "[diff] MISMATCH - stopping\n");
                 break;
             }
         }
-
-        tick();
         if ((sim_time & 0xfffff) == 0)
             fprintf(stderr, "[soc] %llu cyc pc=%08x\r", (unsigned long long)sim_time, (uint32_t)top->io_pc_debug);
+
+        tick();
     }
     fprintf(stderr, "\n[soc] stopped: %llu cycles, pc=%08x, committed=%llu",
             (unsigned long long)sim_time, (uint32_t)top->io_pc_debug, (unsigned long long)committed);

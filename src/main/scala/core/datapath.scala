@@ -262,7 +262,11 @@ class Datapath extends Module{
 	io.pc := memory_stage.io.mw_pipe_reg.pc
 	io.inst := execute_stage.io.em_pipe_reg.inst
 	io.commit_inst := memory_stage.io.mw_pipe_reg.inst
-	io.commit_valid := memory_stage.io.mw_pipe_reg.enable
+	// commit_fire: true for exactly one cycle per retired instruction
+	// (not during stalls when MW holds the same instruction)
+	val commit_fire = Wire(Bool())
+	commit_fire := memory_stage.io.mw_pipe_reg.enable && !io.stall
+	io.commit_valid := commit_fire
 	io.commit_pc := memory_stage.io.mw_pipe_reg.pc
 }
 

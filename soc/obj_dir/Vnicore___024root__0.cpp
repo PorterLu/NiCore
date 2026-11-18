@@ -2411,6 +2411,8 @@ void Vnicore___024root___ico_comb__TOP__2(Vnicore___024root* vlSelf) {
                                        & (- (QData)((IData)(
                                                             (0x10U 
                                                              != (IData)(vlSelfRef.nicore__DOT__dcache__DOT__cache_state))))))));
+    vlSelfRef.io_commit_valid = ((IData)(vlSelfRef.nicore__DOT__datapath__DOT__fetch_stage__DOT___T_1) 
+                                 & (IData)(vlSelfRef.nicore__DOT__datapath__DOT__memory_stage__DOT__mw_pipe_reg_enable));
     vlSelfRef.__VdfgRegularize_hebeb780c_0_409 = ((IData)(vlSelfRef.nicore__DOT__datapath__DOT__fetch_stage__DOT___T_1) 
                                                   & (0x0000100fU 
                                                      == vlSelfRef.nicore__DOT__datapath__DOT__decode_stage__DOT__de_pipe_reg_inst));
@@ -14127,7 +14129,6 @@ void Vnicore___024root___nba_sequent__TOP__0(Vnicore___024root* vlSelf) {
                                                                 ((IData)(vlSelfRef.io_master_rlast) 
                                                                  & ((IData)(vlSelfRef.io_master_rvalid) 
                                                                     & (IData)(vlSelfRef.io_master_rready))))))));
-    vlSelfRef.io_commit_valid = vlSelfRef.nicore__DOT__datapath__DOT__memory_stage__DOT__mw_pipe_reg_enable;
     vlSelfRef.nicore__DOT__datapath__DOT___csr_atomic_flush_T_1 
         = ((IData)(vlSelfRef.nicore__DOT__datapath__DOT__memory_stage__DOT__mw_pipe_reg_enable) 
            & (0U != (IData)(vlSelfRef.nicore__DOT__datapath__DOT__memory_stage__DOT__mw_pipe_reg_csr_write_op)));
