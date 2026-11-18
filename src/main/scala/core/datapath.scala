@@ -67,7 +67,10 @@ class Datapath extends Module{
 	val icache_stall = !io.icache.cpu_response.ready && fetch_stage.io.icache.cpu_request.valid
 	val itlb_stall = !fetch_stage.io.tlb_ready
 	val dtlb_stall = !memory_stage.io.tlb_ready
-	val stall = icache_stall || dcache_stall || mul_stall || div_stall || itlb_stall || dtlb_stall		//stall暂时设置为false
+	// load-use hazard: the instruction in EX needs a register being loaded by
+	// the instruction in EM, but the load data isn't available yet
+	val load_use_stall = execute_stage.io.src_unready
+	val stall = icache_stall || dcache_stall || mul_stall || div_stall || itlb_stall || dtlb_stall || load_use_stall		//stall暂时设置为false
 	val pipeline_stall = icache_stall || dcache_stall || mul_stall || div_stall
 
 	val jump_addr = WireInit(0.U(64.W))					//要跳转的地址

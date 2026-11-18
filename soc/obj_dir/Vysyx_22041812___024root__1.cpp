@@ -95,15 +95,8 @@ void Vysyx_22041812___024root___nba_sequent__TOP__1(Vysyx_22041812___024root* vl
                 = vlSelfRef.ysyx_22041812__DOT__datapath__DOT__fetch_stage__DOT___next_pc_T_12[2U];
         }
     }
-    vlSelfRef.ysyx_22041812__DOT__datapath__DOT__execute_stage__DOT__multiplier_io_mul_valid 
-        = ((IData)(vlSelfRef.ysyx_22041812__DOT__datapath__DOT__execute_stage__DOT___multiplier_io_mul_valid_T_2) 
-           & (IData)(vlSelfRef.__VdfgRegularize_hebeb780c_0_407));
-    vlSelfRef.ysyx_22041812__DOT__datapath__DOT__execute_stage__DOT__divider_io_div_valid 
-        = ((IData)(vlSelfRef.ysyx_22041812__DOT__datapath__DOT__execute_stage__DOT___multiplier_io_mul_valid_T_2) 
-           & (((0x10U == (IData)(vlSelfRef.ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__de_pipe_reg_alu_op)) 
-               | ((0x0eU == (IData)(vlSelfRef.ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__de_pipe_reg_alu_op)) 
-                  | (IData)(vlSelfRef.ysyx_22041812__DOT__datapath__DOT__execute_stage__DOT___divider_io_div_valid_T_2))) 
-              & (IData)(vlSelfRef.__VdfgRegularize_hebeb780c_0_406)));
+    vlSelfRef.ysyx_22041812__DOT__datapath__DOT__execute_stage__DOT___multiplier_io_mul_valid_T_2 
+        = (1U & (~ (IData)(vlSelfRef.ysyx_22041812__DOT__datapath__DOT__execute_stage__DOT__src_unready)));
     vlSelfRef.ysyx_22041812__DOT__datapath__DOT__fetch_stage__DOT__iTLB__DOT___T_3 
         = (1U & (~ (IData)(vlSelfRef.ysyx_22041812__DOT__datapath__DOT__fetch_stage__DOT__iTLB_io_stall)));
     vlSelfRef.ysyx_22041812__DOT__datapath__DOT__csr__DOT__writeData 
@@ -133,6 +126,15 @@ void Vysyx_22041812___024root___nba_sequent__TOP__1(Vysyx_22041812___024root* vl
     vlSelfRef.ysyx_22041812__DOT__datapath__DOT__fetch_stage__DOT__iTLB_io_flush 
         = ((IData)(vlSelfRef.ysyx_22041812__DOT__datapath__DOT__memory_stage_io_tlb_flush_all) 
            | (IData)(vlSelfRef.ysyx_22041812__DOT__datapath__DOT__sfence_em));
+    vlSelfRef.ysyx_22041812__DOT__datapath__DOT__execute_stage__DOT__multiplier_io_mul_valid 
+        = ((IData)(vlSelfRef.ysyx_22041812__DOT__datapath__DOT__execute_stage__DOT___multiplier_io_mul_valid_T_2) 
+           & (IData)(vlSelfRef.__VdfgRegularize_hebeb780c_0_407));
+    vlSelfRef.ysyx_22041812__DOT__datapath__DOT__execute_stage__DOT__divider_io_div_valid 
+        = ((IData)(vlSelfRef.ysyx_22041812__DOT__datapath__DOT__execute_stage__DOT___multiplier_io_mul_valid_T_2) 
+           & (((0x10U == (IData)(vlSelfRef.ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__de_pipe_reg_alu_op)) 
+               | ((0x0eU == (IData)(vlSelfRef.ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__de_pipe_reg_alu_op)) 
+                  | (IData)(vlSelfRef.ysyx_22041812__DOT__datapath__DOT__execute_stage__DOT___divider_io_div_valid_T_2))) 
+              & (IData)(vlSelfRef.__VdfgRegularize_hebeb780c_0_406)));
     vlSelfRef.ysyx_22041812__DOT__datapath__DOT__memory_stage__DOT__dTLB__DOT___T_191 
         = ((IData)(vlSelfRef.ysyx_22041812__DOT__datapath__DOT__fetch_stage__DOT__iTLB__DOT___T_3) 
            & (IData)(vlSelfRef.ysyx_22041812__DOT__datapath__DOT__memory_stage__DOT__dTLB_io_cache_response_ready));
@@ -1447,8 +1449,8 @@ void Vysyx_22041812___024root___nba_sequent__TOP__1(Vysyx_22041812___024root* vl
     vlSelfRef.ysyx_22041812__DOT__datapath__DOT___csr_atomic_flush_T_7 
         = ((IData)(vlSelfRef.ysyx_22041812__DOT__datapath__DOT__fetch_stage__DOT__fd_pipe_reg_enable) 
            & (0U != (IData)(vlSelfRef.ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__control_io_csr_cmd)));
-    vlSelfRef.io_stall = (1U & ((~ ((IData)(vlSelfRef.ysyx_22041812__DOT__datapath__DOT__memory_stage__DOT__tlb_tag) 
-                                    & ((IData)(vlSelfRef.ysyx_22041812__DOT__datapath__DOT__fetch_stage__DOT__iTLB__DOT___io_tlb_ready_T) 
+    vlSelfRef.io_stall = (1U & ((IData)(vlSelfRef.ysyx_22041812__DOT__datapath__DOT__fetch_stage__DOT__iTLB_io_stall) 
+                                | ((~ ((IData)(vlSelfRef.ysyx_22041812__DOT__datapath__DOT__fetch_stage__DOT__iTLB__DOT___io_tlb_ready_T) 
                                        | ((0U == (IData)(vlSelfRef.ysyx_22041812__DOT__datapath__DOT__fetch_stage__DOT__iTLB__DOT__tlb_state))
                                            ? (IData)(vlSelfRef.ysyx_22041812__DOT__datapath__DOT__fetch_stage__DOT__iTLB__DOT___io_tlb_ready_T)
                                            : (((1U 
@@ -1500,8 +1502,9 @@ void Vysyx_22041812___024root___nba_sequent__TOP__1(Vysyx_22041812___024root* vl
                                                         == (IData)(vlSelfRef.ysyx_22041812__DOT__datapath__DOT__fetch_stage__DOT__iTLB__DOT__tlb_state)) 
                                                        & (IData)(vlSelfRef.ysyx_22041812__DOT__datapath__DOT__fetch_stage__DOT__iTLB__DOT___T_191))))))) 
                                               | (2U 
-                                                 == (IData)(vlSelfRef.ysyx_22041812__DOT__datapath__DOT__fetch_stage__DOT__iTLB__DOT__tlb_state))))))) 
-                                | (IData)(vlSelfRef.ysyx_22041812__DOT__datapath__DOT__fetch_stage__DOT__iTLB_io_stall)));
+                                                 == (IData)(vlSelfRef.ysyx_22041812__DOT__datapath__DOT__fetch_stage__DOT__iTLB__DOT__tlb_state)))))) 
+                                   | ((~ (IData)(vlSelfRef.ysyx_22041812__DOT__datapath__DOT__memory_stage__DOT__tlb_tag)) 
+                                      | (IData)(vlSelfRef.ysyx_22041812__DOT__datapath__DOT__execute_stage__DOT__src_unready)))));
     vlSelfRef.ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__immGen__DOT___io_out_T_7 
         = ((5U == (IData)(vlSelfRef.ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__immGen_io_sel))
             ? (((QData)((IData)(vlSelfRef.ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__immGen__DOT___Iimm_T_1)) 
@@ -4416,7 +4419,7 @@ void Vysyx_22041812___024root___eval(Vysyx_22041812___024root* vlSelf) {
 #ifdef VL_DEBUG
             Vysyx_22041812___024root___dump_triggers__ico(vlSelfRef.__VicoTriggered, "ico"s);
 #endif
-            VL_FATAL_MT("../ysyx_22041812.v", 15096, "", "DIDNOTCONVERGE: Input combinational region did not converge after '--converge-limit' of 10000 tries");
+            VL_FATAL_MT("../ysyx_22041812.v", 15106, "", "DIDNOTCONVERGE: Input combinational region did not converge after '--converge-limit' of 10000 tries");
         }
         __VicoIterCount = ((IData)(1U) + __VicoIterCount);
         vlSelfRef.__VicoPhaseResult = Vysyx_22041812___024root___eval_phase__ico(vlSelf);
@@ -4427,7 +4430,7 @@ void Vysyx_22041812___024root___eval(Vysyx_22041812___024root* vlSelf) {
 #ifdef VL_DEBUG
             Vysyx_22041812___024root___dump_triggers__act(vlSelfRef.__VnbaTriggered, "nba"s);
 #endif
-            VL_FATAL_MT("../ysyx_22041812.v", 15096, "", "DIDNOTCONVERGE: NBA region did not converge after '--converge-limit' of 10000 tries");
+            VL_FATAL_MT("../ysyx_22041812.v", 15106, "", "DIDNOTCONVERGE: NBA region did not converge after '--converge-limit' of 10000 tries");
         }
         __VnbaIterCount = ((IData)(1U) + __VnbaIterCount);
         vlSelfRef.__VactIterCount = 0U;
@@ -4436,7 +4439,7 @@ void Vysyx_22041812___024root___eval(Vysyx_22041812___024root* vlSelf) {
 #ifdef VL_DEBUG
                 Vysyx_22041812___024root___dump_triggers__act(vlSelfRef.__VactTriggered, "act"s);
 #endif
-                VL_FATAL_MT("../ysyx_22041812.v", 15096, "", "DIDNOTCONVERGE: Active region did not converge after '--converge-limit' of 10000 tries");
+                VL_FATAL_MT("../ysyx_22041812.v", 15106, "", "DIDNOTCONVERGE: Active region did not converge after '--converge-limit' of 10000 tries");
             }
             vlSelfRef.__VactIterCount = ((IData)(1U) 
                                          + vlSelfRef.__VactIterCount);

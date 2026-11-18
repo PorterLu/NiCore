@@ -2026,6 +2026,7 @@ class alignas(VL_CACHE_LINE_BYTES) Vysyx_22041812___024root final {
             CData/*0:0*/ ysyx_22041812__DOT__datapath__DOT__execute_stage_io_mw_pipe_reg_wb_en;
             CData/*4:0*/ ysyx_22041812__DOT__datapath__DOT__execute_stage_io_mw_pipe_reg_dest;
             CData/*1:0*/ ysyx_22041812__DOT__datapath__DOT__execute_stage_io_mw_pipe_reg_wb_sel;
+            CData/*0:0*/ ysyx_22041812__DOT__datapath__DOT__execute_stage_io_src_unready;
             CData/*0:0*/ ysyx_22041812__DOT__datapath__DOT__memory_stage_clock;
             CData/*0:0*/ ysyx_22041812__DOT__datapath__DOT__memory_stage_reset;
             CData/*0:0*/ ysyx_22041812__DOT__datapath__DOT__memory_stage_io_stall;
@@ -2070,9 +2071,9 @@ class alignas(VL_CACHE_LINE_BYTES) Vysyx_22041812___024root final {
             CData/*0:0*/ ysyx_22041812__DOT__datapath__DOT__memory_stage_io_csr_jump_taken;
             CData/*0:0*/ ysyx_22041812__DOT__datapath__DOT__memory_stage_io_csr_is_illegal;
             CData/*0:0*/ ysyx_22041812__DOT__datapath__DOT__memory_stage_io_csr_inst_misalign;
-            CData/*0:0*/ ysyx_22041812__DOT__datapath__DOT__memory_stage_io_csr_store_misalign;
         };
         struct {
+            CData/*0:0*/ ysyx_22041812__DOT__datapath__DOT__memory_stage_io_csr_store_misalign;
             CData/*0:0*/ ysyx_22041812__DOT__datapath__DOT__memory_stage_io_csr_load_misalign;
             CData/*0:0*/ ysyx_22041812__DOT__datapath__DOT__memory_stage_io_clint_timer_clear;
             CData/*0:0*/ ysyx_22041812__DOT__datapath__DOT__memory_stage_io_clint_soft_clear;
@@ -2136,9 +2137,9 @@ class alignas(VL_CACHE_LINE_BYTES) Vysyx_22041812___024root final {
             CData/*0:0*/ ysyx_22041812__DOT__datapath__DOT__data_cache_tag;
             CData/*0:0*/ ysyx_22041812__DOT__datapath__DOT___dcache_stall_T_12;
             CData/*0:0*/ ysyx_22041812__DOT__datapath__DOT__dcache_stall;
-            CData/*0:0*/ ysyx_22041812__DOT__datapath__DOT__icache_stall;
         };
         struct {
+            CData/*0:0*/ ysyx_22041812__DOT__datapath__DOT__icache_stall;
             CData/*0:0*/ ysyx_22041812__DOT__datapath__DOT__itlb_stall;
             CData/*0:0*/ ysyx_22041812__DOT__datapath__DOT__dtlb_stall;
             CData/*0:0*/ ysyx_22041812__DOT__datapath__DOT__mul_stall;
@@ -2202,9 +2203,9 @@ class alignas(VL_CACHE_LINE_BYTES) Vysyx_22041812___024root final {
             CData/*0:0*/ ysyx_22041812__DOT__datapath__DOT__execute_stage__DOT__io_em_pipe_reg_csr_is_illegal;
             CData/*0:0*/ ysyx_22041812__DOT__datapath__DOT__execute_stage__DOT__io_em_pipe_reg_csr_inst_misalign;
             CData/*0:0*/ ysyx_22041812__DOT__datapath__DOT__execute_stage__DOT__io_em_pipe_reg_csr_load_misalign;
-            CData/*0:0*/ ysyx_22041812__DOT__datapath__DOT__execute_stage__DOT__io_em_pipe_reg_csr_store_misalign;
         };
         struct {
+            CData/*0:0*/ ysyx_22041812__DOT__datapath__DOT__execute_stage__DOT__io_em_pipe_reg_csr_store_misalign;
             CData/*1:0*/ ysyx_22041812__DOT__datapath__DOT__execute_stage__DOT__io_em_pipe_reg_iTLB_fault;
             CData/*3:0*/ ysyx_22041812__DOT__datapath__DOT__execute_stage__DOT__io_em_pipe_reg_amo_op;
             CData/*0:0*/ ysyx_22041812__DOT__datapath__DOT__execute_stage__DOT__io_em_pipe_reg_enable;
@@ -2212,6 +2213,7 @@ class alignas(VL_CACHE_LINE_BYTES) Vysyx_22041812___024root final {
             CData/*0:0*/ ysyx_22041812__DOT__datapath__DOT__execute_stage__DOT__io_mw_pipe_reg_wb_en;
             CData/*4:0*/ ysyx_22041812__DOT__datapath__DOT__execute_stage__DOT__io_mw_pipe_reg_dest;
             CData/*1:0*/ ysyx_22041812__DOT__datapath__DOT__execute_stage__DOT__io_mw_pipe_reg_wb_sel;
+            CData/*0:0*/ ysyx_22041812__DOT__datapath__DOT__execute_stage__DOT__io_src_unready;
             CData/*1:0*/ ysyx_22041812__DOT__datapath__DOT__execute_stage__DOT__alu_io_width_type;
             CData/*3:0*/ ysyx_22041812__DOT__datapath__DOT__execute_stage__DOT__alu_io_alu_op;
             CData/*2:0*/ ysyx_22041812__DOT__datapath__DOT__execute_stage__DOT__brCond_io_br_type;
@@ -2267,10 +2269,10 @@ class alignas(VL_CACHE_LINE_BYTES) Vysyx_22041812___024root final {
             CData/*0:0*/ ysyx_22041812__DOT__datapath__DOT__execute_stage__DOT___io_div_stall_T_6;
             CData/*0:0*/ ysyx_22041812__DOT__datapath__DOT__execute_stage__DOT___io_div_stall_T_7;
             CData/*0:0*/ ysyx_22041812__DOT__datapath__DOT__execute_stage__DOT___io_div_stall_T_8;
-            CData/*0:0*/ ysyx_22041812__DOT__datapath__DOT__execute_stage__DOT___multiplier_io_mul_valid_T_2;
-            CData/*0:0*/ ysyx_22041812__DOT__datapath__DOT__execute_stage__DOT___multiplier_io_mulw_T;
         };
         struct {
+            CData/*0:0*/ ysyx_22041812__DOT__datapath__DOT__execute_stage__DOT___multiplier_io_mul_valid_T_2;
+            CData/*0:0*/ ysyx_22041812__DOT__datapath__DOT__execute_stage__DOT___multiplier_io_mulw_T;
             CData/*1:0*/ ysyx_22041812__DOT__datapath__DOT__execute_stage__DOT___multiplier_io_mul_op_T_13;
             CData/*1:0*/ ysyx_22041812__DOT__datapath__DOT__execute_stage__DOT___multiplier_io_mul_op_T_14;
             CData/*0:0*/ ysyx_22041812__DOT__datapath__DOT__execute_stage__DOT___T_12;
@@ -2333,10 +2335,10 @@ class alignas(VL_CACHE_LINE_BYTES) Vysyx_22041812___024root final {
             CData/*5:0*/ ysyx_22041812__DOT__datapath__DOT__execute_stage__DOT__divider__DOT___GEN_3;
             CData/*5:0*/ ysyx_22041812__DOT__datapath__DOT__execute_stage__DOT__divider__DOT___GEN_4;
             CData/*0:0*/ ysyx_22041812__DOT__datapath__DOT__execute_stage__DOT__divider__DOT__w_last_calc;
-            CData/*0:0*/ ysyx_22041812__DOT__datapath__DOT__execute_stage__DOT__divider__DOT___T_4;
-            CData/*1:0*/ ysyx_22041812__DOT__datapath__DOT__execute_stage__DOT__divider__DOT___GEN_18;
         };
         struct {
+            CData/*0:0*/ ysyx_22041812__DOT__datapath__DOT__execute_stage__DOT__divider__DOT___T_4;
+            CData/*1:0*/ ysyx_22041812__DOT__datapath__DOT__execute_stage__DOT__divider__DOT___GEN_18;
             CData/*0:0*/ ysyx_22041812__DOT__datapath__DOT__execute_stage__DOT__divider__DOT___GEN_44;
             CData/*0:0*/ ysyx_22041812__DOT__datapath__DOT__execute_stage__DOT__multiplier__DOT__clock;
             CData/*0:0*/ ysyx_22041812__DOT__datapath__DOT__execute_stage__DOT__multiplier__DOT__reset;
@@ -2399,10 +2401,10 @@ class alignas(VL_CACHE_LINE_BYTES) Vysyx_22041812___024root final {
             CData/*0:0*/ ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__io_mw_pipe_reg_enable;
             CData/*4:0*/ ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__io_mw_pipe_reg_dest;
             CData/*0:0*/ ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__io_mw_pipe_reg_wb_en;
-            CData/*1:0*/ ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__io_mw_pipe_reg_wb_sel;
-            CData/*1:0*/ ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__io_fd_pipe_reg_iTLB_fault;
         };
         struct {
+            CData/*1:0*/ ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__io_mw_pipe_reg_wb_sel;
+            CData/*1:0*/ ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__io_fd_pipe_reg_iTLB_fault;
             CData/*0:0*/ ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__io_fd_pipe_reg_enable;
             CData/*4:0*/ ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__io_de_pipe_reg_alu_op;
             CData/*2:0*/ ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__io_de_pipe_reg_imm_sel;
@@ -2465,10 +2467,10 @@ class alignas(VL_CACHE_LINE_BYTES) Vysyx_22041812___024root final {
             CData/*0:0*/ ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__de_pipe_reg_enable;
             CData/*4:0*/ ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__src1_addr;
             CData/*4:0*/ ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__src2_addr;
-            CData/*4:0*/ ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__dest_addr;
-            CData/*0:0*/ ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT___csr_op_T;
         };
         struct {
+            CData/*4:0*/ ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__dest_addr;
+            CData/*0:0*/ ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT___csr_op_T;
             CData/*0:0*/ ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT___csr_op_T_5;
             CData/*0:0*/ ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT___csr_op_T_7;
             CData/*2:0*/ ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT___csr_op_T_11;
@@ -2531,10 +2533,10 @@ class alignas(VL_CACHE_LINE_BYTES) Vysyx_22041812___024root final {
             CData/*0:0*/ ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_7;
             CData/*0:0*/ ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_9;
             CData/*0:0*/ ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_11;
-            CData/*0:0*/ ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_13;
-            CData/*0:0*/ ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_15;
         };
         struct {
+            CData/*0:0*/ ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_13;
+            CData/*0:0*/ ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_15;
             CData/*0:0*/ ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_17;
             CData/*0:0*/ ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_19;
             CData/*0:0*/ ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_21;
@@ -2597,10 +2599,10 @@ class alignas(VL_CACHE_LINE_BYTES) Vysyx_22041812___024root final {
             CData/*0:0*/ ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_135;
             CData/*0:0*/ ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_137;
             CData/*0:0*/ ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_139;
-            CData/*0:0*/ ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_141;
-            CData/*0:0*/ ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_143;
         };
         struct {
+            CData/*0:0*/ ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_141;
+            CData/*0:0*/ ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_143;
             CData/*0:0*/ ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_145;
             CData/*0:0*/ ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_147;
             CData/*0:0*/ ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_149;
@@ -2663,10 +2665,10 @@ class alignas(VL_CACHE_LINE_BYTES) Vysyx_22041812___024root final {
             CData/*1:0*/ ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_231;
             CData/*1:0*/ ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_232;
             CData/*1:0*/ ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_233;
-            CData/*1:0*/ ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_234;
-            CData/*1:0*/ ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_235;
         };
         struct {
+            CData/*1:0*/ ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_234;
+            CData/*1:0*/ ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_235;
             CData/*1:0*/ ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_236;
             CData/*1:0*/ ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_237;
             CData/*1:0*/ ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_238;
@@ -2729,10 +2731,10 @@ class alignas(VL_CACHE_LINE_BYTES) Vysyx_22041812___024root final {
             CData/*0:0*/ ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_380;
             CData/*0:0*/ ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_381;
             CData/*0:0*/ ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_382;
-            CData/*0:0*/ ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_384;
-            CData/*0:0*/ ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_385;
         };
         struct {
+            CData/*0:0*/ ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_384;
+            CData/*0:0*/ ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_385;
             CData/*0:0*/ ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_427;
             CData/*0:0*/ ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_428;
             CData/*0:0*/ ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_429;
@@ -2795,10 +2797,10 @@ class alignas(VL_CACHE_LINE_BYTES) Vysyx_22041812___024root final {
             CData/*1:0*/ ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_519;
             CData/*1:0*/ ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_520;
             CData/*1:0*/ ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_521;
-            CData/*1:0*/ ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_522;
-            CData/*1:0*/ ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_523;
         };
         struct {
+            CData/*1:0*/ ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_522;
+            CData/*1:0*/ ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_523;
             CData/*1:0*/ ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_524;
             CData/*1:0*/ ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_525;
             CData/*1:0*/ ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_526;
@@ -2861,10 +2863,10 @@ class alignas(VL_CACHE_LINE_BYTES) Vysyx_22041812___024root final {
             CData/*2:0*/ ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_584;
             CData/*2:0*/ ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_585;
             CData/*2:0*/ ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_586;
-            CData/*2:0*/ ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_587;
-            CData/*2:0*/ ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_588;
         };
         struct {
+            CData/*2:0*/ ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_587;
+            CData/*2:0*/ ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_588;
             CData/*2:0*/ ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_589;
             CData/*2:0*/ ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_590;
             CData/*2:0*/ ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_591;
@@ -2927,10 +2929,10 @@ class alignas(VL_CACHE_LINE_BYTES) Vysyx_22041812___024root final {
             CData/*2:0*/ ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_648;
             CData/*2:0*/ ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_649;
             CData/*2:0*/ ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_650;
-            CData/*2:0*/ ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_651;
-            CData/*2:0*/ ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_652;
         };
         struct {
+            CData/*2:0*/ ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_651;
+            CData/*2:0*/ ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_652;
             CData/*2:0*/ ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_653;
             CData/*2:0*/ ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_654;
             CData/*2:0*/ ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_655;
@@ -2993,10 +2995,10 @@ class alignas(VL_CACHE_LINE_BYTES) Vysyx_22041812___024root final {
             CData/*4:0*/ ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_713;
             CData/*4:0*/ ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_714;
             CData/*4:0*/ ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_715;
-            CData/*4:0*/ ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_716;
-            CData/*4:0*/ ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_717;
         };
         struct {
+            CData/*4:0*/ ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_716;
+            CData/*4:0*/ ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_717;
             CData/*4:0*/ ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_718;
             CData/*4:0*/ ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_719;
             CData/*4:0*/ ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_720;
@@ -3059,10 +3061,10 @@ class alignas(VL_CACHE_LINE_BYTES) Vysyx_22041812___024root final {
             CData/*2:0*/ ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_864;
             CData/*2:0*/ ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_865;
             CData/*2:0*/ ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_920;
-            CData/*2:0*/ ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_921;
-            CData/*2:0*/ ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_922;
         };
         struct {
+            CData/*2:0*/ ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_921;
+            CData/*2:0*/ ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_922;
             CData/*2:0*/ ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_923;
             CData/*2:0*/ ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_924;
             CData/*2:0*/ ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_925;
@@ -3125,10 +3127,10 @@ class alignas(VL_CACHE_LINE_BYTES) Vysyx_22041812___024root final {
             CData/*2:0*/ ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_1036;
             CData/*2:0*/ ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_1037;
             CData/*2:0*/ ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_1038;
-            CData/*2:0*/ ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_1039;
-            CData/*2:0*/ ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_1040;
         };
         struct {
+            CData/*2:0*/ ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_1039;
+            CData/*2:0*/ ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_1040;
             CData/*2:0*/ ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_1041;
             CData/*2:0*/ ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_1042;
             CData/*2:0*/ ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_1043;
@@ -3191,10 +3193,10 @@ class alignas(VL_CACHE_LINE_BYTES) Vysyx_22041812___024root final {
             CData/*1:0*/ ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_1103;
             CData/*1:0*/ ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_1104;
             CData/*1:0*/ ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_1105;
-            CData/*1:0*/ ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_1106;
-            CData/*1:0*/ ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_1107;
         };
         struct {
+            CData/*1:0*/ ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_1106;
+            CData/*1:0*/ ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_1107;
             CData/*1:0*/ ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_1108;
             CData/*1:0*/ ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_1109;
             CData/*1:0*/ ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_1110;
@@ -3257,10 +3259,10 @@ class alignas(VL_CACHE_LINE_BYTES) Vysyx_22041812___024root final {
             CData/*0:0*/ ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_1242;
             CData/*0:0*/ ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_1243;
             CData/*0:0*/ ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_1244;
-            CData/*0:0*/ ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_1245;
-            CData/*0:0*/ ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_1246;
         };
         struct {
+            CData/*0:0*/ ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_1245;
+            CData/*0:0*/ ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_1246;
             CData/*1:0*/ ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_1255;
             CData/*1:0*/ ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_1256;
             CData/*1:0*/ ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_1257;
@@ -3323,10 +3325,10 @@ class alignas(VL_CACHE_LINE_BYTES) Vysyx_22041812___024root final {
             CData/*1:0*/ ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_1314;
             CData/*1:0*/ ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_1315;
             CData/*1:0*/ ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_1316;
-            CData/*1:0*/ ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_1317;
-            CData/*1:0*/ ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_1318;
         };
         struct {
+            CData/*1:0*/ ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_1317;
+            CData/*1:0*/ ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_1318;
             CData/*1:0*/ ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_1319;
             CData/*1:0*/ ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_1320;
             CData/*1:0*/ ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_1321;
@@ -3389,10 +3391,10 @@ class alignas(VL_CACHE_LINE_BYTES) Vysyx_22041812___024root final {
             CData/*2:0*/ ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_1384;
             CData/*2:0*/ ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_1385;
             CData/*2:0*/ ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_1386;
-            CData/*2:0*/ ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_1387;
-            CData/*2:0*/ ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_1388;
         };
         struct {
+            CData/*2:0*/ ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_1387;
+            CData/*2:0*/ ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_1388;
             CData/*2:0*/ ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_1389;
             CData/*2:0*/ ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_1390;
             CData/*2:0*/ ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_1391;
@@ -3455,10 +3457,10 @@ class alignas(VL_CACHE_LINE_BYTES) Vysyx_22041812___024root final {
             CData/*0:0*/ ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_1455;
             CData/*0:0*/ ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_1456;
             CData/*0:0*/ ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_1457;
-            CData/*0:0*/ ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_1458;
-            CData/*0:0*/ ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_1459;
         };
         struct {
+            CData/*0:0*/ ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_1458;
+            CData/*0:0*/ ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_1459;
             CData/*0:0*/ ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_1460;
             CData/*0:0*/ ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_1461;
             CData/*0:0*/ ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_1462;
@@ -3521,10 +3523,10 @@ class alignas(VL_CACHE_LINE_BYTES) Vysyx_22041812___024root final {
             CData/*0:0*/ ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_1519;
             CData/*0:0*/ ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_1520;
             CData/*0:0*/ ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_1521;
-            CData/*0:0*/ ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_1522;
-            CData/*0:0*/ ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_1523;
         };
         struct {
+            CData/*0:0*/ ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_1522;
+            CData/*0:0*/ ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_1523;
             CData/*0:0*/ ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_1524;
             CData/*0:0*/ ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_1525;
             CData/*0:0*/ ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_1526;
@@ -3587,10 +3589,10 @@ class alignas(VL_CACHE_LINE_BYTES) Vysyx_22041812___024root final {
             CData/*0:0*/ ysyx_22041812__DOT__datapath__DOT__memory_stage__DOT__io_csr_inst_misalign;
             CData/*0:0*/ ysyx_22041812__DOT__datapath__DOT__memory_stage__DOT__io_csr_store_misalign;
             CData/*0:0*/ ysyx_22041812__DOT__datapath__DOT__memory_stage__DOT__io_csr_load_misalign;
-            CData/*0:0*/ ysyx_22041812__DOT__datapath__DOT__memory_stage__DOT__io_clint_timer_clear;
-            CData/*0:0*/ ysyx_22041812__DOT__datapath__DOT__memory_stage__DOT__io_clint_soft_clear;
         };
         struct {
+            CData/*0:0*/ ysyx_22041812__DOT__datapath__DOT__memory_stage__DOT__io_clint_timer_clear;
+            CData/*0:0*/ ysyx_22041812__DOT__datapath__DOT__memory_stage__DOT__io_clint_soft_clear;
             CData/*0:0*/ ysyx_22041812__DOT__datapath__DOT__memory_stage__DOT__io_clint_timer_valid;
             CData/*0:0*/ ysyx_22041812__DOT__datapath__DOT__memory_stage__DOT__io_clint_soft_valid;
             CData/*0:0*/ ysyx_22041812__DOT__datapath__DOT__memory_stage__DOT__io_tlb_valid;
@@ -3653,10 +3655,10 @@ class alignas(VL_CACHE_LINE_BYTES) Vysyx_22041812___024root final {
             CData/*0:0*/ ysyx_22041812__DOT__datapath__DOT__memory_stage__DOT__ls_stall;
             CData/*0:0*/ ysyx_22041812__DOT__datapath__DOT__memory_stage__DOT__tlb_tag;
             CData/*0:0*/ ysyx_22041812__DOT__datapath__DOT__memory_stage__DOT___GEN_0;
-            CData/*1:0*/ ysyx_22041812__DOT__datapath__DOT__memory_stage__DOT__dTLB_fault_reg;
-            CData/*0:0*/ ysyx_22041812__DOT__datapath__DOT__memory_stage__DOT__data_cache_tag;
         };
         struct {
+            CData/*1:0*/ ysyx_22041812__DOT__datapath__DOT__memory_stage__DOT__dTLB_fault_reg;
+            CData/*0:0*/ ysyx_22041812__DOT__datapath__DOT__memory_stage__DOT__data_cache_tag;
             CData/*0:0*/ ysyx_22041812__DOT__datapath__DOT__memory_stage__DOT___mem_response_T;
             CData/*0:0*/ ysyx_22041812__DOT__datapath__DOT__memory_stage__DOT__mem_response;
             CData/*0:0*/ ysyx_22041812__DOT__datapath__DOT__memory_stage__DOT___T_2;
@@ -3719,10 +3721,10 @@ class alignas(VL_CACHE_LINE_BYTES) Vysyx_22041812___024root final {
             CData/*0:0*/ ysyx_22041812__DOT__datapath__DOT__memory_stage__DOT__dTLB__DOT__tlbe_0_D;
             CData/*0:0*/ ysyx_22041812__DOT__datapath__DOT__memory_stage__DOT__dTLB__DOT__tlbe_0_A;
             CData/*0:0*/ ysyx_22041812__DOT__datapath__DOT__memory_stage__DOT__dTLB__DOT__tlbe_0_G;
-            CData/*0:0*/ ysyx_22041812__DOT__datapath__DOT__memory_stage__DOT__dTLB__DOT__tlbe_0_U;
-            CData/*0:0*/ ysyx_22041812__DOT__datapath__DOT__memory_stage__DOT__dTLB__DOT__tlbe_0_X;
         };
         struct {
+            CData/*0:0*/ ysyx_22041812__DOT__datapath__DOT__memory_stage__DOT__dTLB__DOT__tlbe_0_U;
+            CData/*0:0*/ ysyx_22041812__DOT__datapath__DOT__memory_stage__DOT__dTLB__DOT__tlbe_0_X;
             CData/*0:0*/ ysyx_22041812__DOT__datapath__DOT__memory_stage__DOT__dTLB__DOT__tlbe_0_W;
             CData/*0:0*/ ysyx_22041812__DOT__datapath__DOT__memory_stage__DOT__dTLB__DOT__tlbe_0_R;
             CData/*0:0*/ ysyx_22041812__DOT__datapath__DOT__memory_stage__DOT__dTLB__DOT__tlbe_0_V;
@@ -3785,10 +3787,10 @@ class alignas(VL_CACHE_LINE_BYTES) Vysyx_22041812___024root final {
             CData/*0:0*/ ysyx_22041812__DOT__datapath__DOT__memory_stage__DOT__dTLB__DOT___GEN_139;
             CData/*0:0*/ ysyx_22041812__DOT__datapath__DOT__memory_stage__DOT__dTLB__DOT___GEN_140;
             CData/*0:0*/ ysyx_22041812__DOT__datapath__DOT__memory_stage__DOT__dTLB__DOT___GEN_141;
-            CData/*0:0*/ ysyx_22041812__DOT__datapath__DOT__memory_stage__DOT__dTLB__DOT___GEN_142;
-            CData/*1:0*/ ysyx_22041812__DOT__datapath__DOT__memory_stage__DOT__dTLB__DOT___GEN_143;
         };
         struct {
+            CData/*0:0*/ ysyx_22041812__DOT__datapath__DOT__memory_stage__DOT__dTLB__DOT___GEN_142;
+            CData/*1:0*/ ysyx_22041812__DOT__datapath__DOT__memory_stage__DOT__dTLB__DOT___GEN_143;
             CData/*1:0*/ ysyx_22041812__DOT__datapath__DOT__memory_stage__DOT__dTLB__DOT___GEN_146;
             CData/*1:0*/ ysyx_22041812__DOT__datapath__DOT__memory_stage__DOT__dTLB__DOT___GEN_327;
             CData/*2:0*/ ysyx_22041812__DOT__datapath__DOT__memory_stage__DOT__dTLB__DOT___GEN_329;
@@ -3851,10 +3853,10 @@ class alignas(VL_CACHE_LINE_BYTES) Vysyx_22041812___024root final {
             CData/*0:0*/ ysyx_22041812__DOT__datapath__DOT__memory_stage__DOT__dTLB__DOT___GEN_388;
             CData/*0:0*/ ysyx_22041812__DOT__datapath__DOT__memory_stage__DOT__dTLB__DOT___GEN_389;
             CData/*0:0*/ ysyx_22041812__DOT__datapath__DOT__memory_stage__DOT__dTLB__DOT___GEN_390;
-            CData/*0:0*/ ysyx_22041812__DOT__datapath__DOT__memory_stage__DOT__dTLB__DOT___GEN_391;
-            CData/*0:0*/ ysyx_22041812__DOT__datapath__DOT__memory_stage__DOT__dTLB__DOT___GEN_392;
         };
         struct {
+            CData/*0:0*/ ysyx_22041812__DOT__datapath__DOT__memory_stage__DOT__dTLB__DOT___GEN_391;
+            CData/*0:0*/ ysyx_22041812__DOT__datapath__DOT__memory_stage__DOT__dTLB__DOT___GEN_392;
             CData/*0:0*/ ysyx_22041812__DOT__datapath__DOT__memory_stage__DOT__dTLB__DOT___GEN_393;
             CData/*1:0*/ ysyx_22041812__DOT__datapath__DOT__memory_stage__DOT__dTLB__DOT___GEN_394;
             CData/*1:0*/ ysyx_22041812__DOT__datapath__DOT__memory_stage__DOT__dTLB__DOT___GEN_397;
@@ -3917,10 +3919,10 @@ class alignas(VL_CACHE_LINE_BYTES) Vysyx_22041812___024root final {
             CData/*0:0*/ ysyx_22041812__DOT__datapath__DOT__memory_stage__DOT__dTLB__DOT___GEN_967;
             CData/*0:0*/ ysyx_22041812__DOT__datapath__DOT__memory_stage__DOT__dTLB__DOT___GEN_983;
             CData/*0:0*/ ysyx_22041812__DOT__datapath__DOT__memory_stage__DOT__dTLB__DOT___GEN_999;
-            CData/*1:0*/ ysyx_22041812__DOT__datapath__DOT__memory_stage__DOT__dTLB__DOT___GEN_1031;
-            CData/*2:0*/ ysyx_22041812__DOT__datapath__DOT__memory_stage__DOT__dTLB__DOT___GEN_1079;
         };
         struct {
+            CData/*1:0*/ ysyx_22041812__DOT__datapath__DOT__memory_stage__DOT__dTLB__DOT___GEN_1031;
+            CData/*2:0*/ ysyx_22041812__DOT__datapath__DOT__memory_stage__DOT__dTLB__DOT___GEN_1079;
             CData/*2:0*/ ysyx_22041812__DOT__datapath__DOT__memory_stage__DOT__dTLB__DOT___GEN_1081;
             CData/*0:0*/ ysyx_22041812__DOT__datapath__DOT__memory_stage__DOT__dTLB__DOT___GEN_1083;
             CData/*1:0*/ ysyx_22041812__DOT__datapath__DOT__memory_stage__DOT__dTLB__DOT___GEN_1086;
@@ -3983,10 +3985,10 @@ class alignas(VL_CACHE_LINE_BYTES) Vysyx_22041812___024root final {
             CData/*0:0*/ ysyx_22041812__DOT__datapath__DOT__memory_stage__DOT__dTLB__DOT___GEN_1745;
             CData/*0:0*/ ysyx_22041812__DOT__datapath__DOT__memory_stage__DOT__dTLB__DOT___GEN_1746;
             CData/*0:0*/ ysyx_22041812__DOT__datapath__DOT__memory_stage__DOT__dTLB__DOT___GEN_1747;
-            CData/*0:0*/ ysyx_22041812__DOT__datapath__DOT__memory_stage__DOT__dTLB__DOT___GEN_1748;
-            CData/*0:0*/ ysyx_22041812__DOT__datapath__DOT__memory_stage__DOT__dTLB__DOT___GEN_1749;
         };
         struct {
+            CData/*0:0*/ ysyx_22041812__DOT__datapath__DOT__memory_stage__DOT__dTLB__DOT___GEN_1748;
+            CData/*0:0*/ ysyx_22041812__DOT__datapath__DOT__memory_stage__DOT__dTLB__DOT___GEN_1749;
             CData/*1:0*/ ysyx_22041812__DOT__datapath__DOT__memory_stage__DOT__dTLB__DOT___GEN_1750;
             CData/*1:0*/ ysyx_22041812__DOT__datapath__DOT__memory_stage__DOT__dTLB__DOT___GEN_1753;
             CData/*0:0*/ ysyx_22041812__DOT__datapath__DOT__memory_stage__DOT__dTLB__DOT___GEN_1754;
@@ -4049,10 +4051,10 @@ class alignas(VL_CACHE_LINE_BYTES) Vysyx_22041812___024root final {
             CData/*0:0*/ ysyx_22041812__DOT__datapath__DOT__fetch_stage__DOT__io_pipeline_stall;
             CData/*0:0*/ ysyx_22041812__DOT__datapath__DOT__fetch_stage__DOT__io_csr_trap;
             CData/*0:0*/ ysyx_22041812__DOT__datapath__DOT__fetch_stage__DOT__io_csr_atomic;
-            CData/*0:0*/ ysyx_22041812__DOT__datapath__DOT__fetch_stage__DOT__io_flush_fd;
-            CData/*1:0*/ ysyx_22041812__DOT__datapath__DOT__fetch_stage__DOT__io_de_pipe_reg_pc_sel;
         };
         struct {
+            CData/*0:0*/ ysyx_22041812__DOT__datapath__DOT__fetch_stage__DOT__io_flush_fd;
+            CData/*1:0*/ ysyx_22041812__DOT__datapath__DOT__fetch_stage__DOT__io_de_pipe_reg_pc_sel;
             CData/*0:0*/ ysyx_22041812__DOT__datapath__DOT__fetch_stage__DOT__io_de_pipe_reg_enable;
             CData/*0:0*/ ysyx_22041812__DOT__datapath__DOT__fetch_stage__DOT__io_flush_em;
             CData/*0:0*/ ysyx_22041812__DOT__datapath__DOT__fetch_stage__DOT__io_brCond_taken;
@@ -4115,10 +4117,10 @@ class alignas(VL_CACHE_LINE_BYTES) Vysyx_22041812___024root final {
             CData/*0:0*/ ysyx_22041812__DOT__datapath__DOT__fetch_stage__DOT__iTLB__DOT__pte_reg_A;
             CData/*0:0*/ ysyx_22041812__DOT__datapath__DOT__fetch_stage__DOT__iTLB__DOT__pte_reg_G;
             CData/*0:0*/ ysyx_22041812__DOT__datapath__DOT__fetch_stage__DOT__iTLB__DOT__pte_reg_U;
-            CData/*0:0*/ ysyx_22041812__DOT__datapath__DOT__fetch_stage__DOT__iTLB__DOT__pte_reg_X;
-            CData/*0:0*/ ysyx_22041812__DOT__datapath__DOT__fetch_stage__DOT__iTLB__DOT__pte_reg_W;
         };
         struct {
+            CData/*0:0*/ ysyx_22041812__DOT__datapath__DOT__fetch_stage__DOT__iTLB__DOT__pte_reg_X;
+            CData/*0:0*/ ysyx_22041812__DOT__datapath__DOT__fetch_stage__DOT__iTLB__DOT__pte_reg_W;
             CData/*0:0*/ ysyx_22041812__DOT__datapath__DOT__fetch_stage__DOT__iTLB__DOT__pte_reg_R;
             CData/*0:0*/ ysyx_22041812__DOT__datapath__DOT__fetch_stage__DOT__iTLB__DOT__pte_reg_V;
             CData/*0:0*/ ysyx_22041812__DOT__datapath__DOT__fetch_stage__DOT__iTLB__DOT__pte_in_V;
@@ -4181,10 +4183,10 @@ class alignas(VL_CACHE_LINE_BYTES) Vysyx_22041812___024root final {
             CData/*0:0*/ ysyx_22041812__DOT__datapath__DOT__fetch_stage__DOT__iTLB__DOT___GEN_336;
             CData/*0:0*/ ysyx_22041812__DOT__datapath__DOT__fetch_stage__DOT__iTLB__DOT___GEN_337;
             CData/*0:0*/ ysyx_22041812__DOT__datapath__DOT__fetch_stage__DOT__iTLB__DOT___GEN_338;
-            CData/*1:0*/ ysyx_22041812__DOT__datapath__DOT__fetch_stage__DOT__iTLB__DOT___GEN_339;
-            CData/*1:0*/ ysyx_22041812__DOT__datapath__DOT__fetch_stage__DOT__iTLB__DOT___GEN_342;
         };
         struct {
+            CData/*1:0*/ ysyx_22041812__DOT__datapath__DOT__fetch_stage__DOT__iTLB__DOT___GEN_339;
+            CData/*1:0*/ ysyx_22041812__DOT__datapath__DOT__fetch_stage__DOT__iTLB__DOT___GEN_342;
             CData/*1:0*/ ysyx_22041812__DOT__datapath__DOT__fetch_stage__DOT__iTLB__DOT___GEN_343;
             CData/*0:0*/ ysyx_22041812__DOT__datapath__DOT__fetch_stage__DOT__iTLB__DOT___GEN_344;
             CData/*2:0*/ ysyx_22041812__DOT__datapath__DOT__fetch_stage__DOT__iTLB__DOT___GEN_345;
@@ -4247,12 +4249,12 @@ class alignas(VL_CACHE_LINE_BYTES) Vysyx_22041812___024root final {
             CData/*1:0*/ ysyx_22041812__DOT__datapath__DOT__fetch_stage__DOT__iTLB__DOT___GEN_404;
             CData/*1:0*/ ysyx_22041812__DOT__datapath__DOT__fetch_stage__DOT__iTLB__DOT___GEN_405;
             CData/*0:0*/ ysyx_22041812__DOT__datapath__DOT__fetch_stage__DOT__iTLB__DOT___GEN_406;
-            CData/*2:0*/ ysyx_22041812__DOT__datapath__DOT__fetch_stage__DOT__iTLB__DOT___GEN_407;
-            CData/*1:0*/ ysyx_22041812__DOT__datapath__DOT__fetch_stage__DOT__iTLB__DOT___GEN_408;
         };
     };
     struct {
         struct {
+            CData/*2:0*/ ysyx_22041812__DOT__datapath__DOT__fetch_stage__DOT__iTLB__DOT___GEN_407;
+            CData/*1:0*/ ysyx_22041812__DOT__datapath__DOT__fetch_stage__DOT__iTLB__DOT___GEN_408;
             CData/*0:0*/ ysyx_22041812__DOT__datapath__DOT__fetch_stage__DOT__iTLB__DOT___GEN_409;
             CData/*2:0*/ ysyx_22041812__DOT__datapath__DOT__fetch_stage__DOT__iTLB__DOT___GEN_410;
             CData/*1:0*/ ysyx_22041812__DOT__datapath__DOT__fetch_stage__DOT__iTLB__DOT___GEN_411;
@@ -4315,10 +4317,10 @@ class alignas(VL_CACHE_LINE_BYTES) Vysyx_22041812___024root final {
             CData/*1:0*/ ysyx_22041812__DOT__datapath__DOT__fetch_stage__DOT__iTLB__DOT___GEN_1246;
             CData/*0:0*/ ysyx_22041812__DOT__datapath__DOT__fetch_stage__DOT__iTLB__DOT___GEN_1294;
             CData/*2:0*/ ysyx_22041812__DOT__datapath__DOT__fetch_stage__DOT__iTLB__DOT___GEN_1295;
-            CData/*1:0*/ ysyx_22041812__DOT__datapath__DOT__fetch_stage__DOT__iTLB__DOT___GEN_1296;
-            CData/*0:0*/ ysyx_22041812__DOT__datapath__DOT__fetch_stage__DOT__iTLB__DOT___GEN_1297;
         };
         struct {
+            CData/*1:0*/ ysyx_22041812__DOT__datapath__DOT__fetch_stage__DOT__iTLB__DOT___GEN_1296;
+            CData/*0:0*/ ysyx_22041812__DOT__datapath__DOT__fetch_stage__DOT__iTLB__DOT___GEN_1297;
             CData/*0:0*/ ysyx_22041812__DOT__datapath__DOT__fetch_stage__DOT__iTLB__DOT___GEN_1298;
             CData/*1:0*/ ysyx_22041812__DOT__datapath__DOT__fetch_stage__DOT__iTLB__DOT___GEN_1302;
             CData/*0:0*/ ysyx_22041812__DOT__datapath__DOT__fetch_stage__DOT__iTLB__DOT___GEN_1318;
@@ -4381,10 +4383,10 @@ class alignas(VL_CACHE_LINE_BYTES) Vysyx_22041812___024root final {
             CData/*2:0*/ ysyx_22041812__DOT__datapath__DOT__fetch_stage__DOT__iTLB__DOT___GEN_1964;
             CData/*0:0*/ ysyx_22041812__DOT__datapath__DOT__fetch_stage__DOT__iTLB__DOT___GEN_1966;
             CData/*0:0*/ ysyx_22041812__DOT__datapath__DOT__fetch_stage__DOT__iTLB__DOT___GEN_1969;
-            CData/*0:0*/ ysyx_22041812__DOT__datapath__DOT__fetch_stage__DOT__iTLB__DOT___GEN_1970;
-            CData/*0:0*/ ysyx_22041812__DOT__datapath__DOT__fetch_stage__DOT__iTLB__DOT___GEN_1971;
         };
         struct {
+            CData/*0:0*/ ysyx_22041812__DOT__datapath__DOT__fetch_stage__DOT__iTLB__DOT___GEN_1970;
+            CData/*0:0*/ ysyx_22041812__DOT__datapath__DOT__fetch_stage__DOT__iTLB__DOT___GEN_1971;
             CData/*0:0*/ ysyx_22041812__DOT__datapath__DOT__fetch_stage__DOT__iTLB__DOT___GEN_1972;
             CData/*0:0*/ ysyx_22041812__DOT__datapath__DOT__fetch_stage__DOT__iTLB__DOT___GEN_1973;
             CData/*0:0*/ ysyx_22041812__DOT__datapath__DOT__fetch_stage__DOT__iTLB__DOT___GEN_1974;
@@ -4447,10 +4449,10 @@ class alignas(VL_CACHE_LINE_BYTES) Vysyx_22041812___024root final {
             CData/*0:0*/ ysyx_22041812__DOT__datapath__DOT__csr__DOT__io_em_enable;
             CData/*0:0*/ ysyx_22041812__DOT__datapath__DOT__csr__DOT__io_de_enable;
             CData/*1:0*/ ysyx_22041812__DOT__datapath__DOT__csr__DOT__mode;
-            CData/*0:0*/ ysyx_22041812__DOT__datapath__DOT__csr__DOT__mstatus_mxr;
-            CData/*0:0*/ ysyx_22041812__DOT__datapath__DOT__csr__DOT__mstatus_sum;
         };
         struct {
+            CData/*0:0*/ ysyx_22041812__DOT__datapath__DOT__csr__DOT__mstatus_mxr;
+            CData/*0:0*/ ysyx_22041812__DOT__datapath__DOT__csr__DOT__mstatus_sum;
             CData/*0:0*/ ysyx_22041812__DOT__datapath__DOT__csr__DOT__mstatus_mprv;
             CData/*1:0*/ ysyx_22041812__DOT__datapath__DOT__csr__DOT__mstatus_mpp;
             CData/*0:0*/ ysyx_22041812__DOT__datapath__DOT__csr__DOT__mstatus_spp;
@@ -4513,10 +4515,10 @@ class alignas(VL_CACHE_LINE_BYTES) Vysyx_22041812___024root final {
             CData/*0:0*/ ysyx_22041812__DOT__datapath__DOT__csr__DOT___T_53;
             CData/*0:0*/ ysyx_22041812__DOT__datapath__DOT__csr__DOT___T_55;
             CData/*0:0*/ ysyx_22041812__DOT__datapath__DOT__csr__DOT___T_57;
-            CData/*0:0*/ ysyx_22041812__DOT__datapath__DOT__csr__DOT___T_59;
-            CData/*0:0*/ ysyx_22041812__DOT__datapath__DOT__csr__DOT___T_61;
         };
         struct {
+            CData/*0:0*/ ysyx_22041812__DOT__datapath__DOT__csr__DOT___T_59;
+            CData/*0:0*/ ysyx_22041812__DOT__datapath__DOT__csr__DOT___T_61;
             CData/*0:0*/ ysyx_22041812__DOT__datapath__DOT__csr__DOT___T_63;
             CData/*0:0*/ ysyx_22041812__DOT__datapath__DOT__csr__DOT___T_65;
             CData/*0:0*/ ysyx_22041812__DOT__datapath__DOT__csr__DOT___T_67;
@@ -4579,10 +4581,10 @@ class alignas(VL_CACHE_LINE_BYTES) Vysyx_22041812___024root final {
             CData/*0:0*/ ysyx_22041812__DOT__datapath__DOT__csr__DOT___instValid_T;
             CData/*0:0*/ ysyx_22041812__DOT__datapath__DOT__csr__DOT___instValid_T_4;
             CData/*0:0*/ ysyx_22041812__DOT__datapath__DOT__csr__DOT___instValid_T_6;
-            CData/*0:0*/ ysyx_22041812__DOT__datapath__DOT__csr__DOT___instValid_T_8;
-            CData/*0:0*/ ysyx_22041812__DOT__datapath__DOT__csr__DOT___instValid_T_10;
         };
         struct {
+            CData/*0:0*/ ysyx_22041812__DOT__datapath__DOT__csr__DOT___instValid_T_8;
+            CData/*0:0*/ ysyx_22041812__DOT__datapath__DOT__csr__DOT___instValid_T_10;
             CData/*0:0*/ ysyx_22041812__DOT__datapath__DOT__csr__DOT__instValid;
             CData/*0:0*/ ysyx_22041812__DOT__datapath__DOT__csr__DOT___csrData_T_1;
             CData/*0:0*/ ysyx_22041812__DOT__datapath__DOT__csr__DOT___csrData_T_3;
@@ -4645,10 +4647,10 @@ class alignas(VL_CACHE_LINE_BYTES) Vysyx_22041812___024root final {
             CData/*3:0*/ ysyx_22041812__DOT__datapath__DOT__csr__DOT___GEN_2;
             CData/*3:0*/ ysyx_22041812__DOT__datapath__DOT__csr__DOT___GEN_3;
             CData/*3:0*/ ysyx_22041812__DOT__datapath__DOT__csr__DOT___GEN_4;
-            CData/*0:0*/ ysyx_22041812__DOT__datapath__DOT__csr__DOT___interrupt_return_addr_T_8;
-            CData/*0:0*/ ysyx_22041812__DOT__datapath__DOT__csr__DOT__tmp_1_sd;
         };
         struct {
+            CData/*0:0*/ ysyx_22041812__DOT__datapath__DOT__csr__DOT___interrupt_return_addr_T_8;
+            CData/*0:0*/ ysyx_22041812__DOT__datapath__DOT__csr__DOT__tmp_1_sd;
             CData/*0:0*/ ysyx_22041812__DOT__datapath__DOT__csr__DOT__tmp_1_sum;
             CData/*0:0*/ ysyx_22041812__DOT__datapath__DOT__csr__DOT__tmp_1_spp;
             CData/*0:0*/ ysyx_22041812__DOT__datapath__DOT__csr__DOT__tmp_1_spie;
@@ -4711,10 +4713,10 @@ class alignas(VL_CACHE_LINE_BYTES) Vysyx_22041812___024root final {
             CData/*0:0*/ ysyx_22041812__DOT__datapath__DOT__writeback_stage__DOT__io_mw_enable;
             CData/*0:0*/ ysyx_22041812__DOT__datapath__DOT__writeback_stage__DOT__io_retired;
             CData/*2:0*/ ysyx_22041812__DOT__datapath__DOT__writeback_stage__DOT__io_csr_w_op;
-            CData/*0:0*/ ysyx_22041812__DOT__datapath__DOT__writeback_stage__DOT__io_regFile_wen;
-            CData/*4:0*/ ysyx_22041812__DOT__datapath__DOT__writeback_stage__DOT__io_regFile_waddr;
         };
         struct {
+            CData/*0:0*/ ysyx_22041812__DOT__datapath__DOT__writeback_stage__DOT__io_regFile_wen;
+            CData/*4:0*/ ysyx_22041812__DOT__datapath__DOT__writeback_stage__DOT__io_regFile_waddr;
             CData/*4:0*/ ysyx_22041812__DOT__datapath__DOT__writeback_stage__DOT__io_mw_pipe_reg_dest;
             CData/*1:0*/ ysyx_22041812__DOT__datapath__DOT__writeback_stage__DOT__io_mw_pipe_reg_wb_sel;
             CData/*0:0*/ ysyx_22041812__DOT__datapath__DOT__writeback_stage__DOT__io_mw_pipe_reg_wb_en;
@@ -4777,10 +4779,10 @@ class alignas(VL_CACHE_LINE_BYTES) Vysyx_22041812___024root final {
             CData/*0:0*/ ysyx_22041812__DOT__arb__DOT__io_dcache_w_bits_last;
             CData/*0:0*/ ysyx_22041812__DOT__arb__DOT__io_dcache_b_ready;
             CData/*0:0*/ ysyx_22041812__DOT__arb__DOT__io_dcache_b_valid;
-            CData/*0:0*/ ysyx_22041812__DOT__arb__DOT__io_dcache_ar_ready;
-            CData/*0:0*/ ysyx_22041812__DOT__arb__DOT__io_dcache_ar_valid;
         };
         struct {
+            CData/*0:0*/ ysyx_22041812__DOT__arb__DOT__io_dcache_ar_ready;
+            CData/*0:0*/ ysyx_22041812__DOT__arb__DOT__io_dcache_ar_valid;
             CData/*7:0*/ ysyx_22041812__DOT__arb__DOT__io_dcache_ar_bits_len;
             CData/*2:0*/ ysyx_22041812__DOT__arb__DOT__io_dcache_ar_bits_size;
             CData/*0:0*/ ysyx_22041812__DOT__arb__DOT__io_dcache_r_ready;
@@ -4843,10 +4845,10 @@ class alignas(VL_CACHE_LINE_BYTES) Vysyx_22041812___024root final {
             CData/*0:0*/ __VdfgRegularize_hebeb780c_0_30;
             CData/*0:0*/ __VdfgRegularize_hebeb780c_0_36;
             CData/*1:0*/ __VdfgRegularize_hebeb780c_0_161;
-            CData/*0:0*/ __VdfgRegularize_hebeb780c_0_218;
-            CData/*0:0*/ __VdfgRegularize_hebeb780c_0_300;
         };
         struct {
+            CData/*0:0*/ __VdfgRegularize_hebeb780c_0_218;
+            CData/*0:0*/ __VdfgRegularize_hebeb780c_0_300;
             CData/*0:0*/ __VdfgRegularize_hebeb780c_0_303;
             CData/*0:0*/ __VdfgRegularize_hebeb780c_0_305;
             CData/*0:0*/ __VdfgRegularize_hebeb780c_0_306;
@@ -4909,10 +4911,10 @@ class alignas(VL_CACHE_LINE_BYTES) Vysyx_22041812___024root final {
             SData/*11:0*/ ysyx_22041812__DOT__datapath__DOT__memory_stage_io_mw_pipe_reg_csr_write_addr;
             SData/*11:0*/ ysyx_22041812__DOT__datapath__DOT__writeback_stage_io_csr_w_addr;
             SData/*11:0*/ ysyx_22041812__DOT__datapath__DOT__writeback_stage_io_mw_pipe_reg_csr_write_addr;
-            SData/*11:0*/ ysyx_22041812__DOT__datapath__DOT__csr_io_r_addr;
-            SData/*11:0*/ ysyx_22041812__DOT__datapath__DOT__csr_io_w_addr;
         };
         struct {
+            SData/*11:0*/ ysyx_22041812__DOT__datapath__DOT__csr_io_r_addr;
+            SData/*11:0*/ ysyx_22041812__DOT__datapath__DOT__csr_io_w_addr;
             SData/*11:0*/ ysyx_22041812__DOT__datapath__DOT__execute_stage__DOT__io_de_pipe_reg_csr_write_addr;
             SData/*11:0*/ ysyx_22041812__DOT__datapath__DOT__execute_stage__DOT__io_em_pipe_reg_csr_write_addr;
             SData/*11:0*/ ysyx_22041812__DOT__datapath__DOT__execute_stage__DOT__em_pipe_reg_csr_write_addr;
@@ -4975,10 +4977,10 @@ class alignas(VL_CACHE_LINE_BYTES) Vysyx_22041812___024root final {
             SData/*11:0*/ ysyx_22041812__DOT__datapath__DOT__writeback_stage__DOT__io_mw_pipe_reg_csr_write_addr;
             SData/*9:0*/ __VdfgRegularize_hebeb780c_0_83;
             VL_OUT(io_inst,31,0);
-            VL_OUT(io_commit_inst,31,0);
-            VL_OUT(io_master_awaddr,31,0);
         };
         struct {
+            VL_OUT(io_commit_inst,31,0);
+            VL_OUT(io_master_awaddr,31,0);
             VL_OUT(io_master_araddr,31,0);
             VL_IN(io_slave_awaddr,31,0);
             VL_IN(io_slave_araddr,31,0);
@@ -5041,10 +5043,10 @@ class alignas(VL_CACHE_LINE_BYTES) Vysyx_22041812___024root final {
             VlWide<4>/*127:0*/ ysyx_22041812__DOT__sram4_BWEN;
             VlWide<4>/*127:0*/ ysyx_22041812__DOT__sram4_D;
             VlWide<4>/*127:0*/ ysyx_22041812__DOT__sram4_Q;
-            VlWide<4>/*127:0*/ ysyx_22041812__DOT__sram5_BWEN;
-            VlWide<4>/*127:0*/ ysyx_22041812__DOT__sram5_D;
         };
         struct {
+            VlWide<4>/*127:0*/ ysyx_22041812__DOT__sram5_BWEN;
+            VlWide<4>/*127:0*/ ysyx_22041812__DOT__sram5_D;
             VlWide<4>/*127:0*/ ysyx_22041812__DOT__sram5_Q;
             VlWide<4>/*127:0*/ ysyx_22041812__DOT__sram6_BWEN;
             VlWide<4>/*127:0*/ ysyx_22041812__DOT__sram6_D;
@@ -5107,10 +5109,10 @@ class alignas(VL_CACHE_LINE_BYTES) Vysyx_22041812___024root final {
             IData/*21:0*/ ysyx_22041812__DOT__dcache__DOT__cpu_request_addr_tag;
             IData/*31:0*/ ysyx_22041812__DOT__dcache__DOT___writeback_addr_T;
             IData/*31:0*/ ysyx_22041812__DOT__dcache__DOT___GEN_23;
-            IData/*31:0*/ ysyx_22041812__DOT__dcache__DOT___GEN_29;
-            IData/*31:0*/ ysyx_22041812__DOT__dcache__DOT___writeback_addr_T_1;
         };
         struct {
+            IData/*31:0*/ ysyx_22041812__DOT__dcache__DOT___GEN_29;
+            IData/*31:0*/ ysyx_22041812__DOT__dcache__DOT___writeback_addr_T_1;
             IData/*31:0*/ ysyx_22041812__DOT__dcache__DOT___GEN_43;
             IData/*31:0*/ ysyx_22041812__DOT__dcache__DOT___GEN_49;
             IData/*31:0*/ ysyx_22041812__DOT__dcache__DOT___writeback_addr_T_2;
@@ -5173,10 +5175,10 @@ class alignas(VL_CACHE_LINE_BYTES) Vysyx_22041812___024root final {
             VlWide<4>/*127:0*/ ysyx_22041812__DOT__dcache__DOT___GEN_405;
             VlWide<4>/*127:0*/ ysyx_22041812__DOT__dcache__DOT___GEN_407;
             VlWide<4>/*127:0*/ ysyx_22041812__DOT__dcache__DOT___GEN_408;
-            VlWide<4>/*127:0*/ ysyx_22041812__DOT__dcache__DOT___GEN_410;
-            VlWide<4>/*127:0*/ ysyx_22041812__DOT__dcache__DOT___GEN_411;
         };
         struct {
+            VlWide<4>/*127:0*/ ysyx_22041812__DOT__dcache__DOT___GEN_410;
+            VlWide<4>/*127:0*/ ysyx_22041812__DOT__dcache__DOT___GEN_411;
             VlWide<4>/*127:0*/ ysyx_22041812__DOT__dcache__DOT___GEN_413;
             VlWide<4>/*127:0*/ ysyx_22041812__DOT__dcache__DOT___GEN_414;
             IData/*31:0*/ ysyx_22041812__DOT__dcache__DOT___GEN_424;
@@ -5239,10 +5241,10 @@ class alignas(VL_CACHE_LINE_BYTES) Vysyx_22041812___024root final {
             VlWide<4>/*127:0*/ ysyx_22041812__DOT__dcache__DOT___GEN_661;
             IData/*31:0*/ ysyx_22041812__DOT__dcache__DOT___GEN_667;
             IData/*21:0*/ ysyx_22041812__DOT__dcache__DOT___GEN_682;
-            IData/*21:0*/ ysyx_22041812__DOT__dcache__DOT___GEN_687;
-            IData/*21:0*/ ysyx_22041812__DOT__dcache__DOT___GEN_692;
         };
         struct {
+            IData/*21:0*/ ysyx_22041812__DOT__dcache__DOT___GEN_687;
+            IData/*21:0*/ ysyx_22041812__DOT__dcache__DOT___GEN_692;
             IData/*21:0*/ ysyx_22041812__DOT__dcache__DOT___GEN_697;
             VlWide<4>/*127:0*/ ysyx_22041812__DOT__dcache__DOT___GEN_704;
             VlWide<4>/*127:0*/ ysyx_22041812__DOT__dcache__DOT___GEN_707;
@@ -5305,10 +5307,10 @@ class alignas(VL_CACHE_LINE_BYTES) Vysyx_22041812___024root final {
             IData/*31:0*/ ysyx_22041812__DOT__dcache__DOT___GEN_956;
             IData/*31:0*/ ysyx_22041812__DOT__dcache__DOT___GEN_959;
             IData/*31:0*/ ysyx_22041812__DOT__dcache__DOT___GEN_965;
-            IData/*31:0*/ ysyx_22041812__DOT__dcache__DOT___GEN_973;
-            IData/*21:0*/ ysyx_22041812__DOT__dcache__DOT___GEN_988;
         };
         struct {
+            IData/*31:0*/ ysyx_22041812__DOT__dcache__DOT___GEN_973;
+            IData/*21:0*/ ysyx_22041812__DOT__dcache__DOT___GEN_988;
             IData/*21:0*/ ysyx_22041812__DOT__dcache__DOT___GEN_993;
             IData/*21:0*/ ysyx_22041812__DOT__dcache__DOT___GEN_998;
             IData/*21:0*/ ysyx_22041812__DOT__dcache__DOT___GEN_1003;
@@ -5371,10 +5373,10 @@ class alignas(VL_CACHE_LINE_BYTES) Vysyx_22041812___024root final {
             IData/*21:0*/ ysyx_22041812__DOT__dcache__DOT___GEN_1292;
             IData/*21:0*/ ysyx_22041812__DOT__dcache__DOT___GEN_1297;
             IData/*21:0*/ ysyx_22041812__DOT__dcache__DOT___GEN_1302;
-            IData/*21:0*/ ysyx_22041812__DOT__dcache__DOT___GEN_1307;
-            IData/*31:0*/ ysyx_22041812__DOT__dcache__DOT___GEN_1321;
         };
         struct {
+            IData/*21:0*/ ysyx_22041812__DOT__dcache__DOT___GEN_1307;
+            IData/*31:0*/ ysyx_22041812__DOT__dcache__DOT___GEN_1321;
             IData/*31:0*/ ysyx_22041812__DOT__dcache__DOT___GEN_1335;
             VlWide<4>/*127:0*/ ysyx_22041812__DOT__dcache__DOT___GEN_1341;
             VlWide<4>/*127:0*/ ysyx_22041812__DOT__dcache__DOT___GEN_1344;
@@ -5437,10 +5439,10 @@ class alignas(VL_CACHE_LINE_BYTES) Vysyx_22041812___024root final {
             VlWide<4>/*127:0*/ ysyx_22041812__DOT__icache__DOT__data_mem_0_io_sram_wdata;
             VlWide<4>/*127:0*/ ysyx_22041812__DOT__icache__DOT__data_mem_0_io_sram_rdata;
             VlWide<4>/*127:0*/ ysyx_22041812__DOT__icache__DOT__data_mem_1_io_cache_req_wmask;
-            VlWide<4>/*127:0*/ ysyx_22041812__DOT__icache__DOT__data_mem_1_io_data_write_data;
-            VlWide<4>/*127:0*/ ysyx_22041812__DOT__icache__DOT__data_mem_1_io_data_read_data;
         };
         struct {
+            VlWide<4>/*127:0*/ ysyx_22041812__DOT__icache__DOT__data_mem_1_io_data_write_data;
+            VlWide<4>/*127:0*/ ysyx_22041812__DOT__icache__DOT__data_mem_1_io_data_read_data;
             VlWide<4>/*127:0*/ ysyx_22041812__DOT__icache__DOT__data_mem_1_io_sram_wmask;
             VlWide<4>/*127:0*/ ysyx_22041812__DOT__icache__DOT__data_mem_1_io_sram_wdata;
             VlWide<4>/*127:0*/ ysyx_22041812__DOT__icache__DOT__data_mem_1_io_sram_rdata;
@@ -5503,10 +5505,10 @@ class alignas(VL_CACHE_LINE_BYTES) Vysyx_22041812___024root final {
             VlWide<4>/*127:0*/ ysyx_22041812__DOT__icache__DOT___GEN_478;
             VlWide<4>/*127:0*/ ysyx_22041812__DOT__icache__DOT___GEN_479;
             VlWide<4>/*127:0*/ ysyx_22041812__DOT__icache__DOT___GEN_481;
-            VlWide<4>/*127:0*/ ysyx_22041812__DOT__icache__DOT___GEN_482;
-            VlWide<4>/*127:0*/ ysyx_22041812__DOT__icache__DOT___GEN_484;
         };
         struct {
+            VlWide<4>/*127:0*/ ysyx_22041812__DOT__icache__DOT___GEN_482;
+            VlWide<4>/*127:0*/ ysyx_22041812__DOT__icache__DOT___GEN_484;
             VlWide<4>/*127:0*/ ysyx_22041812__DOT__icache__DOT___GEN_485;
             VlWide<4>/*127:0*/ ysyx_22041812__DOT__icache__DOT___GEN_552;
             VlWide<4>/*127:0*/ ysyx_22041812__DOT__icache__DOT___GEN_553;
@@ -5569,10 +5571,10 @@ class alignas(VL_CACHE_LINE_BYTES) Vysyx_22041812___024root final {
             VlWide<4>/*127:0*/ ysyx_22041812__DOT__icache__DOT___GEN_786;
             VlWide<4>/*127:0*/ ysyx_22041812__DOT__icache__DOT___GEN_788;
             VlWide<4>/*127:0*/ ysyx_22041812__DOT__icache__DOT___GEN_789;
-            IData/*31:0*/ ysyx_22041812__DOT__icache__DOT___GEN_799;
-            IData/*31:0*/ ysyx_22041812__DOT__icache__DOT___GEN_804;
         };
         struct {
+            IData/*31:0*/ ysyx_22041812__DOT__icache__DOT___GEN_799;
+            IData/*31:0*/ ysyx_22041812__DOT__icache__DOT___GEN_804;
             IData/*21:0*/ ysyx_22041812__DOT__icache__DOT___GEN_836;
             IData/*21:0*/ ysyx_22041812__DOT__icache__DOT___GEN_841;
             IData/*21:0*/ ysyx_22041812__DOT__icache__DOT___GEN_846;
@@ -5635,10 +5637,10 @@ class alignas(VL_CACHE_LINE_BYTES) Vysyx_22041812___024root final {
             IData/*21:0*/ ysyx_22041812__DOT__icache__DOT___GEN_1166;
             IData/*21:0*/ ysyx_22041812__DOT__icache__DOT___GEN_1171;
             VlWide<4>/*127:0*/ ysyx_22041812__DOT__icache__DOT___GEN_1175;
-            VlWide<4>/*127:0*/ ysyx_22041812__DOT__icache__DOT___GEN_1178;
-            VlWide<4>/*127:0*/ ysyx_22041812__DOT__icache__DOT___GEN_1179;
         };
         struct {
+            VlWide<4>/*127:0*/ ysyx_22041812__DOT__icache__DOT___GEN_1178;
+            VlWide<4>/*127:0*/ ysyx_22041812__DOT__icache__DOT___GEN_1179;
             VlWide<4>/*127:0*/ ysyx_22041812__DOT__icache__DOT___GEN_1180;
             VlWide<4>/*127:0*/ ysyx_22041812__DOT__icache__DOT___GEN_1181;
             VlWide<4>/*127:0*/ ysyx_22041812__DOT__icache__DOT___GEN_1182;
@@ -5701,10 +5703,10 @@ class alignas(VL_CACHE_LINE_BYTES) Vysyx_22041812___024root final {
             IData/*31:0*/ ysyx_22041812__DOT__datapath__DOT__io_dcache_cpu_request_addr;
             IData/*31:0*/ ysyx_22041812__DOT__datapath__DOT__fetch_stage_io_de_pipe_reg_inst;
             IData/*31:0*/ ysyx_22041812__DOT__datapath__DOT__fetch_stage_io_icache_cpu_request_addr;
-            IData/*31:0*/ ysyx_22041812__DOT__datapath__DOT__fetch_stage_io_fd_pipe_reg_inst;
-            IData/*31:0*/ ysyx_22041812__DOT__datapath__DOT__decode_stage_io_fd_pipe_reg_inst;
         };
         struct {
+            IData/*31:0*/ ysyx_22041812__DOT__datapath__DOT__fetch_stage_io_fd_pipe_reg_inst;
+            IData/*31:0*/ ysyx_22041812__DOT__datapath__DOT__decode_stage_io_fd_pipe_reg_inst;
             IData/*31:0*/ ysyx_22041812__DOT__datapath__DOT__decode_stage_io_de_pipe_reg_inst;
             IData/*31:0*/ ysyx_22041812__DOT__datapath__DOT__execute_stage_io_de_pipe_reg_inst;
             IData/*31:0*/ ysyx_22041812__DOT__datapath__DOT__execute_stage_io_em_pipe_reg_inst;
@@ -5767,10 +5769,10 @@ class alignas(VL_CACHE_LINE_BYTES) Vysyx_22041812___024root final {
             IData/*31:0*/ ysyx_22041812__DOT__datapath__DOT__execute_stage__DOT__multiplier__DOT__src1_lo;
             IData/*31:0*/ ysyx_22041812__DOT__datapath__DOT__execute_stage__DOT__multiplier__DOT__src2_lo;
             VlWide<4>/*127:0*/ ysyx_22041812__DOT__datapath__DOT__execute_stage__DOT__multiplier__DOT___result_u_T;
-            VlWide<3>/*95:0*/ ysyx_22041812__DOT__datapath__DOT__execute_stage__DOT__multiplier__DOT___result_u_T_1;
-            VlWide<4>/*127:0*/ ysyx_22041812__DOT__datapath__DOT__execute_stage__DOT__multiplier__DOT___GEN_52;
         };
         struct {
+            VlWide<3>/*95:0*/ ysyx_22041812__DOT__datapath__DOT__execute_stage__DOT__multiplier__DOT___result_u_T_1;
+            VlWide<4>/*127:0*/ ysyx_22041812__DOT__datapath__DOT__execute_stage__DOT__multiplier__DOT___GEN_52;
             VlWide<4>/*127:0*/ ysyx_22041812__DOT__datapath__DOT__execute_stage__DOT__multiplier__DOT___result_u_T_3;
             VlWide<3>/*95:0*/ ysyx_22041812__DOT__datapath__DOT__execute_stage__DOT__multiplier__DOT___result_u_T_4;
             VlWide<4>/*127:0*/ ysyx_22041812__DOT__datapath__DOT__execute_stage__DOT__multiplier__DOT___GEN_53;
@@ -5833,10 +5835,10 @@ class alignas(VL_CACHE_LINE_BYTES) Vysyx_22041812___024root final {
             VlWide<4>/*126:0*/ ysyx_22041812__DOT__datapath__DOT__memory_stage__DOT___io_dcache_cpu_request_data_T_7;
             VlWide<3>/*66:0*/ ysyx_22041812__DOT__datapath__DOT__memory_stage__DOT__shift;
             IData/*31:0*/ ysyx_22041812__DOT__datapath__DOT__memory_stage__DOT___load_data_ext_T_3;
-            IData/*26:0*/ ysyx_22041812__DOT__datapath__DOT__memory_stage__DOT__dTLB__DOT__io_tlb_flush_vpn;
-            IData/*31:0*/ ysyx_22041812__DOT__datapath__DOT__memory_stage__DOT__dTLB__DOT__io_tlb_request_addr;
         };
         struct {
+            IData/*26:0*/ ysyx_22041812__DOT__datapath__DOT__memory_stage__DOT__dTLB__DOT__io_tlb_flush_vpn;
+            IData/*31:0*/ ysyx_22041812__DOT__datapath__DOT__memory_stage__DOT__dTLB__DOT__io_tlb_request_addr;
             IData/*26:0*/ ysyx_22041812__DOT__datapath__DOT__memory_stage__DOT__dTLB__DOT__vpn;
             IData/*26:0*/ ysyx_22041812__DOT__datapath__DOT__memory_stage__DOT__dTLB__DOT__tlbe_0_vpn;
             IData/*16:0*/ ysyx_22041812__DOT__datapath__DOT__memory_stage__DOT__dTLB__DOT__asid;
@@ -5899,10 +5901,10 @@ class alignas(VL_CACHE_LINE_BYTES) Vysyx_22041812___024root final {
             IData/*31:0*/ ysyx_22041812__DOT__datapath__DOT__fetch_stage__DOT__iTLB__DOT___GEN_1085;
             IData/*26:0*/ ysyx_22041812__DOT__datapath__DOT__fetch_stage__DOT__iTLB__DOT___GEN_1278;
             IData/*31:0*/ ysyx_22041812__DOT__datapath__DOT__fetch_stage__DOT__iTLB__DOT___GEN_1301;
-            IData/*26:0*/ ysyx_22041812__DOT__datapath__DOT__fetch_stage__DOT__iTLB__DOT___GEN_1494;
-            IData/*31:0*/ ysyx_22041812__DOT__datapath__DOT__fetch_stage__DOT__iTLB__DOT___GEN_1511;
         };
         struct {
+            IData/*26:0*/ ysyx_22041812__DOT__datapath__DOT__fetch_stage__DOT__iTLB__DOT___GEN_1494;
+            IData/*31:0*/ ysyx_22041812__DOT__datapath__DOT__fetch_stage__DOT__iTLB__DOT___GEN_1511;
             IData/*26:0*/ ysyx_22041812__DOT__datapath__DOT__fetch_stage__DOT__iTLB__DOT___GEN_1721;
             IData/*31:0*/ ysyx_22041812__DOT__datapath__DOT__fetch_stage__DOT__iTLB__DOT___GEN_1738;
             IData/*26:0*/ ysyx_22041812__DOT__datapath__DOT__fetch_stage__DOT__iTLB__DOT___GEN_1948;
@@ -5965,10 +5967,10 @@ class alignas(VL_CACHE_LINE_BYTES) Vysyx_22041812___024root final {
             VL_OUT64(io_pc_debug,63,0);
             VL_OUT64(io_master_wdata,63,0);
             VL_IN64(io_master_rdata,63,0);
-            VL_IN64(io_slave_wdata,63,0);
-            VL_OUT64(io_slave_rdata,63,0);
         };
         struct {
+            VL_IN64(io_slave_wdata,63,0);
+            VL_OUT64(io_slave_rdata,63,0);
             QData/*63:0*/ ysyx_22041812__DOT__io_pc_debug;
             QData/*63:0*/ ysyx_22041812__DOT__io_master_wdata;
             QData/*63:0*/ ysyx_22041812__DOT__io_master_rdata;
@@ -6031,10 +6033,10 @@ class alignas(VL_CACHE_LINE_BYTES) Vysyx_22041812___024root final {
             QData/*63:0*/ ysyx_22041812__DOT__dcache__DOT___GEN_1008;
             QData/*63:0*/ ysyx_22041812__DOT__dcache__DOT___GEN_1086;
             QData/*63:0*/ ysyx_22041812__DOT__dcache__DOT___GEN_1129;
-            QData/*63:0*/ ysyx_22041812__DOT__dcache__DOT___GEN_1241;
-            QData/*63:0*/ ysyx_22041812__DOT__dcache__DOT___GEN_1325;
         };
         struct {
+            QData/*63:0*/ ysyx_22041812__DOT__dcache__DOT___GEN_1241;
+            QData/*63:0*/ ysyx_22041812__DOT__dcache__DOT___GEN_1325;
             QData/*63:0*/ ysyx_22041812__DOT__dcache__DOT__cache_data_0;
             QData/*63:0*/ ysyx_22041812__DOT__dcache__DOT___GEN_149;
             QData/*63:0*/ ysyx_22041812__DOT__dcache__DOT___GEN_152;
@@ -6097,10 +6099,10 @@ class alignas(VL_CACHE_LINE_BYTES) Vysyx_22041812___024root final {
             QData/*63:0*/ ysyx_22041812__DOT__dcache__DOT___GEN_271;
             QData/*63:0*/ ysyx_22041812__DOT__dcache__DOT___GEN_282;
             QData/*63:0*/ ysyx_22041812__DOT__dcache__DOT___GEN_293;
-            QData/*63:0*/ ysyx_22041812__DOT__dcache__DOT___GEN_300;
-            QData/*63:0*/ ysyx_22041812__DOT__dcache__DOT___GEN_404;
         };
         struct {
+            QData/*63:0*/ ysyx_22041812__DOT__dcache__DOT___GEN_300;
+            QData/*63:0*/ ysyx_22041812__DOT__dcache__DOT___GEN_404;
             QData/*63:0*/ ysyx_22041812__DOT__dcache__DOT___GEN_463;
             QData/*63:0*/ ysyx_22041812__DOT__dcache__DOT___GEN_434;
             QData/*63:0*/ ysyx_22041812__DOT__dcache__DOT___GEN_445;
@@ -6163,10 +6165,10 @@ class alignas(VL_CACHE_LINE_BYTES) Vysyx_22041812___024root final {
             QData/*63:0*/ ysyx_22041812__DOT__dcache__DOT___GEN_679;
             QData/*63:0*/ ysyx_22041812__DOT__dcache__DOT___GEN_729;
             QData/*63:0*/ ysyx_22041812__DOT__dcache__DOT___GEN_742;
-            QData/*63:0*/ ysyx_22041812__DOT__dcache__DOT___GEN_753;
-            QData/*63:0*/ ysyx_22041812__DOT__dcache__DOT___GEN_801;
         };
         struct {
+            QData/*63:0*/ ysyx_22041812__DOT__dcache__DOT___GEN_753;
+            QData/*63:0*/ ysyx_22041812__DOT__dcache__DOT___GEN_801;
             QData/*63:0*/ ysyx_22041812__DOT__dcache__DOT___GEN_814;
             QData/*63:0*/ ysyx_22041812__DOT__dcache__DOT___GEN_824;
             QData/*63:0*/ ysyx_22041812__DOT__dcache__DOT___GEN_834;
@@ -6229,10 +6231,10 @@ class alignas(VL_CACHE_LINE_BYTES) Vysyx_22041812___024root final {
             QData/*63:0*/ ysyx_22041812__DOT__icache__DOT___GEN_527;
             QData/*63:0*/ ysyx_22041812__DOT__icache__DOT___GEN_541;
             QData/*63:0*/ ysyx_22041812__DOT__icache__DOT___GEN_549;
-            QData/*63:0*/ ysyx_22041812__DOT__icache__DOT___GEN_581;
-            QData/*63:0*/ ysyx_22041812__DOT__icache__DOT___GEN_614;
         };
         struct {
+            QData/*63:0*/ ysyx_22041812__DOT__icache__DOT___GEN_581;
+            QData/*63:0*/ ysyx_22041812__DOT__icache__DOT___GEN_614;
             QData/*63:0*/ ysyx_22041812__DOT__icache__DOT___GEN_648;
             QData/*63:0*/ ysyx_22041812__DOT__icache__DOT___GEN_703;
             QData/*63:0*/ ysyx_22041812__DOT__icache__DOT___GEN_776;
@@ -6295,10 +6297,10 @@ class alignas(VL_CACHE_LINE_BYTES) Vysyx_22041812___024root final {
             QData/*63:0*/ ysyx_22041812__DOT__icache__DOT___GEN_641;
             QData/*63:0*/ ysyx_22041812__DOT__icache__DOT___GEN_679;
             QData/*63:0*/ ysyx_22041812__DOT__icache__DOT___GEN_729;
-            QData/*63:0*/ ysyx_22041812__DOT__icache__DOT___GEN_753;
-            QData/*63:0*/ ysyx_22041812__DOT__icache__DOT___GEN_801;
         };
         struct {
+            QData/*63:0*/ ysyx_22041812__DOT__icache__DOT___GEN_753;
+            QData/*63:0*/ ysyx_22041812__DOT__icache__DOT___GEN_801;
             QData/*63:0*/ ysyx_22041812__DOT__icache__DOT___GEN_834;
             QData/*63:0*/ ysyx_22041812__DOT__icache__DOT___GEN_882;
             QData/*63:0*/ ysyx_22041812__DOT__icache__DOT___GEN_889;
@@ -6361,10 +6363,10 @@ class alignas(VL_CACHE_LINE_BYTES) Vysyx_22041812___024root final {
             QData/*63:0*/ ysyx_22041812__DOT__datapath__DOT__execute_stage_io_mw_pipe_reg_pc;
             QData/*63:0*/ ysyx_22041812__DOT__datapath__DOT__execute_stage_io_mw_pipe_reg_csr_read_data;
             QData/*63:0*/ ysyx_22041812__DOT__datapath__DOT__execute_stage_io_mw_pipe_reg_load_data;
-            QData/*63:0*/ ysyx_22041812__DOT__datapath__DOT__memory_stage_io_data_cache_response_data;
-            QData/*63:0*/ ysyx_22041812__DOT__datapath__DOT__memory_stage_io_dcache_cpu_request_data;
         };
         struct {
+            QData/*63:0*/ ysyx_22041812__DOT__datapath__DOT__memory_stage_io_data_cache_response_data;
+            QData/*63:0*/ ysyx_22041812__DOT__datapath__DOT__memory_stage_io_dcache_cpu_request_data;
             QData/*63:0*/ ysyx_22041812__DOT__datapath__DOT__memory_stage_io_dcache_cpu_response_data;
             QData/*63:0*/ ysyx_22041812__DOT__datapath__DOT__memory_stage_io_em_pipe_reg_alu_out;
             QData/*63:0*/ ysyx_22041812__DOT__datapath__DOT__memory_stage_io_em_pipe_reg_csr_read_data;
@@ -6427,10 +6429,10 @@ class alignas(VL_CACHE_LINE_BYTES) Vysyx_22041812___024root final {
             QData/*63:0*/ ysyx_22041812__DOT__datapath__DOT__execute_stage__DOT__io_mw_pipe_reg_alu_out;
             QData/*63:0*/ ysyx_22041812__DOT__datapath__DOT__execute_stage__DOT__io_mw_pipe_reg_pc;
             QData/*63:0*/ ysyx_22041812__DOT__datapath__DOT__execute_stage__DOT__io_mw_pipe_reg_csr_read_data;
-            QData/*63:0*/ ysyx_22041812__DOT__datapath__DOT__execute_stage__DOT__io_mw_pipe_reg_load_data;
-            QData/*63:0*/ ysyx_22041812__DOT__datapath__DOT__execute_stage__DOT__alu_io_A;
         };
         struct {
+            QData/*63:0*/ ysyx_22041812__DOT__datapath__DOT__execute_stage__DOT__io_mw_pipe_reg_load_data;
+            QData/*63:0*/ ysyx_22041812__DOT__datapath__DOT__execute_stage__DOT__alu_io_A;
             QData/*63:0*/ ysyx_22041812__DOT__datapath__DOT__execute_stage__DOT__alu_io_B;
             QData/*63:0*/ ysyx_22041812__DOT__datapath__DOT__execute_stage__DOT__alu_io_out;
             QData/*63:0*/ ysyx_22041812__DOT__datapath__DOT__execute_stage__DOT__brCond_io_rs1;
@@ -6493,10 +6495,10 @@ class alignas(VL_CACHE_LINE_BYTES) Vysyx_22041812___024root final {
             QData/*63:0*/ ysyx_22041812__DOT__datapath__DOT__execute_stage__DOT__B_data;
             QData/*63:0*/ ysyx_22041812__DOT__datapath__DOT__execute_stage__DOT__divider__DOT__io_dividend;
             QData/*63:0*/ ysyx_22041812__DOT__datapath__DOT__execute_stage__DOT__divider__DOT__io_divisor;
-            QData/*63:0*/ ysyx_22041812__DOT__datapath__DOT__execute_stage__DOT__divider__DOT__io_quotient;
-            QData/*63:0*/ ysyx_22041812__DOT__datapath__DOT__execute_stage__DOT__divider__DOT__io_remainder;
         };
         struct {
+            QData/*63:0*/ ysyx_22041812__DOT__datapath__DOT__execute_stage__DOT__divider__DOT__io_quotient;
+            QData/*63:0*/ ysyx_22041812__DOT__datapath__DOT__execute_stage__DOT__divider__DOT__io_remainder;
             QData/*63:0*/ ysyx_22041812__DOT__datapath__DOT__execute_stage__DOT__divider__DOT__result;
             QData/*63:0*/ ysyx_22041812__DOT__datapath__DOT__execute_stage__DOT__divider__DOT___dividend_T_12;
             QData/*63:0*/ ysyx_22041812__DOT__datapath__DOT__execute_stage__DOT__divider__DOT___dividend_T_14;
@@ -6559,10 +6561,10 @@ class alignas(VL_CACHE_LINE_BYTES) Vysyx_22041812___024root final {
             QData/*63:0*/ ysyx_22041812__DOT__datapath__DOT__execute_stage__DOT__multiplier__DOT___GEN_36;
             QData/*63:0*/ ysyx_22041812__DOT__datapath__DOT__execute_stage__DOT__brCond__DOT__io_rs1;
             QData/*63:0*/ ysyx_22041812__DOT__datapath__DOT__execute_stage__DOT__brCond__DOT__io_rs2;
-            QData/*63:0*/ ysyx_22041812__DOT__datapath__DOT__execute_stage__DOT__alu__DOT__io_A;
-            QData/*63:0*/ ysyx_22041812__DOT__datapath__DOT__execute_stage__DOT__alu__DOT__io_B;
         };
         struct {
+            QData/*63:0*/ ysyx_22041812__DOT__datapath__DOT__execute_stage__DOT__alu__DOT__io_A;
+            QData/*63:0*/ ysyx_22041812__DOT__datapath__DOT__execute_stage__DOT__alu__DOT__io_B;
             QData/*63:0*/ ysyx_22041812__DOT__datapath__DOT__execute_stage__DOT__alu__DOT__io_out;
             QData/*63:0*/ ysyx_22041812__DOT__datapath__DOT__execute_stage__DOT__alu__DOT___out_T_1;
             QData/*63:0*/ ysyx_22041812__DOT__datapath__DOT__execute_stage__DOT__alu__DOT___out_T_3;
@@ -6625,10 +6627,10 @@ class alignas(VL_CACHE_LINE_BYTES) Vysyx_22041812___024root final {
             QData/*63:0*/ ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__regFile_io_rdata_30;
             QData/*63:0*/ ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__regFile_io_rdata_31;
             QData/*63:0*/ ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__regFile_io_rdata_32;
-            QData/*63:0*/ ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__regFile_io_rdata_33;
-            QData/*63:0*/ ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__regFile_io_rdata_34;
         };
         struct {
+            QData/*63:0*/ ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__regFile_io_rdata_33;
+            QData/*63:0*/ ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__regFile_io_rdata_34;
             QData/*63:0*/ ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__gpr_ptr_regfile_0;
             QData/*63:0*/ ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__gpr_ptr_regfile_1;
             QData/*63:0*/ ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__gpr_ptr_regfile_2;
@@ -6691,10 +6693,10 @@ class alignas(VL_CACHE_LINE_BYTES) Vysyx_22041812___024root final {
             QData/*63:0*/ ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__gpr_ptr__DOT__regfile_15;
             QData/*63:0*/ ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__gpr_ptr__DOT__regfile_16;
             QData/*63:0*/ ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__gpr_ptr__DOT__regfile_17;
-            QData/*63:0*/ ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__gpr_ptr__DOT__regfile_18;
-            QData/*63:0*/ ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__gpr_ptr__DOT__regfile_19;
         };
         struct {
+            QData/*63:0*/ ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__gpr_ptr__DOT__regfile_18;
+            QData/*63:0*/ ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__gpr_ptr__DOT__regfile_19;
             QData/*63:0*/ ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__gpr_ptr__DOT__regfile_20;
             QData/*63:0*/ ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__gpr_ptr__DOT__regfile_21;
             QData/*63:0*/ ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__gpr_ptr__DOT__regfile_22;
@@ -6757,10 +6759,10 @@ class alignas(VL_CACHE_LINE_BYTES) Vysyx_22041812___024root final {
             QData/*63:0*/ ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__regFile__DOT__reg_13;
             QData/*63:0*/ ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__regFile__DOT__reg_14;
             QData/*63:0*/ ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__regFile__DOT__reg_15;
-            QData/*63:0*/ ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__regFile__DOT__reg_16;
-            QData/*63:0*/ ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__regFile__DOT__reg_17;
         };
         struct {
+            QData/*63:0*/ ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__regFile__DOT__reg_16;
+            QData/*63:0*/ ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__regFile__DOT__reg_17;
             QData/*63:0*/ ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__regFile__DOT__reg_18;
             QData/*63:0*/ ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__regFile__DOT__reg_19;
             QData/*63:0*/ ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__regFile__DOT__reg_20;
@@ -6823,10 +6825,10 @@ class alignas(VL_CACHE_LINE_BYTES) Vysyx_22041812___024root final {
             QData/*63:0*/ ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__regFile__DOT___GEN_112;
             QData/*63:0*/ ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__regFile__DOT___GEN_113;
             QData/*63:0*/ ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__regFile__DOT___GEN_114;
-            QData/*63:0*/ ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__regFile__DOT___GEN_115;
-            QData/*63:0*/ ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__regFile__DOT___GEN_116;
         };
         struct {
+            QData/*63:0*/ ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__regFile__DOT___GEN_115;
+            QData/*63:0*/ ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__regFile__DOT___GEN_116;
             QData/*63:0*/ ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__regFile__DOT___GEN_117;
             QData/*63:0*/ ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__regFile__DOT___GEN_118;
             QData/*63:0*/ ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__regFile__DOT___GEN_119;
@@ -6889,10 +6891,10 @@ class alignas(VL_CACHE_LINE_BYTES) Vysyx_22041812___024root final {
             QData/*63:0*/ ysyx_22041812__DOT__datapath__DOT__memory_stage__DOT__mw_pipe_reg_csr_write_data;
             QData/*63:0*/ ysyx_22041812__DOT__datapath__DOT__memory_stage__DOT__amo_old;
             QData/*63:0*/ ysyx_22041812__DOT__datapath__DOT__memory_stage__DOT__a1;
-            QData/*63:0*/ ysyx_22041812__DOT__datapath__DOT__memory_stage__DOT__a2;
-            QData/*63:0*/ ysyx_22041812__DOT__datapath__DOT__memory_stage__DOT___lt_s_T_5;
         };
         struct {
+            QData/*63:0*/ ysyx_22041812__DOT__datapath__DOT__memory_stage__DOT__a2;
+            QData/*63:0*/ ysyx_22041812__DOT__datapath__DOT__memory_stage__DOT___lt_s_T_5;
             QData/*63:0*/ ysyx_22041812__DOT__datapath__DOT__memory_stage__DOT___lt_s_T_6;
             QData/*63:0*/ ysyx_22041812__DOT__datapath__DOT__memory_stage__DOT___amo_result_T_1;
             QData/*63:0*/ ysyx_22041812__DOT__datapath__DOT__memory_stage__DOT___amo_result_T_2;
@@ -6955,10 +6957,10 @@ class alignas(VL_CACHE_LINE_BYTES) Vysyx_22041812___024root final {
             QData/*63:0*/ ysyx_22041812__DOT__datapath__DOT__memory_stage__DOT__dTLB__DOT__va_reg;
             QData/*43:0*/ ysyx_22041812__DOT__datapath__DOT__memory_stage__DOT__dTLB__DOT__tlbe_0_ppn;
             QData/*43:0*/ ysyx_22041812__DOT__datapath__DOT__memory_stage__DOT__dTLB__DOT__pte_reg_ppn;
-            QData/*43:0*/ ysyx_22041812__DOT__datapath__DOT__memory_stage__DOT__dTLB__DOT__pte_in_ppn;
-            QData/*55:0*/ ysyx_22041812__DOT__datapath__DOT__memory_stage__DOT__dTLB__DOT__ppn_base;
         };
         struct {
+            QData/*43:0*/ ysyx_22041812__DOT__datapath__DOT__memory_stage__DOT__dTLB__DOT__pte_in_ppn;
+            QData/*55:0*/ ysyx_22041812__DOT__datapath__DOT__memory_stage__DOT__dTLB__DOT__ppn_base;
             QData/*51:0*/ ysyx_22041812__DOT__datapath__DOT__memory_stage__DOT__dTLB__DOT___ok_T_1;
             QData/*51:0*/ ysyx_22041812__DOT__datapath__DOT__memory_stage__DOT__dTLB__DOT___GEN_2896;
             QData/*42:0*/ ysyx_22041812__DOT__datapath__DOT__memory_stage__DOT__dTLB__DOT___ok_T_8;
@@ -7021,10 +7023,10 @@ class alignas(VL_CACHE_LINE_BYTES) Vysyx_22041812___024root final {
             QData/*43:0*/ ysyx_22041812__DOT__datapath__DOT__fetch_stage__DOT__iTLB__DOT__pte_in_ppn;
             QData/*55:0*/ ysyx_22041812__DOT__datapath__DOT__fetch_stage__DOT__iTLB__DOT__ppn_base;
             QData/*51:0*/ ysyx_22041812__DOT__datapath__DOT__fetch_stage__DOT__iTLB__DOT___ok_T_1;
-            QData/*51:0*/ ysyx_22041812__DOT__datapath__DOT__fetch_stage__DOT__iTLB__DOT___GEN_2895;
-            QData/*42:0*/ ysyx_22041812__DOT__datapath__DOT__fetch_stage__DOT__iTLB__DOT___ok_T_8;
         };
         struct {
+            QData/*51:0*/ ysyx_22041812__DOT__datapath__DOT__fetch_stage__DOT__iTLB__DOT___GEN_2895;
+            QData/*42:0*/ ysyx_22041812__DOT__datapath__DOT__fetch_stage__DOT__iTLB__DOT___ok_T_8;
             QData/*42:0*/ ysyx_22041812__DOT__datapath__DOT__fetch_stage__DOT__iTLB__DOT___GEN_2897;
             QData/*33:0*/ ysyx_22041812__DOT__datapath__DOT__fetch_stage__DOT__iTLB__DOT___ok_T_16;
             QData/*33:0*/ ysyx_22041812__DOT__datapath__DOT__fetch_stage__DOT__iTLB__DOT___GEN_2899;
@@ -7087,10 +7089,10 @@ class alignas(VL_CACHE_LINE_BYTES) Vysyx_22041812___024root final {
             QData/*63:0*/ ysyx_22041812__DOT__datapath__DOT__csr__DOT__stval_data;
             QData/*43:0*/ ysyx_22041812__DOT__datapath__DOT__csr__DOT__satp_ppn;
             QData/*50:0*/ ysyx_22041812__DOT__datapath__DOT__csr__DOT__hi;
-            QData/*63:0*/ ysyx_22041812__DOT__datapath__DOT__csr__DOT___T;
-            QData/*63:0*/ ysyx_22041812__DOT__datapath__DOT__csr__DOT___T_350;
         };
         struct {
+            QData/*63:0*/ ysyx_22041812__DOT__datapath__DOT__csr__DOT___T;
+            QData/*63:0*/ ysyx_22041812__DOT__datapath__DOT__csr__DOT___T_350;
             QData/*63:0*/ ysyx_22041812__DOT__datapath__DOT__csr__DOT___T_1;
             QData/*63:0*/ ysyx_22041812__DOT__datapath__DOT__csr__DOT___T_2;
             QData/*63:0*/ ysyx_22041812__DOT__datapath__DOT__csr__DOT___T_3;
@@ -7153,10 +7155,10 @@ class alignas(VL_CACHE_LINE_BYTES) Vysyx_22041812___024root final {
             QData/*63:0*/ ysyx_22041812__DOT__datapath__DOT__csr__DOT___csrData_T_197;
             QData/*63:0*/ ysyx_22041812__DOT__datapath__DOT__csr__DOT___csrData_T_198;
             QData/*63:0*/ ysyx_22041812__DOT__datapath__DOT__csr__DOT___csrData_T_199;
-            QData/*63:0*/ ysyx_22041812__DOT__datapath__DOT__csr__DOT___csrData_T_200;
-            QData/*63:0*/ ysyx_22041812__DOT__datapath__DOT__csr__DOT___csrData_T_201;
         };
         struct {
+            QData/*63:0*/ ysyx_22041812__DOT__datapath__DOT__csr__DOT___csrData_T_200;
+            QData/*63:0*/ ysyx_22041812__DOT__datapath__DOT__csr__DOT___csrData_T_201;
             QData/*63:0*/ ysyx_22041812__DOT__datapath__DOT__csr__DOT___csrData_T_202;
             QData/*63:0*/ ysyx_22041812__DOT__datapath__DOT__csr__DOT__csrData;
             QData/*63:0*/ ysyx_22041812__DOT__datapath__DOT__csr__DOT___writeData_T;
@@ -7219,10 +7221,10 @@ class alignas(VL_CACHE_LINE_BYTES) Vysyx_22041812___024root final {
             QData/*62:0*/ ysyx_22041812__DOT__datapath__DOT__csr__DOT___scause_code_T_3;
             QData/*63:0*/ ysyx_22041812__DOT__datapath__DOT__csr__DOT___sepc_data_T_5;
             QData/*63:0*/ ysyx_22041812__DOT__datapath__DOT__csr__DOT___GEN_140;
-            QData/*62:0*/ ysyx_22041812__DOT__datapath__DOT__csr__DOT___GEN_142;
-            QData/*63:0*/ ysyx_22041812__DOT__datapath__DOT__csr__DOT___GEN_143;
         };
         struct {
+            QData/*62:0*/ ysyx_22041812__DOT__datapath__DOT__csr__DOT___GEN_142;
+            QData/*63:0*/ ysyx_22041812__DOT__datapath__DOT__csr__DOT___GEN_143;
             QData/*63:0*/ ysyx_22041812__DOT__datapath__DOT__csr__DOT___GEN_150;
             QData/*62:0*/ ysyx_22041812__DOT__datapath__DOT__csr__DOT___GEN_152;
             QData/*63:0*/ ysyx_22041812__DOT__datapath__DOT__csr__DOT___GEN_153;

@@ -5002,6 +5002,7 @@ VL_ATTR_COLD void Vysyx_22041812___024root___ctor_var_reset(Vysyx_22041812___024
     vlSelf->ysyx_22041812__DOT__datapath__DOT__execute_stage_io_mw_pipe_reg_pc = VL_SCOPED_RAND_RESET_Q(64, __VscopeHash, 1419360360660392773ull);
     vlSelf->ysyx_22041812__DOT__datapath__DOT__execute_stage_io_mw_pipe_reg_csr_read_data = VL_SCOPED_RAND_RESET_Q(64, __VscopeHash, 8102830274631259918ull);
     vlSelf->ysyx_22041812__DOT__datapath__DOT__execute_stage_io_mw_pipe_reg_load_data = VL_SCOPED_RAND_RESET_Q(64, __VscopeHash, 13309121443682162036ull);
+    vlSelf->ysyx_22041812__DOT__datapath__DOT__execute_stage_io_src_unready = VL_SCOPED_RAND_RESET_I(1, __VscopeHash, 16018618655081410335ull);
     vlSelf->ysyx_22041812__DOT__datapath__DOT__memory_stage_clock = VL_SCOPED_RAND_RESET_I(1, __VscopeHash, 13733292342265907287ull);
     vlSelf->ysyx_22041812__DOT__datapath__DOT__memory_stage_reset = VL_SCOPED_RAND_RESET_I(1, __VscopeHash, 13246741359651577148ull);
     vlSelf->ysyx_22041812__DOT__datapath__DOT__memory_stage_io_stall = VL_SCOPED_RAND_RESET_I(1, __VscopeHash, 10230150361865762731ull);
@@ -5265,6 +5266,7 @@ VL_ATTR_COLD void Vysyx_22041812___024root___ctor_var_reset(Vysyx_22041812___024
     vlSelf->ysyx_22041812__DOT__datapath__DOT__execute_stage__DOT__io_mw_pipe_reg_pc = VL_SCOPED_RAND_RESET_Q(64, __VscopeHash, 1557950316205119299ull);
     vlSelf->ysyx_22041812__DOT__datapath__DOT__execute_stage__DOT__io_mw_pipe_reg_csr_read_data = VL_SCOPED_RAND_RESET_Q(64, __VscopeHash, 2337516132678710233ull);
     vlSelf->ysyx_22041812__DOT__datapath__DOT__execute_stage__DOT__io_mw_pipe_reg_load_data = VL_SCOPED_RAND_RESET_Q(64, __VscopeHash, 3405306125808991009ull);
+    vlSelf->ysyx_22041812__DOT__datapath__DOT__execute_stage__DOT__io_src_unready = VL_SCOPED_RAND_RESET_I(1, __VscopeHash, 10886532684533659510ull);
     vlSelf->ysyx_22041812__DOT__datapath__DOT__execute_stage__DOT__alu_io_A = VL_SCOPED_RAND_RESET_Q(64, __VscopeHash, 1776322276701644043ull);
     vlSelf->ysyx_22041812__DOT__datapath__DOT__execute_stage__DOT__alu_io_B = VL_SCOPED_RAND_RESET_Q(64, __VscopeHash, 938148865216037792ull);
     vlSelf->ysyx_22041812__DOT__datapath__DOT__execute_stage__DOT__alu_io_width_type = VL_SCOPED_RAND_RESET_I(2, __VscopeHash, 1819942607645014855ull);

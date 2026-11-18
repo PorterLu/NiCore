@@ -41,6 +41,7 @@ class ExecuteStage extends Module{
 		val mw_pipe_reg_csr_read_data = Input(UInt(64.W))
 		val mw_pipe_reg_load_data = Input(UInt(64.W))
 		val dTLB_ready = Input(Bool())
+		val src_unready = Output(Bool())
 	})
 
 	val em_pipe_reg = RegInit(
@@ -119,6 +120,7 @@ class ExecuteStage extends Module{
 	val src_unready = ((io.de_pipe_reg.src1_addr === em_pipe_reg.dest) 
 						|| (io.de_pipe_reg.src2_addr === em_pipe_reg.dest)) && em_pipe_reg.ld_type.orR && !io.data_cache_tag && 
 						em_pipe_reg.enable && io.de_pipe_reg.enable && !em_pipe_reg.is_clint
+	io.src_unready := src_unready
 
 	val mul_result = RegInit(0.U(64.W))
 	val mul_result_enable = RegInit(false.B)
