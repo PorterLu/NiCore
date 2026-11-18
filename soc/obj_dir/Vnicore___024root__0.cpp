@@ -12427,6 +12427,7 @@ void Vnicore___024root___nba_sequent__TOP__0(Vnicore___024root* vlSelf) {
         = (vlSelfRef.nicore__DOT__datapath__DOT__fetch_stage__DOT__iTLB__DOT__pte_reg_ppn 
            << 0x0000000cU);
     vlSelfRef.io_pc_debug = vlSelfRef.nicore__DOT__datapath__DOT__memory_stage__DOT__mw_pipe_reg_pc;
+    vlSelfRef.io_commit_pc = vlSelfRef.nicore__DOT__datapath__DOT__memory_stage__DOT__mw_pipe_reg_pc;
     vlSelfRef.nicore__DOT__datapath__DOT__decode_stage__DOT___csr_write_data_T_8 
         = (4ULL + vlSelfRef.nicore__DOT__datapath__DOT__memory_stage__DOT__mw_pipe_reg_pc);
     vlSelfRef.nicore__DOT__datapath__DOT__fetch_stage__DOT__iTLB__DOT__ppn_base 
@@ -14126,6 +14127,7 @@ void Vnicore___024root___nba_sequent__TOP__0(Vnicore___024root* vlSelf) {
                                                                 ((IData)(vlSelfRef.io_master_rlast) 
                                                                  & ((IData)(vlSelfRef.io_master_rvalid) 
                                                                     & (IData)(vlSelfRef.io_master_rready))))))));
+    vlSelfRef.io_commit_valid = vlSelfRef.nicore__DOT__datapath__DOT__memory_stage__DOT__mw_pipe_reg_enable;
     vlSelfRef.nicore__DOT__datapath__DOT___csr_atomic_flush_T_1 
         = ((IData)(vlSelfRef.nicore__DOT__datapath__DOT__memory_stage__DOT__mw_pipe_reg_enable) 
            & (0U != (IData)(vlSelfRef.nicore__DOT__datapath__DOT__memory_stage__DOT__mw_pipe_reg_csr_write_op)));
@@ -14683,19 +14685,4 @@ void Vnicore___024root___nba_sequent__TOP__0(Vnicore___024root* vlSelf) {
                     & ((IData)(vlSelfRef.nicore__DOT__datapath__DOT__decode_stage__DOT__de_pipe_reg_enable) 
                        & ((IData)(vlSelfRef.nicore__DOT__datapath__DOT__execute_stage__DOT___src_unready_T) 
                           | (IData)(vlSelfRef.nicore__DOT__datapath__DOT__execute_stage__DOT___src_unready_T_1)))))));
-    vlSelfRef.nicore__DOT__datapath__DOT__fetch_stage__DOT__iTLB_io_stall 
-        = ((IData)(vlSelfRef.__VdfgRegularize_hebeb780c_0_408) 
-           | ((((0x0fU == (IData)(vlSelfRef.nicore__DOT__datapath__DOT__decode_stage__DOT__de_pipe_reg_alu_op)) 
-                | ((0x10U == (IData)(vlSelfRef.nicore__DOT__datapath__DOT__decode_stage__DOT__de_pipe_reg_alu_op)) 
-                   | (IData)(vlSelfRef.nicore__DOT__datapath__DOT__execute_stage__DOT__divider_io_div_signed))) 
-               & (IData)(vlSelfRef.__VdfgRegularize_hebeb780c_0_407)) 
-              | (((~ (IData)(vlSelfRef.nicore__DOT__datapath__DOT__fetch_stage__DOT__iTLB_io_cache_response_ready)) 
-                  & (IData)(vlSelfRef.nicore__DOT__datapath__DOT__fetch_stage_io_icache_cpu_request_valid)) 
-                 | ((IData)(vlSelfRef.nicore__DOT__datapath__DOT__execute_stage__DOT__em_pipe_reg_enable) 
-                    & ((~ (IData)(vlSelfRef.nicore__DOT__datapath__DOT__execute_stage__DOT__em_pipe_reg_is_clint)) 
-                       & (((0x0000100fU == vlSelfRef.nicore__DOT__datapath__DOT__execute_stage__DOT__em_pipe_reg_inst) 
-                           | (IData)(vlSelfRef.__VdfgRegularize_hebeb780c_0_300)) 
-                          & ((0U == (IData)(vlSelfRef.nicore__DOT__datapath__DOT__memory_stage__DOT__dTLB_fault_reg)) 
-                             & ((~ (IData)(vlSelfRef.nicore__DOT__datapath__DOT__memory_stage__DOT__data_cache_tag)) 
-                                | (IData)(vlSelfRef.nicore__DOT__datapath__DOT__memory_stage__DOT__amo_second)))))))));
 }

@@ -29,6 +29,7 @@ class alignas(VL_CACHE_LINE_BYTES) Vnicore___024root final {
         struct {
             VL_IN8(clock,0,0);
             VL_IN8(reset,0,0);
+            VL_OUT8(io_commit_valid,0,0);
             VL_OUT8(io_start,0,0);
             VL_OUT8(io_stall,0,0);
             VL_IN8(io_interrupt,0,0);
@@ -84,15 +85,16 @@ class alignas(VL_CACHE_LINE_BYTES) Vnicore___024root final {
             VL_OUT8(io_slave_rid,3,0);
             CData/*0:0*/ nicore__DOT__clock;
             CData/*0:0*/ nicore__DOT__reset;
+            CData/*0:0*/ nicore__DOT__io_commit_valid;
             CData/*0:0*/ nicore__DOT__io_start;
             CData/*0:0*/ nicore__DOT__io_stall;
             CData/*0:0*/ nicore__DOT__io_interrupt;
             CData/*0:0*/ nicore__DOT__io_master_awready;
             CData/*0:0*/ nicore__DOT__io_master_awvalid;
-            CData/*3:0*/ nicore__DOT__io_master_awid;
-            CData/*7:0*/ nicore__DOT__io_master_awlen;
         };
         struct {
+            CData/*3:0*/ nicore__DOT__io_master_awid;
+            CData/*7:0*/ nicore__DOT__io_master_awlen;
             CData/*2:0*/ nicore__DOT__io_master_awsize;
             CData/*1:0*/ nicore__DOT__io_master_awburst;
             CData/*0:0*/ nicore__DOT__io_master_wready;
@@ -141,6 +143,7 @@ class alignas(VL_CACHE_LINE_BYTES) Vnicore___024root final {
             CData/*3:0*/ nicore__DOT__io_slave_rid;
             CData/*0:0*/ nicore__DOT__datapath_clock;
             CData/*0:0*/ nicore__DOT__datapath_reset;
+            CData/*0:0*/ nicore__DOT__datapath_io_commit_valid;
             CData/*0:0*/ nicore__DOT__datapath_io_start;
             CData/*0:0*/ nicore__DOT__datapath_io_stall;
             CData/*0:0*/ nicore__DOT__datapath_io_icache_cpu_request_valid;
@@ -154,11 +157,11 @@ class alignas(VL_CACHE_LINE_BYTES) Vnicore___024root final {
             CData/*1:0*/ nicore__DOT__datapath_io_dcache_accessType;
             CData/*0:0*/ nicore__DOT__datapath_io_interrupt;
             CData/*0:0*/ nicore__DOT__icache_clock;
+        };
+        struct {
             CData/*0:0*/ nicore__DOT__icache_reset;
             CData/*0:0*/ nicore__DOT__icache_io_cpu_request_valid;
             CData/*0:0*/ nicore__DOT__icache_io_cpu_response_ready;
-        };
-        struct {
             CData/*0:0*/ nicore__DOT__icache_io_mem_io_ar_ready;
             CData/*0:0*/ nicore__DOT__icache_io_mem_io_ar_valid;
             CData/*7:0*/ nicore__DOT__icache_io_mem_io_ar_bits_len;
@@ -220,11 +223,11 @@ class alignas(VL_CACHE_LINE_BYTES) Vnicore___024root final {
             CData/*0:0*/ nicore__DOT__arb_io_dcache_aw_ready;
             CData/*0:0*/ nicore__DOT__arb_io_dcache_aw_valid;
             CData/*7:0*/ nicore__DOT__arb_io_dcache_aw_bits_len;
+        };
+        struct {
             CData/*2:0*/ nicore__DOT__arb_io_dcache_aw_bits_size;
             CData/*0:0*/ nicore__DOT__arb_io_dcache_w_ready;
             CData/*0:0*/ nicore__DOT__arb_io_dcache_w_valid;
-        };
-        struct {
             CData/*7:0*/ nicore__DOT__arb_io_dcache_w_bits_strb;
             CData/*0:0*/ nicore__DOT__arb_io_dcache_w_bits_last;
             CData/*0:0*/ nicore__DOT__arb_io_dcache_b_ready;
@@ -286,11 +289,11 @@ class alignas(VL_CACHE_LINE_BYTES) Vnicore___024root final {
             CData/*0:0*/ nicore__DOT__sram7_WEN;
             CData/*5:0*/ nicore__DOT__sram7_A;
             CData/*0:0*/ nicore__DOT__dcache__DOT__clock;
+        };
+        struct {
             CData/*0:0*/ nicore__DOT__dcache__DOT__reset;
             CData/*7:0*/ nicore__DOT__dcache__DOT__io_cpu_request_mask;
             CData/*0:0*/ nicore__DOT__dcache__DOT__io_cpu_request_rw;
-        };
-        struct {
             CData/*0:0*/ nicore__DOT__dcache__DOT__io_cpu_request_valid;
             CData/*0:0*/ nicore__DOT__dcache__DOT__io_cpu_response_ready;
             CData/*0:0*/ nicore__DOT__dcache__DOT__io_mem_io_aw_ready;
@@ -352,11 +355,11 @@ class alignas(VL_CACHE_LINE_BYTES) Vnicore___024root final {
             CData/*7:0*/ nicore__DOT__dcache__DOT__tag_mem_2_io_tag_read_visit;
             CData/*0:0*/ nicore__DOT__dcache__DOT__tag_mem_3_clock;
             CData/*0:0*/ nicore__DOT__dcache__DOT__tag_mem_3_reset;
+        };
+        struct {
             CData/*5:0*/ nicore__DOT__dcache__DOT__tag_mem_3_io_cache_req_index;
             CData/*0:0*/ nicore__DOT__dcache__DOT__tag_mem_3_io_cache_req_we;
             CData/*0:0*/ nicore__DOT__dcache__DOT__tag_mem_3_io_tag_write_valid;
-        };
-        struct {
             CData/*0:0*/ nicore__DOT__dcache__DOT__tag_mem_3_io_tag_write_dirty;
             CData/*7:0*/ nicore__DOT__dcache__DOT__tag_mem_3_io_tag_write_visit;
             CData/*0:0*/ nicore__DOT__dcache__DOT__tag_mem_3_io_tag_read_valid;
@@ -418,11 +421,11 @@ class alignas(VL_CACHE_LINE_BYTES) Vnicore___024root final {
             CData/*0:0*/ nicore__DOT__dcache__DOT___GEN_985;
             CData/*0:0*/ nicore__DOT__dcache__DOT___GEN_1063;
             CData/*0:0*/ nicore__DOT__dcache__DOT___GEN_1153;
+        };
+        struct {
             CData/*0:0*/ nicore__DOT__dcache__DOT___GEN_1200;
             CData/*0:0*/ nicore__DOT__dcache__DOT___GEN_1286;
             CData/*0:0*/ nicore__DOT__dcache__DOT__is_match_3;
-        };
-        struct {
             CData/*0:0*/ nicore__DOT__dcache__DOT___T_23;
             CData/*0:0*/ nicore__DOT__dcache__DOT___GEN_98;
             CData/*0:0*/ nicore__DOT__dcache__DOT___GEN_677;
@@ -484,11 +487,11 @@ class alignas(VL_CACHE_LINE_BYTES) Vnicore___024root final {
             CData/*0:0*/ nicore__DOT__dcache__DOT___GEN_1289;
             CData/*0:0*/ nicore__DOT__dcache__DOT__flush_loop_enable;
             CData/*5:0*/ nicore__DOT__dcache__DOT___GEN_2;
+        };
+        struct {
             CData/*1:0*/ nicore__DOT__dcache__DOT___wrap_value_T_5;
             CData/*0:0*/ nicore__DOT__dcache__DOT___GEN_24;
             CData/*0:0*/ nicore__DOT__dcache__DOT___GEN_30;
-        };
-        struct {
             CData/*0:0*/ nicore__DOT__dcache__DOT___GEN_38;
             CData/*0:0*/ nicore__DOT__dcache__DOT___GEN_44;
             CData/*0:0*/ nicore__DOT__dcache__DOT___GEN_50;
@@ -550,11 +553,11 @@ class alignas(VL_CACHE_LINE_BYTES) Vnicore___024root final {
             CData/*0:0*/ nicore__DOT__dcache__DOT___GEN_79;
             CData/*1:0*/ nicore__DOT__dcache__DOT___GEN_81;
             CData/*4:0*/ nicore__DOT__dcache__DOT___GEN_82;
+        };
+        struct {
             CData/*0:0*/ nicore__DOT__dcache__DOT___GEN_85;
             CData/*1:0*/ nicore__DOT__dcache__DOT___GEN_87;
             CData/*4:0*/ nicore__DOT__dcache__DOT___GEN_88;
-        };
-        struct {
             CData/*0:0*/ nicore__DOT__dcache__DOT___GEN_91;
             CData/*1:0*/ nicore__DOT__dcache__DOT___GEN_93;
             CData/*7:0*/ nicore__DOT__dcache__DOT___GEN_108;
@@ -616,11 +619,11 @@ class alignas(VL_CACHE_LINE_BYTES) Vnicore___024root final {
             CData/*7:0*/ nicore__DOT__dcache__DOT___tag_mem_0_io_tag_write_visit_T_4;
             CData/*7:0*/ nicore__DOT__dcache__DOT___GEN_221;
             CData/*0:0*/ nicore__DOT__dcache__DOT___GEN_223;
+        };
+        struct {
             CData/*7:0*/ nicore__DOT__dcache__DOT___GEN_224;
             CData/*0:0*/ nicore__DOT__dcache__DOT___GEN_226;
             CData/*0:0*/ nicore__DOT__dcache__DOT___GEN_227;
-        };
-        struct {
             CData/*7:0*/ nicore__DOT__dcache__DOT___tag_mem_1_io_tag_write_visit_T;
             CData/*7:0*/ nicore__DOT__dcache__DOT___tag_mem_1_io_tag_write_visit_T_3;
             CData/*7:0*/ nicore__DOT__dcache__DOT___tag_mem_1_io_tag_write_visit_T_4;
@@ -682,11 +685,11 @@ class alignas(VL_CACHE_LINE_BYTES) Vnicore___024root final {
             CData/*7:0*/ nicore__DOT__dcache__DOT___GEN_1351;
             CData/*7:0*/ nicore__DOT__dcache__DOT__visit_0;
             CData/*7:0*/ nicore__DOT__dcache__DOT___GEN_315;
+        };
+        struct {
             CData/*7:0*/ nicore__DOT__dcache__DOT___GEN_418;
             CData/*7:0*/ nicore__DOT__dcache__DOT___GEN_720;
             CData/*7:0*/ nicore__DOT__dcache__DOT___GEN_793;
-        };
-        struct {
             CData/*7:0*/ nicore__DOT__dcache__DOT___GEN_874;
             CData/*7:0*/ nicore__DOT__dcache__DOT___GEN_949;
             CData/*7:0*/ nicore__DOT__dcache__DOT___GEN_1026;
@@ -748,11 +751,11 @@ class alignas(VL_CACHE_LINE_BYTES) Vnicore___024root final {
             CData/*0:0*/ nicore__DOT__dcache__DOT___max_T_3;
             CData/*0:0*/ nicore__DOT__dcache__DOT___max_T_4;
             CData/*1:0*/ nicore__DOT__dcache__DOT___max_T_5;
+        };
+        struct {
             CData/*1:0*/ nicore__DOT__dcache__DOT___max_T_6;
             CData/*1:0*/ nicore__DOT__dcache__DOT___max_T_7;
             CData/*1:0*/ nicore__DOT__dcache__DOT___GEN_319;
-        };
-        struct {
             CData/*1:0*/ nicore__DOT__dcache__DOT___GEN_422;
             CData/*1:0*/ nicore__DOT__dcache__DOT___GEN_724;
             CData/*1:0*/ nicore__DOT__dcache__DOT___GEN_797;
@@ -814,11 +817,11 @@ class alignas(VL_CACHE_LINE_BYTES) Vnicore___024root final {
             CData/*7:0*/ nicore__DOT__dcache__DOT___GEN_387;
             CData/*0:0*/ nicore__DOT__dcache__DOT___GEN_388;
             CData/*0:0*/ nicore__DOT__dcache__DOT___GEN_389;
+        };
+        struct {
             CData/*0:0*/ nicore__DOT__dcache__DOT___GEN_391;
             CData/*7:0*/ nicore__DOT__dcache__DOT___GEN_392;
             CData/*0:0*/ nicore__DOT__dcache__DOT___GEN_393;
-        };
-        struct {
             CData/*0:0*/ nicore__DOT__dcache__DOT___GEN_394;
             CData/*0:0*/ nicore__DOT__dcache__DOT___GEN_396;
             CData/*7:0*/ nicore__DOT__dcache__DOT___GEN_397;
@@ -880,11 +883,11 @@ class alignas(VL_CACHE_LINE_BYTES) Vnicore___024root final {
             CData/*0:0*/ nicore__DOT__dcache__DOT___GEN_631;
             CData/*0:0*/ nicore__DOT__dcache__DOT___GEN_634;
             CData/*0:0*/ nicore__DOT__dcache__DOT___GEN_635;
+        };
+        struct {
             CData/*0:0*/ nicore__DOT__dcache__DOT___GEN_638;
             CData/*0:0*/ nicore__DOT__dcache__DOT___GEN_639;
             CData/*0:0*/ nicore__DOT__dcache__DOT___GEN_640;
-        };
-        struct {
             CData/*3:0*/ nicore__DOT__dcache__DOT___GEN_642;
             CData/*0:0*/ nicore__DOT__dcache__DOT___GEN_643;
             CData/*0:0*/ nicore__DOT__dcache__DOT___GEN_646;
@@ -946,11 +949,11 @@ class alignas(VL_CACHE_LINE_BYTES) Vnicore___024root final {
             CData/*0:0*/ nicore__DOT__dcache__DOT___GEN_773;
             CData/*0:0*/ nicore__DOT__dcache__DOT___GEN_774;
             CData/*0:0*/ nicore__DOT__dcache__DOT___GEN_781;
+        };
+        struct {
             CData/*0:0*/ nicore__DOT__dcache__DOT___GEN_784;
             CData/*0:0*/ nicore__DOT__dcache__DOT___GEN_787;
             CData/*1:0*/ nicore__DOT__dcache__DOT___GEN_798;
-        };
-        struct {
             CData/*0:0*/ nicore__DOT__dcache__DOT___GEN_802;
             CData/*0:0*/ nicore__DOT__dcache__DOT___GEN_805;
             CData/*0:0*/ nicore__DOT__dcache__DOT___GEN_807;
@@ -1012,11 +1015,11 @@ class alignas(VL_CACHE_LINE_BYTES) Vnicore___024root final {
             CData/*0:0*/ nicore__DOT__dcache__DOT___GEN_917;
             CData/*7:0*/ nicore__DOT__dcache__DOT___GEN_918;
             CData/*0:0*/ nicore__DOT__dcache__DOT___GEN_919;
+        };
+        struct {
             CData/*0:0*/ nicore__DOT__dcache__DOT___GEN_920;
             CData/*0:0*/ nicore__DOT__dcache__DOT___GEN_922;
             CData/*7:0*/ nicore__DOT__dcache__DOT___GEN_923;
-        };
-        struct {
             CData/*0:0*/ nicore__DOT__dcache__DOT___GEN_924;
             CData/*0:0*/ nicore__DOT__dcache__DOT___GEN_925;
             CData/*0:0*/ nicore__DOT__dcache__DOT___GEN_927;
@@ -1078,11 +1081,11 @@ class alignas(VL_CACHE_LINE_BYTES) Vnicore___024root final {
             CData/*1:0*/ nicore__DOT__dcache__DOT___GEN_1051;
             CData/*0:0*/ nicore__DOT__dcache__DOT___GEN_1053;
             CData/*0:0*/ nicore__DOT__dcache__DOT___GEN_1054;
+        };
+        struct {
             CData/*0:0*/ nicore__DOT__dcache__DOT___GEN_1055;
             CData/*7:0*/ nicore__DOT__dcache__DOT___GEN_1057;
             CData/*0:0*/ nicore__DOT__dcache__DOT___GEN_1058;
-        };
-        struct {
             CData/*0:0*/ nicore__DOT__dcache__DOT___GEN_1065;
             CData/*0:0*/ nicore__DOT__dcache__DOT___GEN_1067;
             CData/*7:0*/ nicore__DOT__dcache__DOT___GEN_1068;
@@ -1144,11 +1147,11 @@ class alignas(VL_CACHE_LINE_BYTES) Vnicore___024root final {
             CData/*0:0*/ nicore__DOT__dcache__DOT___GEN_1170;
             CData/*0:0*/ nicore__DOT__dcache__DOT___GEN_1172;
             CData/*7:0*/ nicore__DOT__dcache__DOT___GEN_1173;
+        };
+        struct {
             CData/*0:0*/ nicore__DOT__dcache__DOT___GEN_1174;
             CData/*1:0*/ nicore__DOT__dcache__DOT___GEN_1193;
             CData/*5:0*/ nicore__DOT__dcache__DOT___GEN_1196;
-        };
-        struct {
             CData/*0:0*/ nicore__DOT__dcache__DOT___GEN_1207;
             CData/*7:0*/ nicore__DOT__dcache__DOT___GEN_1209;
             CData/*0:0*/ nicore__DOT__dcache__DOT___GEN_1210;
@@ -1210,11 +1213,11 @@ class alignas(VL_CACHE_LINE_BYTES) Vnicore___024root final {
             CData/*5:0*/ nicore__DOT__dcache__DOT___GEN_1317;
             CData/*0:0*/ nicore__DOT__dcache__DOT___GEN_1318;
             CData/*0:0*/ nicore__DOT__dcache__DOT___GEN_1319;
+        };
+        struct {
             CData/*7:0*/ nicore__DOT__dcache__DOT___GEN_1323;
             CData/*0:0*/ nicore__DOT__dcache__DOT___GEN_1324;
             CData/*0:0*/ nicore__DOT__dcache__DOT___GEN_1331;
-        };
-        struct {
             CData/*0:0*/ nicore__DOT__dcache__DOT___GEN_1332;
             CData/*1:0*/ nicore__DOT__dcache__DOT___GEN_1334;
             CData/*0:0*/ nicore__DOT__dcache__DOT___GEN_1337;
@@ -1276,11 +1279,11 @@ class alignas(VL_CACHE_LINE_BYTES) Vnicore___024root final {
             CData/*0:0*/ nicore__DOT__icache__DOT__tag_mem_1_io_cache_req_we;
             CData/*0:0*/ nicore__DOT__icache__DOT__tag_mem_1_io_tag_write_valid;
             CData/*0:0*/ nicore__DOT__icache__DOT__tag_mem_1_io_tag_write_dirty;
+        };
+        struct {
             CData/*7:0*/ nicore__DOT__icache__DOT__tag_mem_1_io_tag_write_visit;
             CData/*0:0*/ nicore__DOT__icache__DOT__tag_mem_1_io_tag_read_valid;
             CData/*0:0*/ nicore__DOT__icache__DOT__tag_mem_1_io_tag_read_dirty;
-        };
-        struct {
             CData/*7:0*/ nicore__DOT__icache__DOT__tag_mem_1_io_tag_read_visit;
             CData/*0:0*/ nicore__DOT__icache__DOT__tag_mem_2_clock;
             CData/*0:0*/ nicore__DOT__icache__DOT__tag_mem_2_reset;
@@ -1342,11 +1345,11 @@ class alignas(VL_CACHE_LINE_BYTES) Vnicore___024root final {
             CData/*0:0*/ nicore__DOT__icache__DOT__wrap_wrap_1;
             CData/*5:0*/ nicore__DOT__icache__DOT___wrap_value_T_3;
             CData/*0:0*/ nicore__DOT__icache__DOT___GEN_678;
+        };
+        struct {
             CData/*0:0*/ nicore__DOT__icache__DOT___GEN_752;
             CData/*0:0*/ nicore__DOT__icache__DOT___GEN_833;
             CData/*0:0*/ nicore__DOT__icache__DOT___GEN_908;
-        };
-        struct {
             CData/*0:0*/ nicore__DOT__icache__DOT___GEN_985;
             CData/*0:0*/ nicore__DOT__icache__DOT___GEN_1063;
             CData/*0:0*/ nicore__DOT__icache__DOT___GEN_1153;
@@ -1408,11 +1411,11 @@ class alignas(VL_CACHE_LINE_BYTES) Vnicore___024root final {
             CData/*0:0*/ nicore__DOT__icache__DOT___GEN_220;
             CData/*7:0*/ nicore__DOT__icache__DOT___GEN_221;
             CData/*0:0*/ nicore__DOT__icache__DOT___GEN_223;
+        };
+        struct {
             CData/*7:0*/ nicore__DOT__icache__DOT___GEN_224;
             CData/*0:0*/ nicore__DOT__icache__DOT___GEN_226;
             CData/*0:0*/ nicore__DOT__icache__DOT___GEN_227;
-        };
-        struct {
             CData/*7:0*/ nicore__DOT__icache__DOT___tag_mem_1_io_tag_write_visit_T;
             CData/*7:0*/ nicore__DOT__icache__DOT___tag_mem_1_io_tag_write_visit_T_3;
             CData/*7:0*/ nicore__DOT__icache__DOT___tag_mem_1_io_tag_write_visit_T_4;
@@ -1474,11 +1477,11 @@ class alignas(VL_CACHE_LINE_BYTES) Vnicore___024root final {
             CData/*7:0*/ nicore__DOT__icache__DOT___GEN_1188;
             CData/*7:0*/ nicore__DOT__icache__DOT___GEN_1271;
             CData/*7:0*/ nicore__DOT__icache__DOT___GEN_1354;
+        };
+        struct {
             CData/*7:0*/ nicore__DOT__icache__DOT__visit_3;
             CData/*7:0*/ nicore__DOT__icache__DOT___GEN_314;
             CData/*7:0*/ nicore__DOT__icache__DOT___GEN_417;
-        };
-        struct {
             CData/*7:0*/ nicore__DOT__icache__DOT___GEN_719;
             CData/*7:0*/ nicore__DOT__icache__DOT___GEN_792;
             CData/*7:0*/ nicore__DOT__icache__DOT___GEN_873;
@@ -1540,11 +1543,11 @@ class alignas(VL_CACHE_LINE_BYTES) Vnicore___024root final {
             CData/*1:0*/ nicore__DOT__icache__DOT___GEN_953;
             CData/*1:0*/ nicore__DOT__icache__DOT___GEN_1030;
             CData/*1:0*/ nicore__DOT__icache__DOT___GEN_1108;
+        };
+        struct {
             CData/*1:0*/ nicore__DOT__icache__DOT___GEN_1192;
             CData/*1:0*/ nicore__DOT__icache__DOT___GEN_1275;
             CData/*1:0*/ nicore__DOT__icache__DOT___GEN_1358;
-        };
-        struct {
             CData/*1:0*/ nicore__DOT__icache__DOT__max;
             CData/*0:0*/ nicore__DOT__icache__DOT___T_105;
             CData/*3:0*/ nicore__DOT__icache__DOT___GEN_321;
@@ -1606,11 +1609,11 @@ class alignas(VL_CACHE_LINE_BYTES) Vnicore___024root final {
             CData/*1:0*/ nicore__DOT__icache__DOT___GEN_423;
             CData/*3:0*/ nicore__DOT__icache__DOT___GEN_426;
             CData/*0:0*/ nicore__DOT__icache__DOT___GEN_477;
+        };
+        struct {
             CData/*0:0*/ nicore__DOT__icache__DOT___GEN_480;
             CData/*0:0*/ nicore__DOT__icache__DOT___GEN_483;
             CData/*0:0*/ nicore__DOT__icache__DOT___GEN_486;
-        };
-        struct {
             CData/*3:0*/ nicore__DOT__icache__DOT___GEN_487;
             CData/*0:0*/ nicore__DOT__icache__DOT___GEN_488;
             CData/*3:0*/ nicore__DOT__icache__DOT___GEN_517;
@@ -1672,11 +1675,11 @@ class alignas(VL_CACHE_LINE_BYTES) Vnicore___024root final {
             CData/*0:0*/ nicore__DOT__icache__DOT___GEN_758;
             CData/*0:0*/ nicore__DOT__icache__DOT___GEN_759;
             CData/*0:0*/ nicore__DOT__icache__DOT___GEN_761;
+        };
+        struct {
             CData/*7:0*/ nicore__DOT__icache__DOT___GEN_762;
             CData/*0:0*/ nicore__DOT__icache__DOT___GEN_763;
             CData/*0:0*/ nicore__DOT__icache__DOT___GEN_764;
-        };
-        struct {
             CData/*0:0*/ nicore__DOT__icache__DOT___GEN_766;
             CData/*7:0*/ nicore__DOT__icache__DOT___GEN_767;
             CData/*0:0*/ nicore__DOT__icache__DOT___GEN_768;
@@ -1738,11 +1741,11 @@ class alignas(VL_CACHE_LINE_BYTES) Vnicore___024root final {
             CData/*7:0*/ nicore__DOT__icache__DOT___GEN_928;
             CData/*0:0*/ nicore__DOT__icache__DOT___GEN_929;
             CData/*0:0*/ nicore__DOT__icache__DOT___GEN_930;
+        };
+        struct {
             CData/*0:0*/ nicore__DOT__icache__DOT___GEN_937;
             CData/*0:0*/ nicore__DOT__icache__DOT___GEN_940;
             CData/*0:0*/ nicore__DOT__icache__DOT___GEN_943;
-        };
-        struct {
             CData/*1:0*/ nicore__DOT__icache__DOT___GEN_954;
             CData/*0:0*/ nicore__DOT__icache__DOT___GEN_957;
             CData/*0:0*/ nicore__DOT__icache__DOT___GEN_961;
@@ -1804,11 +1807,11 @@ class alignas(VL_CACHE_LINE_BYTES) Vnicore___024root final {
             CData/*4:0*/ nicore__DOT__icache__DOT___GEN_1114;
             CData/*5:0*/ nicore__DOT__icache__DOT___GEN_1115;
             CData/*0:0*/ nicore__DOT__icache__DOT___GEN_1116;
+        };
+        struct {
             CData/*0:0*/ nicore__DOT__icache__DOT___GEN_1118;
             CData/*0:0*/ nicore__DOT__icache__DOT___GEN_1120;
             CData/*0:0*/ nicore__DOT__icache__DOT___GEN_1122;
-        };
-        struct {
             CData/*0:0*/ nicore__DOT__icache__DOT___GEN_1134;
             CData/*0:0*/ nicore__DOT__icache__DOT___GEN_1140;
             CData/*1:0*/ nicore__DOT__icache__DOT___GEN_1142;
@@ -1870,11 +1873,11 @@ class alignas(VL_CACHE_LINE_BYTES) Vnicore___024root final {
             CData/*0:0*/ nicore__DOT__icache__DOT___GEN_1306;
             CData/*7:0*/ nicore__DOT__icache__DOT___GEN_1308;
             CData/*0:0*/ nicore__DOT__icache__DOT___GEN_1309;
+        };
+        struct {
             CData/*0:0*/ nicore__DOT__icache__DOT___GEN_1310;
             CData/*5:0*/ nicore__DOT__icache__DOT___GEN_1311;
             CData/*0:0*/ nicore__DOT__icache__DOT___GEN_1312;
-        };
-        struct {
             CData/*0:0*/ nicore__DOT__icache__DOT___GEN_1314;
             CData/*0:0*/ nicore__DOT__icache__DOT___GEN_1316;
             CData/*0:0*/ nicore__DOT__icache__DOT___GEN_1318;
@@ -1901,6 +1904,7 @@ class alignas(VL_CACHE_LINE_BYTES) Vnicore___024root final {
             CData/*0:0*/ nicore__DOT__icache__DOT__data_mem_0__DOT__io_sram_wen;
             CData/*0:0*/ nicore__DOT__datapath__DOT__clock;
             CData/*0:0*/ nicore__DOT__datapath__DOT__reset;
+            CData/*0:0*/ nicore__DOT__datapath__DOT__io_commit_valid;
             CData/*0:0*/ nicore__DOT__datapath__DOT__io_start;
             CData/*0:0*/ nicore__DOT__datapath__DOT__io_stall;
             CData/*0:0*/ nicore__DOT__datapath__DOT__io_icache_cpu_request_valid;
@@ -1935,12 +1939,12 @@ class alignas(VL_CACHE_LINE_BYTES) Vnicore___024root final {
             CData/*0:0*/ nicore__DOT__datapath__DOT__fetch_stage_io_tlb_ready;
             CData/*0:0*/ nicore__DOT__datapath__DOT__fetch_stage_io_tlb_flush;
             CData/*0:0*/ nicore__DOT__datapath__DOT__fetch_stage_io_sum;
+        };
+        struct {
             CData/*1:0*/ nicore__DOT__datapath__DOT__fetch_stage_io_mode;
             CData/*0:0*/ nicore__DOT__datapath__DOT__decode_stage_clock;
             CData/*0:0*/ nicore__DOT__datapath__DOT__decode_stage_reset;
             CData/*0:0*/ nicore__DOT__datapath__DOT__decode_stage_io_flush_de;
-        };
-        struct {
             CData/*0:0*/ nicore__DOT__datapath__DOT__decode_stage_io_stall;
             CData/*2:0*/ nicore__DOT__datapath__DOT__decode_stage_io_csr_r_op;
             CData/*2:0*/ nicore__DOT__datapath__DOT__decode_stage_io_csr_cmd;
@@ -2001,12 +2005,12 @@ class alignas(VL_CACHE_LINE_BYTES) Vnicore___024root final {
             CData/*1:0*/ nicore__DOT__datapath__DOT__execute_stage_io_de_pipe_reg_wb_sel;
             CData/*0:0*/ nicore__DOT__datapath__DOT__execute_stage_io_de_pipe_reg_wb_en;
             CData/*0:0*/ nicore__DOT__datapath__DOT__execute_stage_io_de_pipe_reg_csr_is_illegal;
+        };
+        struct {
             CData/*0:0*/ nicore__DOT__datapath__DOT__execute_stage_io_de_pipe_reg_csr_inst_misalign;
             CData/*1:0*/ nicore__DOT__datapath__DOT__execute_stage_io_de_pipe_reg_iTLB_fault;
             CData/*3:0*/ nicore__DOT__datapath__DOT__execute_stage_io_de_pipe_reg_amo_op;
             CData/*0:0*/ nicore__DOT__datapath__DOT__execute_stage_io_de_pipe_reg_enable;
-        };
-        struct {
             CData/*2:0*/ nicore__DOT__datapath__DOT__execute_stage_io_em_pipe_reg_csr_write_op;
             CData/*0:0*/ nicore__DOT__datapath__DOT__execute_stage_io_em_pipe_reg_jump_taken;
             CData/*2:0*/ nicore__DOT__datapath__DOT__execute_stage_io_em_pipe_reg_st_type;
@@ -2067,12 +2071,12 @@ class alignas(VL_CACHE_LINE_BYTES) Vnicore___024root final {
             CData/*0:0*/ nicore__DOT__datapath__DOT__memory_stage_io_is_clint;
             CData/*0:0*/ nicore__DOT__datapath__DOT__memory_stage_io_em_enable;
             CData/*0:0*/ nicore__DOT__datapath__DOT__memory_stage_io_csr_isSret;
+        };
+        struct {
             CData/*0:0*/ nicore__DOT__datapath__DOT__memory_stage_io_csr_isMret;
             CData/*0:0*/ nicore__DOT__datapath__DOT__memory_stage_io_csr_jump_taken;
             CData/*0:0*/ nicore__DOT__datapath__DOT__memory_stage_io_csr_is_illegal;
             CData/*0:0*/ nicore__DOT__datapath__DOT__memory_stage_io_csr_inst_misalign;
-        };
-        struct {
             CData/*0:0*/ nicore__DOT__datapath__DOT__memory_stage_io_csr_store_misalign;
             CData/*0:0*/ nicore__DOT__datapath__DOT__memory_stage_io_csr_load_misalign;
             CData/*0:0*/ nicore__DOT__datapath__DOT__memory_stage_io_clint_timer_clear;
@@ -2133,12 +2137,12 @@ class alignas(VL_CACHE_LINE_BYTES) Vnicore___024root final {
             CData/*0:0*/ nicore__DOT__datapath__DOT__started;
             CData/*0:0*/ nicore__DOT__datapath__DOT___dcache_stall_T_4;
             CData/*0:0*/ nicore__DOT__datapath__DOT___dcache_stall_T_5;
+        };
+        struct {
             CData/*0:0*/ nicore__DOT__datapath__DOT___dcache_stall_T_6;
             CData/*0:0*/ nicore__DOT__datapath__DOT__data_cache_tag;
             CData/*0:0*/ nicore__DOT__datapath__DOT___dcache_stall_T_12;
             CData/*0:0*/ nicore__DOT__datapath__DOT__dcache_stall;
-        };
-        struct {
             CData/*0:0*/ nicore__DOT__datapath__DOT__icache_stall;
             CData/*0:0*/ nicore__DOT__datapath__DOT__itlb_stall;
             CData/*0:0*/ nicore__DOT__datapath__DOT__dtlb_stall;
@@ -2199,12 +2203,12 @@ class alignas(VL_CACHE_LINE_BYTES) Vnicore___024root final {
             CData/*1:0*/ nicore__DOT__datapath__DOT__execute_stage__DOT__io_em_pipe_reg_wb_sel;
             CData/*0:0*/ nicore__DOT__datapath__DOT__execute_stage__DOT__io_em_pipe_reg_wb_en;
             CData/*4:0*/ nicore__DOT__datapath__DOT__execute_stage__DOT__io_em_pipe_reg_dest;
+        };
+        struct {
             CData/*0:0*/ nicore__DOT__datapath__DOT__execute_stage__DOT__io_em_pipe_reg_is_clint;
             CData/*0:0*/ nicore__DOT__datapath__DOT__execute_stage__DOT__io_em_pipe_reg_csr_is_illegal;
             CData/*0:0*/ nicore__DOT__datapath__DOT__execute_stage__DOT__io_em_pipe_reg_csr_inst_misalign;
             CData/*0:0*/ nicore__DOT__datapath__DOT__execute_stage__DOT__io_em_pipe_reg_csr_load_misalign;
-        };
-        struct {
             CData/*0:0*/ nicore__DOT__datapath__DOT__execute_stage__DOT__io_em_pipe_reg_csr_store_misalign;
             CData/*1:0*/ nicore__DOT__datapath__DOT__execute_stage__DOT__io_em_pipe_reg_iTLB_fault;
             CData/*3:0*/ nicore__DOT__datapath__DOT__execute_stage__DOT__io_em_pipe_reg_amo_op;
@@ -2265,12 +2269,12 @@ class alignas(VL_CACHE_LINE_BYTES) Vnicore___024root final {
             CData/*0:0*/ nicore__DOT__datapath__DOT__execute_stage__DOT___io_div_stall_T_2;
             CData/*0:0*/ nicore__DOT__datapath__DOT__execute_stage__DOT___io_div_stall_T_3;
             CData/*0:0*/ nicore__DOT__datapath__DOT__execute_stage__DOT___io_div_stall_T_4;
+        };
+        struct {
             CData/*0:0*/ nicore__DOT__datapath__DOT__execute_stage__DOT___io_div_stall_T_5;
             CData/*0:0*/ nicore__DOT__datapath__DOT__execute_stage__DOT___io_div_stall_T_6;
             CData/*0:0*/ nicore__DOT__datapath__DOT__execute_stage__DOT___io_div_stall_T_7;
             CData/*0:0*/ nicore__DOT__datapath__DOT__execute_stage__DOT___io_div_stall_T_8;
-        };
-        struct {
             CData/*0:0*/ nicore__DOT__datapath__DOT__execute_stage__DOT___multiplier_io_mul_valid_T_2;
             CData/*0:0*/ nicore__DOT__datapath__DOT__execute_stage__DOT___multiplier_io_mulw_T;
             CData/*1:0*/ nicore__DOT__datapath__DOT__execute_stage__DOT___multiplier_io_mul_op_T_13;
@@ -2331,12 +2335,12 @@ class alignas(VL_CACHE_LINE_BYTES) Vnicore___024root final {
             CData/*6:0*/ nicore__DOT__datapath__DOT__execute_stage__DOT__divider__DOT___wrap_value_T_1;
             CData/*6:0*/ nicore__DOT__datapath__DOT__execute_stage__DOT__divider__DOT___GEN_0;
             CData/*6:0*/ nicore__DOT__datapath__DOT__execute_stage__DOT__divider__DOT___GEN_1;
+        };
+        struct {
             CData/*0:0*/ nicore__DOT__datapath__DOT__execute_stage__DOT__divider__DOT__last_calc;
             CData/*5:0*/ nicore__DOT__datapath__DOT__execute_stage__DOT__divider__DOT__windex;
             CData/*0:0*/ nicore__DOT__datapath__DOT__execute_stage__DOT__divider__DOT__wrap_wrap_1;
             CData/*5:0*/ nicore__DOT__datapath__DOT__execute_stage__DOT__divider__DOT___wrap_value_T_3;
-        };
-        struct {
             CData/*5:0*/ nicore__DOT__datapath__DOT__execute_stage__DOT__divider__DOT___GEN_3;
             CData/*5:0*/ nicore__DOT__datapath__DOT__execute_stage__DOT__divider__DOT___GEN_4;
             CData/*0:0*/ nicore__DOT__datapath__DOT__execute_stage__DOT__divider__DOT__w_last_calc;
@@ -2397,12 +2401,12 @@ class alignas(VL_CACHE_LINE_BYTES) Vnicore___024root final {
             CData/*0:0*/ nicore__DOT__datapath__DOT__decode_stage__DOT__io_stall;
             CData/*2:0*/ nicore__DOT__datapath__DOT__decode_stage__DOT__io_csr_r_op;
             CData/*2:0*/ nicore__DOT__datapath__DOT__decode_stage__DOT__io_csr_cmd;
+        };
+        struct {
             CData/*0:0*/ nicore__DOT__datapath__DOT__decode_stage__DOT__io_csr_accessType_illegal;
             CData/*0:0*/ nicore__DOT__datapath__DOT__decode_stage__DOT__io_regFile_wen;
             CData/*4:0*/ nicore__DOT__datapath__DOT__decode_stage__DOT__io_regFile_waddr;
             CData/*1:0*/ nicore__DOT__datapath__DOT__decode_stage__DOT__io_csr_mode;
-        };
-        struct {
             CData/*0:0*/ nicore__DOT__datapath__DOT__decode_stage__DOT__io_mw_pipe_reg_enable;
             CData/*4:0*/ nicore__DOT__datapath__DOT__decode_stage__DOT__io_mw_pipe_reg_dest;
             CData/*0:0*/ nicore__DOT__datapath__DOT__decode_stage__DOT__io_mw_pipe_reg_wb_en;
@@ -2463,12 +2467,12 @@ class alignas(VL_CACHE_LINE_BYTES) Vnicore___024root final {
             CData/*2:0*/ nicore__DOT__datapath__DOT__decode_stage__DOT__de_pipe_reg_ld_type;
             CData/*1:0*/ nicore__DOT__datapath__DOT__decode_stage__DOT__de_pipe_reg_wb_sel;
             CData/*0:0*/ nicore__DOT__datapath__DOT__decode_stage__DOT__de_pipe_reg_wb_en;
+        };
+        struct {
             CData/*0:0*/ nicore__DOT__datapath__DOT__decode_stage__DOT__de_pipe_reg_csr_is_illegal;
             CData/*0:0*/ nicore__DOT__datapath__DOT__decode_stage__DOT__de_pipe_reg_csr_inst_misalign;
             CData/*1:0*/ nicore__DOT__datapath__DOT__decode_stage__DOT__de_pipe_reg_iTLB_fault;
             CData/*3:0*/ nicore__DOT__datapath__DOT__decode_stage__DOT__de_pipe_reg_amo_op;
-        };
-        struct {
             CData/*0:0*/ nicore__DOT__datapath__DOT__decode_stage__DOT__de_pipe_reg_enable;
             CData/*4:0*/ nicore__DOT__datapath__DOT__decode_stage__DOT__src1_addr;
             CData/*4:0*/ nicore__DOT__datapath__DOT__decode_stage__DOT__src2_addr;
@@ -2529,12 +2533,12 @@ class alignas(VL_CACHE_LINE_BYTES) Vnicore___024root final {
             CData/*4:0*/ nicore__DOT__datapath__DOT__decode_stage__DOT__control__DOT__io_alu_op;
             CData/*0:0*/ nicore__DOT__datapath__DOT__decode_stage__DOT__control__DOT__io_prv;
             CData/*2:0*/ nicore__DOT__datapath__DOT__decode_stage__DOT__control__DOT__io_csr_cmd;
+        };
+        struct {
             CData/*0:0*/ nicore__DOT__datapath__DOT__decode_stage__DOT__control__DOT__io_is_illegal;
             CData/*0:0*/ nicore__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_1;
             CData/*0:0*/ nicore__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_3;
             CData/*0:0*/ nicore__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_5;
-        };
-        struct {
             CData/*0:0*/ nicore__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_7;
             CData/*0:0*/ nicore__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_9;
             CData/*0:0*/ nicore__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_11;
@@ -2595,12 +2599,12 @@ class alignas(VL_CACHE_LINE_BYTES) Vnicore___024root final {
             CData/*0:0*/ nicore__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_121;
             CData/*0:0*/ nicore__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_123;
             CData/*0:0*/ nicore__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_125;
+        };
+        struct {
             CData/*0:0*/ nicore__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_127;
             CData/*0:0*/ nicore__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_129;
             CData/*0:0*/ nicore__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_131;
             CData/*0:0*/ nicore__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_133;
-        };
-        struct {
             CData/*0:0*/ nicore__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_135;
             CData/*0:0*/ nicore__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_137;
             CData/*0:0*/ nicore__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_139;
@@ -2661,12 +2665,12 @@ class alignas(VL_CACHE_LINE_BYTES) Vnicore___024root final {
             CData/*1:0*/ nicore__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_226;
             CData/*1:0*/ nicore__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_227;
             CData/*1:0*/ nicore__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_228;
+        };
+        struct {
             CData/*1:0*/ nicore__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_229;
             CData/*1:0*/ nicore__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_230;
             CData/*1:0*/ nicore__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_231;
             CData/*1:0*/ nicore__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_232;
-        };
-        struct {
             CData/*1:0*/ nicore__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_233;
             CData/*1:0*/ nicore__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_234;
             CData/*1:0*/ nicore__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_235;
@@ -2727,12 +2731,12 @@ class alignas(VL_CACHE_LINE_BYTES) Vnicore___024root final {
             CData/*1:0*/ nicore__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_290;
             CData/*1:0*/ nicore__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_291;
             CData/*1:0*/ nicore__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_292;
+        };
+        struct {
             CData/*0:0*/ nicore__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_334;
             CData/*0:0*/ nicore__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_364;
             CData/*0:0*/ nicore__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_381;
             CData/*0:0*/ nicore__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_382;
-        };
-        struct {
             CData/*0:0*/ nicore__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_383;
             CData/*0:0*/ nicore__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_384;
             CData/*0:0*/ nicore__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_385;
@@ -2793,12 +2797,12 @@ class alignas(VL_CACHE_LINE_BYTES) Vnicore___024root final {
             CData/*1:0*/ nicore__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_517;
             CData/*1:0*/ nicore__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_518;
             CData/*1:0*/ nicore__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_519;
+        };
+        struct {
             CData/*1:0*/ nicore__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_520;
             CData/*1:0*/ nicore__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_521;
             CData/*1:0*/ nicore__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_522;
             CData/*1:0*/ nicore__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_523;
-        };
-        struct {
             CData/*1:0*/ nicore__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_524;
             CData/*1:0*/ nicore__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_525;
             CData/*1:0*/ nicore__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_526;
@@ -2859,12 +2863,12 @@ class alignas(VL_CACHE_LINE_BYTES) Vnicore___024root final {
             CData/*1:0*/ nicore__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_581;
             CData/*1:0*/ nicore__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_582;
             CData/*1:0*/ nicore__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_583;
+        };
+        struct {
             CData/*2:0*/ nicore__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_585;
             CData/*2:0*/ nicore__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_586;
             CData/*2:0*/ nicore__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_587;
             CData/*2:0*/ nicore__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_588;
-        };
-        struct {
             CData/*2:0*/ nicore__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_589;
             CData/*2:0*/ nicore__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_590;
             CData/*2:0*/ nicore__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_591;
@@ -2925,12 +2929,12 @@ class alignas(VL_CACHE_LINE_BYTES) Vnicore___024root final {
             CData/*2:0*/ nicore__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_646;
             CData/*2:0*/ nicore__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_647;
             CData/*2:0*/ nicore__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_648;
+        };
+        struct {
             CData/*2:0*/ nicore__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_649;
             CData/*2:0*/ nicore__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_650;
             CData/*2:0*/ nicore__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_651;
             CData/*2:0*/ nicore__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_652;
-        };
-        struct {
             CData/*2:0*/ nicore__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_653;
             CData/*2:0*/ nicore__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_654;
             CData/*2:0*/ nicore__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_655;
@@ -2991,12 +2995,12 @@ class alignas(VL_CACHE_LINE_BYTES) Vnicore___024root final {
             CData/*4:0*/ nicore__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_711;
             CData/*4:0*/ nicore__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_712;
             CData/*4:0*/ nicore__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_713;
+        };
+        struct {
             CData/*4:0*/ nicore__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_714;
             CData/*4:0*/ nicore__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_715;
             CData/*4:0*/ nicore__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_716;
             CData/*4:0*/ nicore__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_717;
-        };
-        struct {
             CData/*4:0*/ nicore__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_718;
             CData/*4:0*/ nicore__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_719;
             CData/*4:0*/ nicore__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_720;
@@ -3057,12 +3061,12 @@ class alignas(VL_CACHE_LINE_BYTES) Vnicore___024root final {
             CData/*4:0*/ nicore__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_775;
             CData/*4:0*/ nicore__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_776;
             CData/*4:0*/ nicore__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_777;
+        };
+        struct {
             CData/*2:0*/ nicore__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_866;
             CData/*2:0*/ nicore__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_867;
             CData/*2:0*/ nicore__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_868;
             CData/*2:0*/ nicore__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_869;
-        };
-        struct {
             CData/*2:0*/ nicore__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_870;
             CData/*2:0*/ nicore__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_871;
             CData/*2:0*/ nicore__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_872;
@@ -3123,12 +3127,12 @@ class alignas(VL_CACHE_LINE_BYTES) Vnicore___024root final {
             CData/*2:0*/ nicore__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_1037;
             CData/*2:0*/ nicore__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_1038;
             CData/*2:0*/ nicore__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_1039;
+        };
+        struct {
             CData/*2:0*/ nicore__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_1040;
             CData/*2:0*/ nicore__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_1041;
             CData/*2:0*/ nicore__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_1042;
             CData/*2:0*/ nicore__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_1043;
-        };
-        struct {
             CData/*2:0*/ nicore__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_1044;
             CData/*2:0*/ nicore__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_1045;
             CData/*2:0*/ nicore__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_1046;
@@ -3189,12 +3193,12 @@ class alignas(VL_CACHE_LINE_BYTES) Vnicore___024root final {
             CData/*1:0*/ nicore__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_1105;
             CData/*1:0*/ nicore__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_1106;
             CData/*1:0*/ nicore__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_1107;
+        };
+        struct {
             CData/*1:0*/ nicore__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_1108;
             CData/*1:0*/ nicore__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_1109;
             CData/*1:0*/ nicore__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_1110;
             CData/*1:0*/ nicore__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_1111;
-        };
-        struct {
             CData/*1:0*/ nicore__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_1112;
             CData/*1:0*/ nicore__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_1113;
             CData/*1:0*/ nicore__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_1114;
@@ -3255,12 +3259,12 @@ class alignas(VL_CACHE_LINE_BYTES) Vnicore___024root final {
             CData/*0:0*/ nicore__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_1170;
             CData/*0:0*/ nicore__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_1171;
             CData/*0:0*/ nicore__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_1172;
+        };
+        struct {
             CData/*0:0*/ nicore__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_1173;
             CData/*0:0*/ nicore__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_1203;
             CData/*0:0*/ nicore__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_1233;
             CData/*0:0*/ nicore__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_1243;
-        };
-        struct {
             CData/*0:0*/ nicore__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_1244;
             CData/*0:0*/ nicore__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_1245;
             CData/*0:0*/ nicore__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_1246;
@@ -3321,12 +3325,12 @@ class alignas(VL_CACHE_LINE_BYTES) Vnicore___024root final {
             CData/*1:0*/ nicore__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_1317;
             CData/*1:0*/ nicore__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_1318;
             CData/*1:0*/ nicore__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_1319;
+        };
+        struct {
             CData/*1:0*/ nicore__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_1320;
             CData/*1:0*/ nicore__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_1321;
             CData/*1:0*/ nicore__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_1322;
             CData/*1:0*/ nicore__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_1323;
-        };
-        struct {
             CData/*1:0*/ nicore__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_1324;
             CData/*1:0*/ nicore__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_1325;
             CData/*1:0*/ nicore__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_1326;
@@ -3387,12 +3391,12 @@ class alignas(VL_CACHE_LINE_BYTES) Vnicore___024root final {
             CData/*2:0*/ nicore__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_1388;
             CData/*2:0*/ nicore__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_1389;
             CData/*2:0*/ nicore__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_1390;
+        };
+        struct {
             CData/*2:0*/ nicore__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_1391;
             CData/*2:0*/ nicore__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_1392;
             CData/*2:0*/ nicore__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_1393;
             CData/*2:0*/ nicore__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_1394;
-        };
-        struct {
             CData/*2:0*/ nicore__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_1395;
             CData/*2:0*/ nicore__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_1396;
             CData/*2:0*/ nicore__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_1397;
@@ -3453,12 +3457,12 @@ class alignas(VL_CACHE_LINE_BYTES) Vnicore___024root final {
             CData/*2:0*/ nicore__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_1452;
             CData/*2:0*/ nicore__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_1453;
             CData/*2:0*/ nicore__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_1454;
+        };
+        struct {
             CData/*2:0*/ nicore__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_1455;
             CData/*2:0*/ nicore__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_1456;
             CData/*0:0*/ nicore__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_1465;
             CData/*0:0*/ nicore__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_1466;
-        };
-        struct {
             CData/*0:0*/ nicore__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_1467;
             CData/*0:0*/ nicore__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_1468;
             CData/*0:0*/ nicore__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_1469;
@@ -3519,12 +3523,12 @@ class alignas(VL_CACHE_LINE_BYTES) Vnicore___024root final {
             CData/*0:0*/ nicore__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_1524;
             CData/*0:0*/ nicore__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_1525;
             CData/*0:0*/ nicore__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_1526;
+        };
+        struct {
             CData/*0:0*/ nicore__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_1527;
             CData/*0:0*/ nicore__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_1528;
             CData/*0:0*/ nicore__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_1529;
             CData/*0:0*/ nicore__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_1530;
-        };
-        struct {
             CData/*0:0*/ nicore__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_1531;
             CData/*0:0*/ nicore__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_1532;
             CData/*0:0*/ nicore__DOT__datapath__DOT__decode_stage__DOT__control__DOT___ctrlSignals_T_1533;
@@ -3585,12 +3589,12 @@ class alignas(VL_CACHE_LINE_BYTES) Vnicore___024root final {
             CData/*0:0*/ nicore__DOT__datapath__DOT__memory_stage__DOT__io_mw_pipe_reg_enable;
             CData/*2:0*/ nicore__DOT__datapath__DOT__memory_stage__DOT__io_de_pipe_reg_ld_type;
             CData/*2:0*/ nicore__DOT__datapath__DOT__memory_stage__DOT__io_de_pipe_reg_st_type;
+        };
+        struct {
             CData/*0:0*/ nicore__DOT__datapath__DOT__memory_stage__DOT__io_de_pipe_reg_enable;
             CData/*0:0*/ nicore__DOT__datapath__DOT__memory_stage__DOT__io_dcache_flush_tag;
             CData/*0:0*/ nicore__DOT__datapath__DOT__memory_stage__DOT__io_is_clint;
             CData/*0:0*/ nicore__DOT__datapath__DOT__memory_stage__DOT__io_em_enable;
-        };
-        struct {
             CData/*0:0*/ nicore__DOT__datapath__DOT__memory_stage__DOT__io_csr_isSret;
             CData/*0:0*/ nicore__DOT__datapath__DOT__memory_stage__DOT__io_csr_isMret;
             CData/*0:0*/ nicore__DOT__datapath__DOT__memory_stage__DOT__io_csr_jump_taken;
@@ -3651,12 +3655,12 @@ class alignas(VL_CACHE_LINE_BYTES) Vnicore___024root final {
             CData/*0:0*/ nicore__DOT__datapath__DOT__memory_stage__DOT___mem_wen_T_1;
             CData/*0:0*/ nicore__DOT__datapath__DOT__memory_stage__DOT___mem_wen_T_2;
             CData/*0:0*/ nicore__DOT__datapath__DOT__memory_stage__DOT___mem_wen_T_3;
+        };
+        struct {
             CData/*0:0*/ nicore__DOT__datapath__DOT__memory_stage__DOT__mem_wen;
             CData/*0:0*/ nicore__DOT__datapath__DOT__memory_stage__DOT___wen_final_T;
             CData/*0:0*/ nicore__DOT__datapath__DOT__memory_stage__DOT__wen_final;
             CData/*0:0*/ nicore__DOT__datapath__DOT__memory_stage__DOT__amo_is_word;
-        };
-        struct {
             CData/*0:0*/ nicore__DOT__datapath__DOT__memory_stage__DOT__lt_s;
             CData/*0:0*/ nicore__DOT__datapath__DOT__memory_stage__DOT__gt_s;
             CData/*5:0*/ nicore__DOT__datapath__DOT__memory_stage__DOT___amo_store_data_T_3;
@@ -3717,12 +3721,12 @@ class alignas(VL_CACHE_LINE_BYTES) Vnicore___024root final {
             CData/*0:0*/ nicore__DOT__datapath__DOT__memory_stage__DOT__dTLB__DOT__io_mxr;
             CData/*0:0*/ nicore__DOT__datapath__DOT__memory_stage__DOT__dTLB__DOT__io_wen;
             CData/*1:0*/ nicore__DOT__datapath__DOT__memory_stage__DOT__dTLB__DOT__io_fault;
+        };
+        struct {
             CData/*0:0*/ nicore__DOT__datapath__DOT__memory_stage__DOT__dTLB__DOT__io_tlb_ready;
             CData/*0:0*/ nicore__DOT__datapath__DOT__memory_stage__DOT__dTLB__DOT__io_flush;
             CData/*0:0*/ nicore__DOT__datapath__DOT__memory_stage__DOT__dTLB__DOT__io_tlb_request_rw;
             CData/*0:0*/ nicore__DOT__datapath__DOT__memory_stage__DOT__dTLB__DOT__io_tlb_request_valid;
-        };
-        struct {
             CData/*0:0*/ nicore__DOT__datapath__DOT__memory_stage__DOT__dTLB__DOT__io_cache_response_ready;
             CData/*3:0*/ nicore__DOT__datapath__DOT__memory_stage__DOT__dTLB__DOT__tlb_state;
             CData/*1:0*/ nicore__DOT__datapath__DOT__memory_stage__DOT__dTLB__DOT__tlbe_0_size;
@@ -3783,12 +3787,12 @@ class alignas(VL_CACHE_LINE_BYTES) Vnicore___024root final {
             CData/*0:0*/ nicore__DOT__datapath__DOT__memory_stage__DOT__dTLB__DOT___permList_T_9;
             CData/*0:0*/ nicore__DOT__datapath__DOT__memory_stage__DOT__dTLB__DOT___permList_T_20;
             CData/*0:0*/ nicore__DOT__datapath__DOT__memory_stage__DOT__dTLB__DOT___permList_T_21;
+        };
+        struct {
             CData/*0:0*/ nicore__DOT__datapath__DOT__memory_stage__DOT__dTLB__DOT__permList_0;
             CData/*0:0*/ nicore__DOT__datapath__DOT__memory_stage__DOT__dTLB__DOT___T_186;
             CData/*1:0*/ nicore__DOT__datapath__DOT__memory_stage__DOT__dTLB__DOT___io_fault_T_4;
             CData/*5:0*/ nicore__DOT__datapath__DOT__memory_stage__DOT__dTLB__DOT__pte_reg_lo;
-        };
-        struct {
             CData/*0:0*/ nicore__DOT__datapath__DOT__memory_stage__DOT__dTLB__DOT___GEN_135;
             CData/*0:0*/ nicore__DOT__datapath__DOT__memory_stage__DOT__dTLB__DOT___GEN_136;
             CData/*0:0*/ nicore__DOT__datapath__DOT__memory_stage__DOT__dTLB__DOT___GEN_137;
@@ -3849,12 +3853,12 @@ class alignas(VL_CACHE_LINE_BYTES) Vnicore___024root final {
             CData/*2:0*/ nicore__DOT__datapath__DOT__memory_stage__DOT__dTLB__DOT___GEN_377;
             CData/*1:0*/ nicore__DOT__datapath__DOT__memory_stage__DOT__dTLB__DOT___GEN_378;
             CData/*1:0*/ nicore__DOT__datapath__DOT__memory_stage__DOT__dTLB__DOT___GEN_379;
+        };
+        struct {
             CData/*0:0*/ nicore__DOT__datapath__DOT__memory_stage__DOT__dTLB__DOT___GEN_380;
             CData/*2:0*/ nicore__DOT__datapath__DOT__memory_stage__DOT__dTLB__DOT___GEN_381;
             CData/*1:0*/ nicore__DOT__datapath__DOT__memory_stage__DOT__dTLB__DOT___GEN_382;
             CData/*0:0*/ nicore__DOT__datapath__DOT__memory_stage__DOT__dTLB__DOT___GEN_383;
-        };
-        struct {
             CData/*2:0*/ nicore__DOT__datapath__DOT__memory_stage__DOT__dTLB__DOT___GEN_384;
             CData/*1:0*/ nicore__DOT__datapath__DOT__memory_stage__DOT__dTLB__DOT___GEN_385;
             CData/*0:0*/ nicore__DOT__datapath__DOT__memory_stage__DOT__dTLB__DOT___GEN_386;
@@ -3915,12 +3919,12 @@ class alignas(VL_CACHE_LINE_BYTES) Vnicore___024root final {
             CData/*0:0*/ nicore__DOT__datapath__DOT__memory_stage__DOT__dTLB__DOT___GEN_743;
             CData/*0:0*/ nicore__DOT__datapath__DOT__memory_stage__DOT__dTLB__DOT___GEN_759;
             CData/*0:0*/ nicore__DOT__datapath__DOT__memory_stage__DOT__dTLB__DOT___GEN_775;
+        };
+        struct {
             CData/*0:0*/ nicore__DOT__datapath__DOT__memory_stage__DOT__dTLB__DOT___GEN_791;
             CData/*1:0*/ nicore__DOT__datapath__DOT__memory_stage__DOT__dTLB__DOT___GEN_823;
             CData/*1:0*/ nicore__DOT__datapath__DOT__memory_stage__DOT__dTLB__DOT___GEN_871;
             CData/*0:0*/ nicore__DOT__datapath__DOT__memory_stage__DOT__dTLB__DOT___GEN_887;
-        };
-        struct {
             CData/*0:0*/ nicore__DOT__datapath__DOT__memory_stage__DOT__dTLB__DOT___GEN_903;
             CData/*0:0*/ nicore__DOT__datapath__DOT__memory_stage__DOT__dTLB__DOT___GEN_919;
             CData/*0:0*/ nicore__DOT__datapath__DOT__memory_stage__DOT__dTLB__DOT___GEN_935;
@@ -3981,12 +3985,12 @@ class alignas(VL_CACHE_LINE_BYTES) Vnicore___024root final {
             CData/*0:0*/ nicore__DOT__datapath__DOT__memory_stage__DOT__dTLB__DOT___GEN_1609;
             CData/*0:0*/ nicore__DOT__datapath__DOT__memory_stage__DOT__dTLB__DOT___GEN_1625;
             CData/*0:0*/ nicore__DOT__datapath__DOT__memory_stage__DOT__dTLB__DOT___GEN_1641;
+        };
+        struct {
             CData/*0:0*/ nicore__DOT__datapath__DOT__memory_stage__DOT__dTLB__DOT___GEN_1657;
             CData/*1:0*/ nicore__DOT__datapath__DOT__memory_stage__DOT__dTLB__DOT___GEN_1689;
             CData/*2:0*/ nicore__DOT__datapath__DOT__memory_stage__DOT__dTLB__DOT___GEN_1737;
             CData/*0:0*/ nicore__DOT__datapath__DOT__memory_stage__DOT__dTLB__DOT___GEN_1739;
-        };
-        struct {
             CData/*0:0*/ nicore__DOT__datapath__DOT__memory_stage__DOT__dTLB__DOT___GEN_1740;
             CData/*0:0*/ nicore__DOT__datapath__DOT__memory_stage__DOT__dTLB__DOT___GEN_1742;
             CData/*0:0*/ nicore__DOT__datapath__DOT__memory_stage__DOT__dTLB__DOT___GEN_1743;
@@ -4047,12 +4051,12 @@ class alignas(VL_CACHE_LINE_BYTES) Vnicore___024root final {
             CData/*0:0*/ nicore__DOT__datapath__DOT__memory_stage__DOT__dTLB__DOT___GEN_2453;
             CData/*2:0*/ nicore__DOT__datapath__DOT__memory_stage__DOT__dTLB__DOT___GEN_2647;
             CData/*0:0*/ nicore__DOT__datapath__DOT__memory_stage__DOT__dTLB__DOT___GEN_2648;
+        };
+        struct {
             CData/*1:0*/ nicore__DOT__datapath__DOT__memory_stage__DOT__dTLB__DOT___GEN_2682;
             CData/*0:0*/ nicore__DOT__datapath__DOT__memory_stage__DOT__dTLB__DOT___GEN_2697;
             CData/*2:0*/ nicore__DOT__datapath__DOT__memory_stage__DOT__dTLB__DOT___GEN_2892;
             CData/*3:0*/ nicore__DOT__datapath__DOT__memory_stage__DOT__dTLB__DOT__next_state;
-        };
-        struct {
             CData/*0:0*/ nicore__DOT__datapath__DOT__fetch_stage__DOT__clock;
             CData/*0:0*/ nicore__DOT__datapath__DOT__fetch_stage__DOT__reset;
             CData/*0:0*/ nicore__DOT__datapath__DOT__fetch_stage__DOT__io_started;
@@ -4113,12 +4117,12 @@ class alignas(VL_CACHE_LINE_BYTES) Vnicore___024root final {
             CData/*0:0*/ nicore__DOT__datapath__DOT__fetch_stage__DOT__iTLB__DOT__tlbe_0_D;
             CData/*0:0*/ nicore__DOT__datapath__DOT__fetch_stage__DOT__iTLB__DOT__tlbe_0_A;
             CData/*0:0*/ nicore__DOT__datapath__DOT__fetch_stage__DOT__iTLB__DOT__tlbe_0_G;
+        };
+        struct {
             CData/*0:0*/ nicore__DOT__datapath__DOT__fetch_stage__DOT__iTLB__DOT__tlbe_0_U;
             CData/*0:0*/ nicore__DOT__datapath__DOT__fetch_stage__DOT__iTLB__DOT__tlbe_0_X;
             CData/*0:0*/ nicore__DOT__datapath__DOT__fetch_stage__DOT__iTLB__DOT__tlbe_0_W;
             CData/*0:0*/ nicore__DOT__datapath__DOT__fetch_stage__DOT__iTLB__DOT__tlbe_0_R;
-        };
-        struct {
             CData/*0:0*/ nicore__DOT__datapath__DOT__fetch_stage__DOT__iTLB__DOT__tlbe_0_V;
             CData/*0:0*/ nicore__DOT__datapath__DOT__fetch_stage__DOT__iTLB__DOT__matchList_0;
             CData/*1:0*/ nicore__DOT__datapath__DOT__fetch_stage__DOT__iTLB__DOT__pte_reg_RSW;
@@ -4179,12 +4183,12 @@ class alignas(VL_CACHE_LINE_BYTES) Vnicore___024root final {
             CData/*0:0*/ nicore__DOT__datapath__DOT__fetch_stage__DOT__iTLB__DOT___GEN_142;
             CData/*1:0*/ nicore__DOT__datapath__DOT__fetch_stage__DOT__iTLB__DOT___GEN_143;
             CData/*1:0*/ nicore__DOT__datapath__DOT__fetch_stage__DOT__iTLB__DOT___GEN_146;
+        };
+        struct {
             CData/*1:0*/ nicore__DOT__datapath__DOT__fetch_stage__DOT__iTLB__DOT___GEN_327;
             CData/*2:0*/ nicore__DOT__datapath__DOT__fetch_stage__DOT__iTLB__DOT___GEN_329;
             CData/*0:0*/ nicore__DOT__datapath__DOT__fetch_stage__DOT__iTLB__DOT___GEN_330;
             CData/*0:0*/ nicore__DOT__datapath__DOT__fetch_stage__DOT__iTLB__DOT___GEN_331;
-        };
-        struct {
             CData/*0:0*/ nicore__DOT__datapath__DOT__fetch_stage__DOT__iTLB__DOT___GEN_332;
             CData/*0:0*/ nicore__DOT__datapath__DOT__fetch_stage__DOT__iTLB__DOT___GEN_333;
             CData/*0:0*/ nicore__DOT__datapath__DOT__fetch_stage__DOT__iTLB__DOT___GEN_334;
@@ -4245,14 +4249,14 @@ class alignas(VL_CACHE_LINE_BYTES) Vnicore___024root final {
             CData/*0:0*/ nicore__DOT__datapath__DOT__fetch_stage__DOT__iTLB__DOT___GEN_391;
             CData/*0:0*/ nicore__DOT__datapath__DOT__fetch_stage__DOT__iTLB__DOT___GEN_392;
             CData/*0:0*/ nicore__DOT__datapath__DOT__fetch_stage__DOT__iTLB__DOT___GEN_393;
-            CData/*1:0*/ nicore__DOT__datapath__DOT__fetch_stage__DOT__iTLB__DOT___GEN_394;
-            CData/*1:0*/ nicore__DOT__datapath__DOT__fetch_stage__DOT__iTLB__DOT___GEN_397;
-            CData/*0:0*/ nicore__DOT__datapath__DOT__fetch_stage__DOT__iTLB__DOT___GEN_398;
-            CData/*2:0*/ nicore__DOT__datapath__DOT__fetch_stage__DOT__iTLB__DOT___GEN_399;
         };
     };
     struct {
         struct {
+            CData/*1:0*/ nicore__DOT__datapath__DOT__fetch_stage__DOT__iTLB__DOT___GEN_394;
+            CData/*1:0*/ nicore__DOT__datapath__DOT__fetch_stage__DOT__iTLB__DOT___GEN_397;
+            CData/*0:0*/ nicore__DOT__datapath__DOT__fetch_stage__DOT__iTLB__DOT___GEN_398;
+            CData/*2:0*/ nicore__DOT__datapath__DOT__fetch_stage__DOT__iTLB__DOT___GEN_399;
             CData/*1:0*/ nicore__DOT__datapath__DOT__fetch_stage__DOT__iTLB__DOT___GEN_400;
             CData/*0:0*/ nicore__DOT__datapath__DOT__fetch_stage__DOT__iTLB__DOT___T_212;
             CData/*1:0*/ nicore__DOT__datapath__DOT__fetch_stage__DOT__iTLB__DOT___GEN_401;
@@ -4313,12 +4317,12 @@ class alignas(VL_CACHE_LINE_BYTES) Vnicore___024root final {
             CData/*2:0*/ nicore__DOT__datapath__DOT__fetch_stage__DOT__iTLB__DOT___GEN_1079;
             CData/*2:0*/ nicore__DOT__datapath__DOT__fetch_stage__DOT__iTLB__DOT___GEN_1081;
             CData/*1:0*/ nicore__DOT__datapath__DOT__fetch_stage__DOT__iTLB__DOT___GEN_1086;
+        };
+        struct {
             CData/*0:0*/ nicore__DOT__datapath__DOT__fetch_stage__DOT__iTLB__DOT___GEN_1102;
             CData/*0:0*/ nicore__DOT__datapath__DOT__fetch_stage__DOT__iTLB__DOT___GEN_1118;
             CData/*0:0*/ nicore__DOT__datapath__DOT__fetch_stage__DOT__iTLB__DOT___GEN_1134;
             CData/*0:0*/ nicore__DOT__datapath__DOT__fetch_stage__DOT__iTLB__DOT___GEN_1150;
-        };
-        struct {
             CData/*0:0*/ nicore__DOT__datapath__DOT__fetch_stage__DOT__iTLB__DOT___GEN_1166;
             CData/*0:0*/ nicore__DOT__datapath__DOT__fetch_stage__DOT__iTLB__DOT___GEN_1182;
             CData/*0:0*/ nicore__DOT__datapath__DOT__fetch_stage__DOT__iTLB__DOT___GEN_1198;
@@ -4379,12 +4383,12 @@ class alignas(VL_CACHE_LINE_BYTES) Vnicore___024root final {
             CData/*1:0*/ nicore__DOT__datapath__DOT__fetch_stage__DOT__iTLB__DOT___GEN_1755;
             CData/*1:0*/ nicore__DOT__datapath__DOT__fetch_stage__DOT__iTLB__DOT___GEN_1756;
             CData/*0:0*/ nicore__DOT__datapath__DOT__fetch_stage__DOT__iTLB__DOT___GEN_1772;
+        };
+        struct {
             CData/*0:0*/ nicore__DOT__datapath__DOT__fetch_stage__DOT__iTLB__DOT___GEN_1788;
             CData/*0:0*/ nicore__DOT__datapath__DOT__fetch_stage__DOT__iTLB__DOT___GEN_1804;
             CData/*0:0*/ nicore__DOT__datapath__DOT__fetch_stage__DOT__iTLB__DOT___GEN_1820;
             CData/*0:0*/ nicore__DOT__datapath__DOT__fetch_stage__DOT__iTLB__DOT___GEN_1836;
-        };
-        struct {
             CData/*0:0*/ nicore__DOT__datapath__DOT__fetch_stage__DOT__iTLB__DOT___GEN_1852;
             CData/*0:0*/ nicore__DOT__datapath__DOT__fetch_stage__DOT__iTLB__DOT___GEN_1868;
             CData/*0:0*/ nicore__DOT__datapath__DOT__fetch_stage__DOT__iTLB__DOT___GEN_1884;
@@ -4445,12 +4449,12 @@ class alignas(VL_CACHE_LINE_BYTES) Vnicore___024root final {
             CData/*0:0*/ nicore__DOT__datapath__DOT__csr__DOT__io_stall;
             CData/*0:0*/ nicore__DOT__datapath__DOT__csr__DOT__io_trap;
             CData/*1:0*/ nicore__DOT__datapath__DOT__csr__DOT__io_mode;
+        };
+        struct {
             CData/*0:0*/ nicore__DOT__datapath__DOT__csr__DOT__io_accessType_illegal;
             CData/*0:0*/ nicore__DOT__datapath__DOT__csr__DOT__io_is_illegal;
             CData/*0:0*/ nicore__DOT__datapath__DOT__csr__DOT__io_inst_misalign;
             CData/*0:0*/ nicore__DOT__datapath__DOT__csr__DOT__io_store_misalign;
-        };
-        struct {
             CData/*0:0*/ nicore__DOT__datapath__DOT__csr__DOT__io_load_misalign;
             CData/*1:0*/ nicore__DOT__datapath__DOT__csr__DOT__io_iTLB_fault;
             CData/*1:0*/ nicore__DOT__datapath__DOT__csr__DOT__io_dTLB_fault;
@@ -4511,12 +4515,12 @@ class alignas(VL_CACHE_LINE_BYTES) Vnicore___024root final {
             CData/*0:0*/ nicore__DOT__datapath__DOT__csr__DOT___T_31;
             CData/*0:0*/ nicore__DOT__datapath__DOT__csr__DOT___T_33;
             CData/*0:0*/ nicore__DOT__datapath__DOT__csr__DOT___T_35;
+        };
+        struct {
             CData/*0:0*/ nicore__DOT__datapath__DOT__csr__DOT___T_37;
             CData/*0:0*/ nicore__DOT__datapath__DOT__csr__DOT___T_39;
             CData/*0:0*/ nicore__DOT__datapath__DOT__csr__DOT___T_41;
             CData/*0:0*/ nicore__DOT__datapath__DOT__csr__DOT___T_43;
-        };
-        struct {
             CData/*0:0*/ nicore__DOT__datapath__DOT__csr__DOT___T_45;
             CData/*0:0*/ nicore__DOT__datapath__DOT__csr__DOT___T_47;
             CData/*0:0*/ nicore__DOT__datapath__DOT__csr__DOT___T_49;
@@ -4577,12 +4581,12 @@ class alignas(VL_CACHE_LINE_BYTES) Vnicore___024root final {
             CData/*0:0*/ nicore__DOT__datapath__DOT__csr__DOT___T_308;
             CData/*0:0*/ nicore__DOT__datapath__DOT__csr__DOT___T_309;
             CData/*0:0*/ nicore__DOT__datapath__DOT__csr__DOT___T_310;
+        };
+        struct {
             CData/*0:0*/ nicore__DOT__datapath__DOT__csr__DOT___T_312;
             CData/*0:0*/ nicore__DOT__datapath__DOT__csr__DOT___T_332;
             CData/*0:0*/ nicore__DOT__datapath__DOT__csr__DOT___T_334;
             CData/*0:0*/ nicore__DOT__datapath__DOT__csr__DOT___T_335;
-        };
-        struct {
             CData/*0:0*/ nicore__DOT__datapath__DOT__csr__DOT___T_336;
             CData/*0:0*/ nicore__DOT__datapath__DOT__csr__DOT___T_337;
             CData/*0:0*/ nicore__DOT__datapath__DOT__csr__DOT___T_348;
@@ -4643,12 +4647,12 @@ class alignas(VL_CACHE_LINE_BYTES) Vnicore___024root final {
             CData/*1:0*/ nicore__DOT__datapath__DOT__csr__DOT__sretMode;
             CData/*1:0*/ nicore__DOT__datapath__DOT__csr__DOT__excMode;
             CData/*1:0*/ nicore__DOT__datapath__DOT__csr__DOT___trapMode_T;
+        };
+        struct {
             CData/*1:0*/ nicore__DOT__datapath__DOT__csr__DOT___trapMode_T_1;
             CData/*0:0*/ nicore__DOT__datapath__DOT__csr__DOT___nextMode_T;
             CData/*0:0*/ nicore__DOT__datapath__DOT__csr__DOT___mip_mtip_T_1;
             CData/*0:0*/ nicore__DOT__datapath__DOT__csr__DOT___mip_msip_T_1;
-        };
-        struct {
             CData/*0:0*/ nicore__DOT__datapath__DOT__csr__DOT___T_354;
             CData/*0:0*/ nicore__DOT__datapath__DOT__csr__DOT___T_356;
             CData/*0:0*/ nicore__DOT__datapath__DOT__csr__DOT___T_358;
@@ -4709,12 +4713,12 @@ class alignas(VL_CACHE_LINE_BYTES) Vnicore___024root final {
             CData/*0:0*/ nicore__DOT__datapath__DOT__csr__DOT___GEN_161;
             CData/*0:0*/ nicore__DOT__datapath__DOT__csr__DOT___GEN_162;
             CData/*1:0*/ nicore__DOT__datapath__DOT__csr__DOT___GEN_163;
+        };
+        struct {
             CData/*0:0*/ nicore__DOT__datapath__DOT__csr__DOT___GEN_165;
             CData/*0:0*/ nicore__DOT__datapath__DOT__csr__DOT___GEN_168;
             CData/*0:0*/ nicore__DOT__datapath__DOT__csr__DOT___GEN_169;
             CData/*1:0*/ nicore__DOT__datapath__DOT__csr__DOT___GEN_170;
-        };
-        struct {
             CData/*0:0*/ nicore__DOT__datapath__DOT__csr__DOT___GEN_172;
             CData/*0:0*/ nicore__DOT__datapath__DOT__csr__DOT___GEN_175;
             CData/*0:0*/ nicore__DOT__datapath__DOT__csr__DOT___GEN_176;
@@ -4775,12 +4779,12 @@ class alignas(VL_CACHE_LINE_BYTES) Vnicore___024root final {
             CData/*2:0*/ nicore__DOT__arb__DOT__io_icache_ar_bits_size;
             CData/*0:0*/ nicore__DOT__arb__DOT__io_icache_r_ready;
             CData/*0:0*/ nicore__DOT__arb__DOT__io_icache_r_valid;
+        };
+        struct {
             CData/*0:0*/ nicore__DOT__arb__DOT__io_icache_r_bits_last;
             CData/*0:0*/ nicore__DOT__arb__DOT__io_dcache_aw_ready;
             CData/*0:0*/ nicore__DOT__arb__DOT__io_dcache_aw_valid;
             CData/*7:0*/ nicore__DOT__arb__DOT__io_dcache_aw_bits_len;
-        };
-        struct {
             CData/*2:0*/ nicore__DOT__arb__DOT__io_dcache_aw_bits_size;
             CData/*0:0*/ nicore__DOT__arb__DOT__io_dcache_w_ready;
             CData/*0:0*/ nicore__DOT__arb__DOT__io_dcache_w_valid;
@@ -4841,12 +4845,12 @@ class alignas(VL_CACHE_LINE_BYTES) Vnicore___024root final {
             CData/*0:0*/ nicore__DOT__arb__DOT___GEN_14;
             CData/*0:0*/ nicore__DOT__arb__DOT___GEN_15;
             CData/*2:0*/ nicore__DOT__arb__DOT___GEN_16;
+        };
+        struct {
             CData/*2:0*/ nicore__DOT__arb__DOT___GEN_17;
             CData/*0:0*/ nicore__DOT__arb__DOT___GEN_18;
             CData/*0:0*/ nicore__DOT__arb__DOT___GEN_19;
             CData/*2:0*/ nicore__DOT__arb__DOT___GEN_20;
-        };
-        struct {
             CData/*0:0*/ nicore__DOT__arb__DOT___GEN_21;
             CData/*0:0*/ nicore__DOT__arb__DOT___GEN_22;
             CData/*0:0*/ __VdfgRegularize_hebeb780c_0_0;
@@ -4907,12 +4911,12 @@ class alignas(VL_CACHE_LINE_BYTES) Vnicore___024root final {
             CData/*1:0*/ __Vtrigprevexpr___TOP__io_slave_arburst__0;
             CData/*0:0*/ __Vtrigprevexpr___TOP__io_slave_rready__0;
             CData/*0:0*/ __VicoDidInit;
+        };
+        struct {
             CData/*0:0*/ __VicoPhaseResult;
             CData/*0:0*/ __Vtrigprevexpr___TOP__clock__1;
             CData/*0:0*/ __VactPhaseResult;
             CData/*0:0*/ __VnbaPhaseResult;
-        };
-        struct {
             SData/*11:0*/ nicore__DOT__datapath__DOT__decode_stage_io_csr_r_addr;
             SData/*11:0*/ nicore__DOT__datapath__DOT__decode_stage_io_de_pipe_reg_csr_write_addr;
             SData/*11:0*/ nicore__DOT__datapath__DOT__execute_stage_io_de_pipe_reg_csr_write_addr;
@@ -4973,12 +4977,12 @@ class alignas(VL_CACHE_LINE_BYTES) Vnicore___024root final {
             SData/*15:0*/ nicore__DOT__datapath__DOT__fetch_stage__DOT__iTLB__DOT___GEN_839;
             SData/*15:0*/ nicore__DOT__datapath__DOT__fetch_stage__DOT__iTLB__DOT___GEN_1047;
             SData/*15:0*/ nicore__DOT__datapath__DOT__fetch_stage__DOT__iTLB__DOT___GEN_1262;
+        };
+        struct {
             SData/*15:0*/ nicore__DOT__datapath__DOT__fetch_stage__DOT__iTLB__DOT___GEN_1478;
             SData/*15:0*/ nicore__DOT__datapath__DOT__fetch_stage__DOT__iTLB__DOT___GEN_1705;
             SData/*15:0*/ nicore__DOT__datapath__DOT__fetch_stage__DOT__iTLB__DOT___GEN_1932;
             SData/*15:0*/ nicore__DOT__datapath__DOT__fetch_stage__DOT__iTLB__DOT___GEN_2159;
-        };
-        struct {
             SData/*11:0*/ nicore__DOT__datapath__DOT__csr__DOT__io_r_addr;
             SData/*11:0*/ nicore__DOT__datapath__DOT__csr__DOT__io_w_addr;
             SData/*12:0*/ nicore__DOT__datapath__DOT__csr__DOT__lo;
@@ -5039,12 +5043,12 @@ class alignas(VL_CACHE_LINE_BYTES) Vnicore___024root final {
             VlWide<4>/*127:0*/ nicore__DOT__sram0_BWEN;
             VlWide<4>/*127:0*/ nicore__DOT__sram0_D;
             VlWide<4>/*127:0*/ nicore__DOT__sram0_Q;
+        };
+        struct {
             VlWide<4>/*127:0*/ nicore__DOT__sram1_BWEN;
             VlWide<4>/*127:0*/ nicore__DOT__sram1_D;
             VlWide<4>/*127:0*/ nicore__DOT__sram1_Q;
             VlWide<4>/*127:0*/ nicore__DOT__sram2_BWEN;
-        };
-        struct {
             VlWide<4>/*127:0*/ nicore__DOT__sram2_D;
             VlWide<4>/*127:0*/ nicore__DOT__sram2_Q;
             VlWide<4>/*127:0*/ nicore__DOT__sram3_BWEN;
@@ -5105,12 +5109,12 @@ class alignas(VL_CACHE_LINE_BYTES) Vnicore___024root final {
             VlWide<4>/*127:0*/ nicore__DOT__dcache__DOT__data_mem_2_io_sram_rdata;
             VlWide<4>/*127:0*/ nicore__DOT__dcache__DOT__data_mem_3_io_cache_req_wmask;
             VlWide<4>/*127:0*/ nicore__DOT__dcache__DOT__data_mem_3_io_data_write_data;
+        };
+        struct {
             VlWide<4>/*127:0*/ nicore__DOT__dcache__DOT__data_mem_3_io_data_read_data;
             VlWide<4>/*127:0*/ nicore__DOT__dcache__DOT__data_mem_3_io_sram_wmask;
             VlWide<4>/*127:0*/ nicore__DOT__dcache__DOT__data_mem_3_io_sram_wdata;
             VlWide<4>/*127:0*/ nicore__DOT__dcache__DOT__data_mem_3_io_sram_rdata;
-        };
-        struct {
             IData/*31:0*/ nicore__DOT__dcache__DOT__refill_addr;
             IData/*31:0*/ nicore__DOT__dcache__DOT__writeback_addr;
             IData/*31:0*/ nicore__DOT__dcache__DOT__cpu_request_addr_reg_origin;
@@ -5171,12 +5175,12 @@ class alignas(VL_CACHE_LINE_BYTES) Vnicore___024root final {
             IData/*31:0*/ nicore__DOT__dcache__DOT___GEN_349;
             IData/*21:0*/ nicore__DOT__dcache__DOT___GEN_353;
             IData/*31:0*/ nicore__DOT__dcache__DOT___GEN_356;
+        };
+        struct {
             IData/*21:0*/ nicore__DOT__dcache__DOT___GEN_361;
             IData/*21:0*/ nicore__DOT__dcache__DOT___GEN_366;
             IData/*21:0*/ nicore__DOT__dcache__DOT___GEN_371;
             IData/*21:0*/ nicore__DOT__dcache__DOT___GEN_376;
-        };
-        struct {
             IData/*21:0*/ nicore__DOT__dcache__DOT___GEN_380;
             IData/*21:0*/ nicore__DOT__dcache__DOT___GEN_385;
             IData/*21:0*/ nicore__DOT__dcache__DOT___GEN_390;
@@ -5237,12 +5241,12 @@ class alignas(VL_CACHE_LINE_BYTES) Vnicore___024root final {
             VlWide<4>/*127:0*/ nicore__DOT__dcache__DOT___GEN_624;
             VlWide<4>/*127:0*/ nicore__DOT__dcache__DOT___GEN_626;
             VlWide<4>/*127:0*/ nicore__DOT__dcache__DOT___GEN_627;
+        };
+        struct {
             IData/*31:0*/ nicore__DOT__dcache__DOT___GEN_633;
             IData/*31:0*/ nicore__DOT__dcache__DOT___GEN_645;
             VlWide<4>/*127:0*/ nicore__DOT__dcache__DOT___GEN_651;
             VlWide<4>/*127:0*/ nicore__DOT__dcache__DOT___GEN_652;
-        };
-        struct {
             VlWide<4>/*127:0*/ nicore__DOT__dcache__DOT___GEN_654;
             VlWide<4>/*127:0*/ nicore__DOT__dcache__DOT___GEN_655;
             VlWide<4>/*127:0*/ nicore__DOT__dcache__DOT___GEN_657;
@@ -5303,12 +5307,12 @@ class alignas(VL_CACHE_LINE_BYTES) Vnicore___024root final {
             IData/*21:0*/ nicore__DOT__dcache__DOT___GEN_916;
             IData/*21:0*/ nicore__DOT__dcache__DOT___GEN_921;
             IData/*21:0*/ nicore__DOT__dcache__DOT___GEN_926;
+        };
+        struct {
             VlWide<4>/*127:0*/ nicore__DOT__dcache__DOT___GEN_933;
             VlWide<4>/*127:0*/ nicore__DOT__dcache__DOT___GEN_936;
             VlWide<4>/*127:0*/ nicore__DOT__dcache__DOT___GEN_938;
             VlWide<4>/*127:0*/ nicore__DOT__dcache__DOT___GEN_939;
-        };
-        struct {
             VlWide<4>/*127:0*/ nicore__DOT__dcache__DOT___GEN_941;
             VlWide<4>/*127:0*/ nicore__DOT__dcache__DOT___GEN_942;
             VlWide<4>/*127:0*/ nicore__DOT__dcache__DOT___GEN_944;
@@ -5369,12 +5373,12 @@ class alignas(VL_CACHE_LINE_BYTES) Vnicore___024root final {
             IData/*21:0*/ nicore__DOT__dcache__DOT___GEN_1218;
             IData/*21:0*/ nicore__DOT__dcache__DOT___GEN_1223;
             IData/*31:0*/ nicore__DOT__dcache__DOT___GEN_1237;
+        };
+        struct {
             IData/*31:0*/ nicore__DOT__dcache__DOT___GEN_1251;
             VlWide<4>/*127:0*/ nicore__DOT__dcache__DOT___GEN_1258;
             VlWide<4>/*127:0*/ nicore__DOT__dcache__DOT___GEN_1261;
             VlWide<4>/*127:0*/ nicore__DOT__dcache__DOT___GEN_1262;
-        };
-        struct {
             VlWide<4>/*127:0*/ nicore__DOT__dcache__DOT___GEN_1263;
             VlWide<4>/*127:0*/ nicore__DOT__dcache__DOT___GEN_1264;
             VlWide<4>/*127:0*/ nicore__DOT__dcache__DOT___GEN_1265;
@@ -5435,12 +5439,12 @@ class alignas(VL_CACHE_LINE_BYTES) Vnicore___024root final {
             IData/*21:0*/ nicore__DOT__icache__DOT__tag_mem_0_io_tag_write_tag;
             IData/*21:0*/ nicore__DOT__icache__DOT__tag_mem_0_io_tag_read_tag;
             IData/*21:0*/ nicore__DOT__icache__DOT__tag_mem_1_io_tag_write_tag;
+        };
+        struct {
             IData/*21:0*/ nicore__DOT__icache__DOT__tag_mem_1_io_tag_read_tag;
             IData/*21:0*/ nicore__DOT__icache__DOT__tag_mem_2_io_tag_write_tag;
             IData/*21:0*/ nicore__DOT__icache__DOT__tag_mem_2_io_tag_read_tag;
             IData/*21:0*/ nicore__DOT__icache__DOT__tag_mem_3_io_tag_write_tag;
-        };
-        struct {
             IData/*21:0*/ nicore__DOT__icache__DOT__tag_mem_3_io_tag_read_tag;
             VlWide<4>/*127:0*/ nicore__DOT__icache__DOT__data_mem_0_io_cache_req_wmask;
             VlWide<4>/*127:0*/ nicore__DOT__icache__DOT__data_mem_0_io_data_write_data;
@@ -5501,12 +5505,12 @@ class alignas(VL_CACHE_LINE_BYTES) Vnicore___024root final {
             VlWide<4>/*127:0*/ nicore__DOT__icache__DOT___GEN_413;
             IData/*31:0*/ nicore__DOT__icache__DOT___GEN_424;
             VlWide<4>/*127:0*/ nicore__DOT__icache__DOT___GEN_435;
+        };
+        struct {
             VlWide<4>/*127:0*/ nicore__DOT__icache__DOT___GEN_436;
             VlWide<4>/*127:0*/ nicore__DOT__icache__DOT___GEN_446;
             VlWide<4>/*127:0*/ nicore__DOT__icache__DOT___GEN_447;
             VlWide<4>/*127:0*/ nicore__DOT__icache__DOT___GEN_457;
-        };
-        struct {
             VlWide<4>/*127:0*/ nicore__DOT__icache__DOT___GEN_458;
             VlWide<4>/*127:0*/ nicore__DOT__icache__DOT___GEN_468;
             VlWide<4>/*127:0*/ nicore__DOT__icache__DOT___GEN_469;
@@ -5567,12 +5571,12 @@ class alignas(VL_CACHE_LINE_BYTES) Vnicore___024root final {
             VlWide<4>/*127:0*/ nicore__DOT__icache__DOT___GEN_716;
             IData/*31:0*/ nicore__DOT__icache__DOT___GEN_726;
             IData/*31:0*/ nicore__DOT__icache__DOT___GEN_732;
+        };
+        struct {
             IData/*21:0*/ nicore__DOT__icache__DOT___GEN_755;
             IData/*21:0*/ nicore__DOT__icache__DOT___GEN_760;
             IData/*21:0*/ nicore__DOT__icache__DOT___GEN_765;
             IData/*21:0*/ nicore__DOT__icache__DOT___GEN_770;
-        };
-        struct {
             VlWide<4>/*127:0*/ nicore__DOT__icache__DOT___GEN_777;
             VlWide<4>/*127:0*/ nicore__DOT__icache__DOT___GEN_780;
             VlWide<4>/*127:0*/ nicore__DOT__icache__DOT___GEN_782;
@@ -5633,12 +5637,12 @@ class alignas(VL_CACHE_LINE_BYTES) Vnicore___024root final {
             VlWide<4>/*127:0*/ nicore__DOT__icache__DOT___GEN_1088;
             VlWide<4>/*127:0*/ nicore__DOT__icache__DOT___GEN_1091;
             VlWide<4>/*127:0*/ nicore__DOT__icache__DOT___GEN_1093;
+        };
+        struct {
             VlWide<4>/*127:0*/ nicore__DOT__icache__DOT___GEN_1094;
             VlWide<4>/*127:0*/ nicore__DOT__icache__DOT___GEN_1096;
             VlWide<4>/*127:0*/ nicore__DOT__icache__DOT___GEN_1097;
             VlWide<4>/*127:0*/ nicore__DOT__icache__DOT___GEN_1099;
-        };
-        struct {
             VlWide<4>/*127:0*/ nicore__DOT__icache__DOT___GEN_1100;
             IData/*31:0*/ nicore__DOT__icache__DOT___GEN_1110;
             IData/*31:0*/ nicore__DOT__icache__DOT___GEN_1143;
@@ -5699,12 +5703,12 @@ class alignas(VL_CACHE_LINE_BYTES) Vnicore___024root final {
             VlWide<4>/*127:0*/ nicore__DOT__icache__DOT__data_mem_1__DOT__io_sram_wmask;
             VlWide<4>/*127:0*/ nicore__DOT__icache__DOT__data_mem_1__DOT__io_sram_wdata;
             VlWide<4>/*127:0*/ nicore__DOT__icache__DOT__data_mem_1__DOT__io_sram_rdata;
+        };
+        struct {
             VlWide<4>/*127:0*/ nicore__DOT__icache__DOT__data_mem_0__DOT__io_cache_req_wmask;
             VlWide<4>/*127:0*/ nicore__DOT__icache__DOT__data_mem_0__DOT__io_data_write_data;
             VlWide<4>/*127:0*/ nicore__DOT__icache__DOT__data_mem_0__DOT__io_data_read_data;
             VlWide<4>/*127:0*/ nicore__DOT__icache__DOT__data_mem_0__DOT__io_sram_wmask;
-        };
-        struct {
             VlWide<4>/*127:0*/ nicore__DOT__icache__DOT__data_mem_0__DOT__io_sram_wdata;
             VlWide<4>/*127:0*/ nicore__DOT__icache__DOT__data_mem_0__DOT__io_sram_rdata;
             IData/*31:0*/ nicore__DOT__datapath__DOT__io_inst;
@@ -5765,12 +5769,12 @@ class alignas(VL_CACHE_LINE_BYTES) Vnicore___024root final {
             VlWide<4>/*127:0*/ nicore__DOT__datapath__DOT__execute_stage__DOT__divider__DOT___GEN_28;
             VlWide<4>/*127:0*/ nicore__DOT__datapath__DOT__execute_stage__DOT__divider__DOT___GEN_43;
             VlWide<4>/*127:0*/ nicore__DOT__datapath__DOT__execute_stage__DOT__divider__DOT__mid128_result;
+        };
+        struct {
             VlWide<4>/*127:0*/ nicore__DOT__datapath__DOT__execute_stage__DOT__divider__DOT___GEN_26;
             VlWide<3>/*64:0*/ nicore__DOT__datapath__DOT__execute_stage__DOT__divider__DOT___GEN_27;
             VlWide<4>/*127:0*/ nicore__DOT__datapath__DOT__execute_stage__DOT__divider__DOT___divisor_T_25;
             VlWide<3>/*64:0*/ nicore__DOT__datapath__DOT__execute_stage__DOT__divider__DOT___GEN_30;
-        };
-        struct {
             VlWide<4>/*127:0*/ nicore__DOT__datapath__DOT__execute_stage__DOT__divider__DOT___io_remainder_T_5;
             VlWide<4>/*127:0*/ nicore__DOT__datapath__DOT__execute_stage__DOT__divider__DOT___io_remainder_T_6;
             VlWide<3>/*64:0*/ nicore__DOT__datapath__DOT__execute_stage__DOT__divider__DOT___GEN_41;
@@ -5831,12 +5835,12 @@ class alignas(VL_CACHE_LINE_BYTES) Vnicore___024root final {
             IData/*31:0*/ nicore__DOT__datapath__DOT__memory_stage__DOT__io_csr_inst;
             IData/*26:0*/ nicore__DOT__datapath__DOT__memory_stage__DOT__dTLB_io_tlb_flush_vpn;
             IData/*31:0*/ nicore__DOT__datapath__DOT__memory_stage__DOT__dTLB_io_tlb_request_addr;
+        };
+        struct {
             IData/*31:0*/ nicore__DOT__datapath__DOT__memory_stage__DOT__mw_pipe_reg_inst;
             IData/*31:0*/ nicore__DOT__datapath__DOT__memory_stage__DOT___lt_s_T_1;
             IData/*31:0*/ nicore__DOT__datapath__DOT__memory_stage__DOT___lt_s_T_3;
             VlWide<4>/*126:0*/ nicore__DOT__datapath__DOT__memory_stage__DOT___GEN_35;
-        };
-        struct {
             VlWide<4>/*126:0*/ nicore__DOT__datapath__DOT__memory_stage__DOT___amo_store_data_T_4;
             VlWide<4>/*126:0*/ nicore__DOT__datapath__DOT__memory_stage__DOT___GEN_36;
             VlWide<4>/*126:0*/ nicore__DOT__datapath__DOT__memory_stage__DOT___io_dcache_cpu_request_data_T_3;
@@ -5897,12 +5901,12 @@ class alignas(VL_CACHE_LINE_BYTES) Vnicore___024root final {
             IData/*26:0*/ nicore__DOT__datapath__DOT__fetch_stage__DOT__iTLB__DOT__tlbe_0_vpn;
             IData/*16:0*/ nicore__DOT__datapath__DOT__fetch_stage__DOT__iTLB__DOT__asid;
             IData/*26:0*/ nicore__DOT__datapath__DOT__fetch_stage__DOT__iTLB__DOT___ok_T_2;
+        };
+        struct {
             IData/*16:0*/ nicore__DOT__datapath__DOT__fetch_stage__DOT__iTLB__DOT___GEN_2896;
             IData/*17:0*/ nicore__DOT__datapath__DOT__fetch_stage__DOT__iTLB__DOT___ok_T_10;
             VlWide<4>/*98:0*/ nicore__DOT__datapath__DOT__fetch_stage__DOT__iTLB__DOT___pte_reg_T;
             IData/*26:0*/ nicore__DOT__datapath__DOT__fetch_stage__DOT__iTLB__DOT___tlbe_vpn_T_6;
-        };
-        struct {
             IData/*26:0*/ nicore__DOT__datapath__DOT__fetch_stage__DOT__iTLB__DOT___tlbe_vpn_T_8;
             IData/*26:0*/ nicore__DOT__datapath__DOT__fetch_stage__DOT__iTLB__DOT___tlbe_vpn_T_9;
             IData/*26:0*/ nicore__DOT__datapath__DOT__fetch_stage__DOT__iTLB__DOT___tlbe_vpn_T_10;
@@ -5963,28 +5967,31 @@ class alignas(VL_CACHE_LINE_BYTES) Vnicore___024root final {
             IData/*31:0*/ nicore__DOT__sram0__DOT__i;
             IData/*31:0*/ nicore__DOT__arb__DOT__io_icache_ar_bits_addr;
             IData/*31:0*/ nicore__DOT__arb__DOT__io_dcache_aw_bits_addr;
+        };
+        struct {
             IData/*31:0*/ nicore__DOT__arb__DOT__io_dcache_ar_bits_addr;
             IData/*31:0*/ nicore__DOT__arb__DOT__io_axi_out_aw_bits_addr;
             IData/*31:0*/ nicore__DOT__arb__DOT__io_axi_out_ar_bits_addr;
             IData/*24:0*/ __VdfgRegularize_hebeb780c_0_215;
-        };
-        struct {
             IData/*24:0*/ __VdfgRegularize_hebeb780c_0_217;
             IData/*31:0*/ __VdfgRegularize_hebeb780c_0_402;
             IData/*31:0*/ __Vtrigprevexpr___TOP__io_slave_awaddr__0;
             IData/*31:0*/ __Vtrigprevexpr___TOP__io_slave_araddr__0;
             IData/*31:0*/ __VactIterCount;
             VL_OUT64(io_pc_debug,63,0);
+            VL_OUT64(io_commit_pc,63,0);
             VL_OUT64(io_master_wdata,63,0);
             VL_IN64(io_master_rdata,63,0);
             VL_IN64(io_slave_wdata,63,0);
             VL_OUT64(io_slave_rdata,63,0);
             QData/*63:0*/ nicore__DOT__io_pc_debug;
+            QData/*63:0*/ nicore__DOT__io_commit_pc;
             QData/*63:0*/ nicore__DOT__io_master_wdata;
             QData/*63:0*/ nicore__DOT__io_master_rdata;
             QData/*63:0*/ nicore__DOT__io_slave_wdata;
             QData/*63:0*/ nicore__DOT__io_slave_rdata;
             QData/*63:0*/ nicore__DOT__datapath_io_pc;
+            QData/*63:0*/ nicore__DOT__datapath_io_commit_pc;
             QData/*63:0*/ nicore__DOT__datapath_io_icache_cpu_response_data;
             QData/*63:0*/ nicore__DOT__datapath_io_dcache_cpu_request_data;
             QData/*63:0*/ nicore__DOT__datapath_io_dcache_cpu_response_data;
@@ -6026,6 +6033,8 @@ class alignas(VL_CACHE_LINE_BYTES) Vnicore___024root final {
             QData/*63:0*/ nicore__DOT__dcache__DOT___GEN_492;
             QData/*63:0*/ nicore__DOT__dcache__DOT___GEN_495;
             QData/*63:0*/ nicore__DOT__dcache__DOT___GEN_498;
+        };
+        struct {
             QData/*63:0*/ nicore__DOT__dcache__DOT___GEN_501;
             QData/*63:0*/ nicore__DOT__dcache__DOT___GEN_507;
             QData/*63:0*/ nicore__DOT__dcache__DOT___GEN_526;
@@ -6033,8 +6042,6 @@ class alignas(VL_CACHE_LINE_BYTES) Vnicore___024root final {
             QData/*63:0*/ nicore__DOT__dcache__DOT___GEN_548;
             QData/*63:0*/ nicore__DOT__dcache__DOT___GEN_580;
             QData/*63:0*/ nicore__DOT__dcache__DOT___GEN_613;
-        };
-        struct {
             QData/*63:0*/ nicore__DOT__dcache__DOT___GEN_647;
             QData/*63:0*/ nicore__DOT__dcache__DOT___GEN_702;
             QData/*63:0*/ nicore__DOT__dcache__DOT___GEN_775;
@@ -6092,6 +6099,8 @@ class alignas(VL_CACHE_LINE_BYTES) Vnicore___024root final {
             QData/*63:0*/ nicore__DOT__dcache__DOT___GEN_159;
             QData/*63:0*/ nicore__DOT__dcache__DOT___GEN_173;
             QData/*63:0*/ nicore__DOT__dcache__DOT___GEN_201;
+        };
+        struct {
             QData/*63:0*/ nicore__DOT__dcache__DOT___GEN_210;
             QData/*63:0*/ nicore__DOT__dcache__DOT___GEN_212;
             QData/*63:0*/ nicore__DOT__dcache__DOT___tmp_response_data_T_12;
@@ -6099,8 +6108,6 @@ class alignas(VL_CACHE_LINE_BYTES) Vnicore___024root final {
             QData/*63:0*/ nicore__DOT__dcache__DOT___tmp_response_data_T_13;
             QData/*63:0*/ nicore__DOT__dcache__DOT___GEN_216;
             QData/*63:0*/ nicore__DOT__dcache__DOT___tmp_response_data_T_14;
-        };
-        struct {
             QData/*63:0*/ nicore__DOT__dcache__DOT___GEN_217;
             QData/*63:0*/ nicore__DOT__dcache__DOT___wmask_T_24;
             QData/*63:0*/ nicore__DOT__dcache__DOT___GEN_253;
@@ -6158,6 +6165,8 @@ class alignas(VL_CACHE_LINE_BYTES) Vnicore___024root final {
             QData/*63:0*/ nicore__DOT__dcache__DOT___GEN_1342;
             QData/*63:0*/ nicore__DOT__dcache__DOT__wmask_0;
             QData/*63:0*/ nicore__DOT__dcache__DOT___GEN_377;
+        };
+        struct {
             QData/*63:0*/ nicore__DOT__dcache__DOT___GEN_494;
             QData/*63:0*/ nicore__DOT__dcache__DOT___GEN_497;
             QData/*63:0*/ nicore__DOT__dcache__DOT___GEN_500;
@@ -6165,8 +6174,6 @@ class alignas(VL_CACHE_LINE_BYTES) Vnicore___024root final {
             QData/*63:0*/ nicore__DOT__dcache__DOT___GEN_509;
             QData/*63:0*/ nicore__DOT__dcache__DOT___GEN_528;
             QData/*63:0*/ nicore__DOT__dcache__DOT___GEN_542;
-        };
-        struct {
             QData/*63:0*/ nicore__DOT__dcache__DOT___GEN_572;
             QData/*63:0*/ nicore__DOT__dcache__DOT___GEN_604;
             QData/*63:0*/ nicore__DOT__dcache__DOT___GEN_637;
@@ -6224,6 +6231,8 @@ class alignas(VL_CACHE_LINE_BYTES) Vnicore___024root final {
             QData/*63:0*/ nicore__DOT__icache__DOT___GEN_1086;
             QData/*63:0*/ nicore__DOT__icache__DOT___GEN_1129;
             QData/*63:0*/ nicore__DOT__icache__DOT___GEN_1241;
+        };
+        struct {
             QData/*63:0*/ nicore__DOT__icache__DOT___GEN_1325;
             QData/*63:0*/ nicore__DOT__icache__DOT__cache_data_0;
             QData/*63:0*/ nicore__DOT__icache__DOT___GEN_461;
@@ -6231,8 +6240,6 @@ class alignas(VL_CACHE_LINE_BYTES) Vnicore___024root final {
             QData/*63:0*/ nicore__DOT__icache__DOT___GEN_443;
             QData/*63:0*/ nicore__DOT__icache__DOT___GEN_454;
             QData/*63:0*/ nicore__DOT__icache__DOT___GEN_465;
-        };
-        struct {
             QData/*63:0*/ nicore__DOT__icache__DOT___GEN_472;
             QData/*63:0*/ nicore__DOT__icache__DOT___GEN_493;
             QData/*63:0*/ nicore__DOT__icache__DOT___GEN_496;
@@ -6290,6 +6297,8 @@ class alignas(VL_CACHE_LINE_BYTES) Vnicore___024root final {
             QData/*63:0*/ nicore__DOT__icache__DOT___GEN_550;
             QData/*63:0*/ nicore__DOT__icache__DOT___GEN_582;
             QData/*63:0*/ nicore__DOT__icache__DOT___GEN_615;
+        };
+        struct {
             QData/*63:0*/ nicore__DOT__icache__DOT___GEN_649;
             QData/*63:0*/ nicore__DOT__icache__DOT___GEN_705;
             QData/*63:0*/ nicore__DOT__icache__DOT___GEN_778;
@@ -6297,8 +6306,6 @@ class alignas(VL_CACHE_LINE_BYTES) Vnicore___024root final {
             QData/*63:0*/ nicore__DOT__icache__DOT___GEN_934;
             QData/*63:0*/ nicore__DOT__icache__DOT___GEN_1011;
             QData/*63:0*/ nicore__DOT__icache__DOT___GEN_1089;
-        };
-        struct {
             QData/*63:0*/ nicore__DOT__icache__DOT___GEN_1176;
             QData/*63:0*/ nicore__DOT__icache__DOT___GEN_1259;
             QData/*63:0*/ nicore__DOT__icache__DOT___GEN_1342;
@@ -6322,6 +6329,7 @@ class alignas(VL_CACHE_LINE_BYTES) Vnicore___024root final {
             QData/*63:0*/ nicore__DOT__icache__DOT___GEN_1252;
             QData/*63:0*/ nicore__DOT__icache__DOT___GEN_1336;
             QData/*63:0*/ nicore__DOT__datapath__DOT__io_pc;
+            QData/*63:0*/ nicore__DOT__datapath__DOT__io_commit_pc;
             QData/*63:0*/ nicore__DOT__datapath__DOT__io_icache_cpu_response_data;
             QData/*63:0*/ nicore__DOT__datapath__DOT__io_dcache_cpu_request_data;
             QData/*63:0*/ nicore__DOT__datapath__DOT__io_dcache_cpu_response_data;
@@ -6355,6 +6363,8 @@ class alignas(VL_CACHE_LINE_BYTES) Vnicore___024root final {
             QData/*63:0*/ nicore__DOT__datapath__DOT__execute_stage_io_data_cache_response_data;
             QData/*63:0*/ nicore__DOT__datapath__DOT__execute_stage_io_de_pipe_reg_pc;
             QData/*63:0*/ nicore__DOT__datapath__DOT__execute_stage_io_de_pipe_reg_imm;
+        };
+        struct {
             QData/*63:0*/ nicore__DOT__datapath__DOT__execute_stage_io_de_pipe_reg_rs1;
             QData/*63:0*/ nicore__DOT__datapath__DOT__execute_stage_io_de_pipe_reg_src1_addr;
             QData/*63:0*/ nicore__DOT__datapath__DOT__execute_stage_io_de_pipe_reg_rs2;
@@ -6363,8 +6373,6 @@ class alignas(VL_CACHE_LINE_BYTES) Vnicore___024root final {
             QData/*63:0*/ nicore__DOT__datapath__DOT__execute_stage_io_em_pipe_reg_alu_out;
             QData/*63:0*/ nicore__DOT__datapath__DOT__execute_stage_io_em_pipe_reg_csr_read_data;
             QData/*63:0*/ nicore__DOT__datapath__DOT__execute_stage_io_em_pipe_reg_csr_write_data;
-        };
-        struct {
             QData/*63:0*/ nicore__DOT__datapath__DOT__execute_stage_io_em_pipe_reg_st_data;
             QData/*63:0*/ nicore__DOT__datapath__DOT__execute_stage_io_em_pipe_reg_pc;
             QData/*63:0*/ nicore__DOT__datapath__DOT__execute_stage_io_em_pipe_reg_sfence_rs1;
@@ -6421,6 +6429,8 @@ class alignas(VL_CACHE_LINE_BYTES) Vnicore___024root final {
             QData/*63:0*/ nicore__DOT__datapath__DOT__execute_stage__DOT__io_clint_r_data;
             QData/*63:0*/ nicore__DOT__datapath__DOT__execute_stage__DOT__io_data_cache_response_data;
             QData/*63:0*/ nicore__DOT__datapath__DOT__execute_stage__DOT__io_de_pipe_reg_pc;
+        };
+        struct {
             QData/*63:0*/ nicore__DOT__datapath__DOT__execute_stage__DOT__io_de_pipe_reg_imm;
             QData/*63:0*/ nicore__DOT__datapath__DOT__execute_stage__DOT__io_de_pipe_reg_rs1;
             QData/*63:0*/ nicore__DOT__datapath__DOT__execute_stage__DOT__io_de_pipe_reg_src1_addr;
@@ -6429,8 +6439,6 @@ class alignas(VL_CACHE_LINE_BYTES) Vnicore___024root final {
             QData/*63:0*/ nicore__DOT__datapath__DOT__execute_stage__DOT__io_de_pipe_reg_csr_read_data;
             QData/*63:0*/ nicore__DOT__datapath__DOT__execute_stage__DOT__io_em_pipe_reg_alu_out;
             QData/*63:0*/ nicore__DOT__datapath__DOT__execute_stage__DOT__io_em_pipe_reg_csr_read_data;
-        };
-        struct {
             QData/*63:0*/ nicore__DOT__datapath__DOT__execute_stage__DOT__io_em_pipe_reg_csr_write_data;
             QData/*63:0*/ nicore__DOT__datapath__DOT__execute_stage__DOT__io_em_pipe_reg_st_data;
             QData/*63:0*/ nicore__DOT__datapath__DOT__execute_stage__DOT__io_em_pipe_reg_pc;
@@ -6487,6 +6495,8 @@ class alignas(VL_CACHE_LINE_BYTES) Vnicore___024root final {
             QData/*63:0*/ nicore__DOT__datapath__DOT__execute_stage__DOT___GEN_13;
             QData/*63:0*/ nicore__DOT__datapath__DOT__execute_stage__DOT___GEN_81;
             QData/*63:0*/ nicore__DOT__datapath__DOT__execute_stage__DOT___src1_data_T_12;
+        };
+        struct {
             QData/*63:0*/ nicore__DOT__datapath__DOT__execute_stage__DOT___src1_data_T_14;
             QData/*63:0*/ nicore__DOT__datapath__DOT__execute_stage__DOT___src1_data_T_15;
             QData/*63:0*/ nicore__DOT__datapath__DOT__execute_stage__DOT___src1_data_T_16;
@@ -6495,8 +6505,6 @@ class alignas(VL_CACHE_LINE_BYTES) Vnicore___024root final {
             QData/*63:0*/ nicore__DOT__datapath__DOT__execute_stage__DOT__src1_data;
             QData/*63:0*/ nicore__DOT__datapath__DOT__execute_stage__DOT___src2_data_T_5;
             QData/*63:0*/ nicore__DOT__datapath__DOT__execute_stage__DOT___src2_data_T_6;
-        };
-        struct {
             QData/*63:0*/ nicore__DOT__datapath__DOT__execute_stage__DOT___src2_data_T_7;
             QData/*63:0*/ nicore__DOT__datapath__DOT__execute_stage__DOT___src2_data_T_8;
             QData/*63:0*/ nicore__DOT__datapath__DOT__execute_stage__DOT___GEN_17;
@@ -6553,6 +6561,8 @@ class alignas(VL_CACHE_LINE_BYTES) Vnicore___024root final {
             QData/*63:0*/ nicore__DOT__datapath__DOT__execute_stage__DOT__multiplier__DOT___multiplier_reg_T_6;
             QData/*63:0*/ nicore__DOT__datapath__DOT__execute_stage__DOT__multiplier__DOT___GEN_10;
             QData/*63:0*/ nicore__DOT__datapath__DOT__execute_stage__DOT__multiplier__DOT___GEN_11;
+        };
+        struct {
             QData/*62:0*/ nicore__DOT__datapath__DOT__execute_stage__DOT__multiplier__DOT___GEN_1;
             QData/*62:0*/ nicore__DOT__datapath__DOT__execute_stage__DOT__multiplier__DOT___mid_result_0_T_2;
             QData/*63:0*/ nicore__DOT__datapath__DOT__execute_stage__DOT__multiplier__DOT___mid_result_0_T_3;
@@ -6561,8 +6571,6 @@ class alignas(VL_CACHE_LINE_BYTES) Vnicore___024root final {
             QData/*63:0*/ nicore__DOT__datapath__DOT__execute_stage__DOT__multiplier__DOT___mid_result_1_T_5;
             QData/*62:0*/ nicore__DOT__datapath__DOT__execute_stage__DOT__multiplier__DOT___GEN_2;
             QData/*62:0*/ nicore__DOT__datapath__DOT__execute_stage__DOT__multiplier__DOT___mid_result_2_T_2;
-        };
-        struct {
             QData/*63:0*/ nicore__DOT__datapath__DOT__execute_stage__DOT__multiplier__DOT___mid_result_2_T_3;
             QData/*63:0*/ nicore__DOT__datapath__DOT__execute_stage__DOT__multiplier__DOT___mid_result_2_T_5;
             QData/*63:0*/ nicore__DOT__datapath__DOT__execute_stage__DOT__multiplier__DOT___mid_result_3_T_3;
@@ -6619,6 +6627,8 @@ class alignas(VL_CACHE_LINE_BYTES) Vnicore___024root final {
             QData/*63:0*/ nicore__DOT__datapath__DOT__decode_stage__DOT__regFile_io_rdata_9;
             QData/*63:0*/ nicore__DOT__datapath__DOT__decode_stage__DOT__regFile_io_rdata_10;
             QData/*63:0*/ nicore__DOT__datapath__DOT__decode_stage__DOT__regFile_io_rdata_11;
+        };
+        struct {
             QData/*63:0*/ nicore__DOT__datapath__DOT__decode_stage__DOT__regFile_io_rdata_12;
             QData/*63:0*/ nicore__DOT__datapath__DOT__decode_stage__DOT__regFile_io_rdata_13;
             QData/*63:0*/ nicore__DOT__datapath__DOT__decode_stage__DOT__regFile_io_rdata_14;
@@ -6627,8 +6637,6 @@ class alignas(VL_CACHE_LINE_BYTES) Vnicore___024root final {
             QData/*63:0*/ nicore__DOT__datapath__DOT__decode_stage__DOT__regFile_io_rdata_17;
             QData/*63:0*/ nicore__DOT__datapath__DOT__decode_stage__DOT__regFile_io_rdata_18;
             QData/*63:0*/ nicore__DOT__datapath__DOT__decode_stage__DOT__regFile_io_rdata_19;
-        };
-        struct {
             QData/*63:0*/ nicore__DOT__datapath__DOT__decode_stage__DOT__regFile_io_rdata_20;
             QData/*63:0*/ nicore__DOT__datapath__DOT__decode_stage__DOT__regFile_io_rdata_21;
             QData/*63:0*/ nicore__DOT__datapath__DOT__decode_stage__DOT__regFile_io_rdata_22;
@@ -6685,6 +6693,8 @@ class alignas(VL_CACHE_LINE_BYTES) Vnicore___024root final {
             QData/*63:0*/ nicore__DOT__datapath__DOT__decode_stage__DOT__de_pipe_reg_csr_read_data;
             QData/*63:0*/ nicore__DOT__datapath__DOT__decode_stage__DOT___csr_write_data_T_8;
             QData/*63:0*/ nicore__DOT__datapath__DOT__decode_stage__DOT___csr_write_data_T_10;
+        };
+        struct {
             QData/*63:0*/ nicore__DOT__datapath__DOT__decode_stage__DOT___csr_write_data_T_11;
             QData/*63:0*/ nicore__DOT__datapath__DOT__decode_stage__DOT___csr_write_data_T_12;
             QData/*63:0*/ nicore__DOT__datapath__DOT__decode_stage__DOT___de_pipe_reg_csr_inst_misalign_T;
@@ -6693,8 +6703,6 @@ class alignas(VL_CACHE_LINE_BYTES) Vnicore___024root final {
             QData/*63:0*/ nicore__DOT__datapath__DOT__decode_stage__DOT__gpr_ptr__DOT__regfile_2;
             QData/*63:0*/ nicore__DOT__datapath__DOT__decode_stage__DOT__gpr_ptr__DOT__regfile_3;
             QData/*63:0*/ nicore__DOT__datapath__DOT__decode_stage__DOT__gpr_ptr__DOT__regfile_4;
-        };
-        struct {
             QData/*63:0*/ nicore__DOT__datapath__DOT__decode_stage__DOT__gpr_ptr__DOT__regfile_5;
             QData/*63:0*/ nicore__DOT__datapath__DOT__decode_stage__DOT__gpr_ptr__DOT__regfile_6;
             QData/*63:0*/ nicore__DOT__datapath__DOT__decode_stage__DOT__gpr_ptr__DOT__regfile_7;
@@ -6751,6 +6759,8 @@ class alignas(VL_CACHE_LINE_BYTES) Vnicore___024root final {
             QData/*63:0*/ nicore__DOT__datapath__DOT__decode_stage__DOT__regFile__DOT__io_rdata_27;
             QData/*63:0*/ nicore__DOT__datapath__DOT__decode_stage__DOT__regFile__DOT__io_rdata_28;
             QData/*63:0*/ nicore__DOT__datapath__DOT__decode_stage__DOT__regFile__DOT__io_rdata_29;
+        };
+        struct {
             QData/*63:0*/ nicore__DOT__datapath__DOT__decode_stage__DOT__regFile__DOT__io_rdata_30;
             QData/*63:0*/ nicore__DOT__datapath__DOT__decode_stage__DOT__regFile__DOT__io_rdata_31;
             QData/*63:0*/ nicore__DOT__datapath__DOT__decode_stage__DOT__regFile__DOT__io_rdata_32;
@@ -6759,8 +6769,6 @@ class alignas(VL_CACHE_LINE_BYTES) Vnicore___024root final {
             QData/*63:0*/ nicore__DOT__datapath__DOT__decode_stage__DOT__regFile__DOT__reg_0;
             QData/*63:0*/ nicore__DOT__datapath__DOT__decode_stage__DOT__regFile__DOT__reg_1;
             QData/*63:0*/ nicore__DOT__datapath__DOT__decode_stage__DOT__regFile__DOT__reg_2;
-        };
-        struct {
             QData/*63:0*/ nicore__DOT__datapath__DOT__decode_stage__DOT__regFile__DOT__reg_3;
             QData/*63:0*/ nicore__DOT__datapath__DOT__decode_stage__DOT__regFile__DOT__reg_4;
             QData/*63:0*/ nicore__DOT__datapath__DOT__decode_stage__DOT__regFile__DOT__reg_5;
@@ -6817,6 +6825,8 @@ class alignas(VL_CACHE_LINE_BYTES) Vnicore___024root final {
             QData/*63:0*/ nicore__DOT__datapath__DOT__decode_stage__DOT__regFile__DOT___GEN_89;
             QData/*63:0*/ nicore__DOT__datapath__DOT__decode_stage__DOT__regFile__DOT___GEN_90;
             QData/*63:0*/ nicore__DOT__datapath__DOT__decode_stage__DOT__regFile__DOT___GEN_91;
+        };
+        struct {
             QData/*63:0*/ nicore__DOT__datapath__DOT__decode_stage__DOT__regFile__DOT___GEN_92;
             QData/*63:0*/ nicore__DOT__datapath__DOT__decode_stage__DOT__regFile__DOT___GEN_93;
             QData/*63:0*/ nicore__DOT__datapath__DOT__decode_stage__DOT__regFile__DOT___GEN_94;
@@ -6825,8 +6835,6 @@ class alignas(VL_CACHE_LINE_BYTES) Vnicore___024root final {
             QData/*63:0*/ nicore__DOT__datapath__DOT__decode_stage__DOT__regFile__DOT___GEN_99;
             QData/*63:0*/ nicore__DOT__datapath__DOT__decode_stage__DOT__regFile__DOT___GEN_100;
             QData/*63:0*/ nicore__DOT__datapath__DOT__decode_stage__DOT__regFile__DOT___GEN_101;
-        };
-        struct {
             QData/*63:0*/ nicore__DOT__datapath__DOT__decode_stage__DOT__regFile__DOT___GEN_102;
             QData/*63:0*/ nicore__DOT__datapath__DOT__decode_stage__DOT__regFile__DOT___GEN_103;
             QData/*63:0*/ nicore__DOT__datapath__DOT__decode_stage__DOT__regFile__DOT___GEN_104;
@@ -6883,6 +6891,8 @@ class alignas(VL_CACHE_LINE_BYTES) Vnicore___024root final {
             QData/*63:0*/ nicore__DOT__datapath__DOT__memory_stage__DOT__io_em_pipe_reg_sfence_rs2;
             QData/*63:0*/ nicore__DOT__datapath__DOT__memory_stage__DOT__io_mw_pipe_reg_load_data;
             QData/*63:0*/ nicore__DOT__datapath__DOT__memory_stage__DOT__io_mw_pipe_reg_alu_out;
+        };
+        struct {
             QData/*63:0*/ nicore__DOT__datapath__DOT__memory_stage__DOT__io_mw_pipe_reg_csr_read_data;
             QData/*63:0*/ nicore__DOT__datapath__DOT__memory_stage__DOT__io_mw_pipe_reg_pc;
             QData/*63:0*/ nicore__DOT__datapath__DOT__memory_stage__DOT__io_mw_pipe_reg_csr_write_data;
@@ -6891,8 +6901,6 @@ class alignas(VL_CACHE_LINE_BYTES) Vnicore___024root final {
             QData/*63:0*/ nicore__DOT__datapath__DOT__memory_stage__DOT__io_clint_r_data;
             QData/*63:0*/ nicore__DOT__datapath__DOT__memory_stage__DOT__io_csr_excPC;
             QData/*63:0*/ nicore__DOT__datapath__DOT__memory_stage__DOT__io_satp;
-        };
-        struct {
             QData/*63:0*/ nicore__DOT__datapath__DOT__memory_stage__DOT__dTLB_io_satp;
             QData/*63:0*/ nicore__DOT__datapath__DOT__memory_stage__DOT__dTLB_io_va;
             QData/*63:0*/ nicore__DOT__datapath__DOT__memory_stage__DOT__dTLB_io_cache_response_data;
@@ -6949,6 +6957,8 @@ class alignas(VL_CACHE_LINE_BYTES) Vnicore___024root final {
             QData/*63:0*/ nicore__DOT__datapath__DOT__memory_stage__DOT___load_data_ext_T_25;
             QData/*63:0*/ nicore__DOT__datapath__DOT__memory_stage__DOT___load_data_ext_T_29;
             QData/*63:0*/ nicore__DOT__datapath__DOT__memory_stage__DOT___load_data_ext_T_30;
+        };
+        struct {
             QData/*63:0*/ nicore__DOT__datapath__DOT__memory_stage__DOT___load_data_ext_T_31;
             QData/*63:0*/ nicore__DOT__datapath__DOT__memory_stage__DOT___load_data_ext_T_32;
             QData/*63:0*/ nicore__DOT__datapath__DOT__memory_stage__DOT___load_data_ext_T_33;
@@ -6957,8 +6967,6 @@ class alignas(VL_CACHE_LINE_BYTES) Vnicore___024root final {
             QData/*63:0*/ nicore__DOT__datapath__DOT__memory_stage__DOT__clint__DOT__io_w_data;
             QData/*63:0*/ nicore__DOT__datapath__DOT__memory_stage__DOT__clint__DOT__io_r_data;
             QData/*63:0*/ nicore__DOT__datapath__DOT__memory_stage__DOT__clint__DOT__msip;
-        };
-        struct {
             QData/*63:0*/ nicore__DOT__datapath__DOT__memory_stage__DOT__clint__DOT__mtimecmp;
             QData/*63:0*/ nicore__DOT__datapath__DOT__memory_stage__DOT__clint__DOT__mtime;
             QData/*63:0*/ nicore__DOT__datapath__DOT__memory_stage__DOT__clint__DOT__addr_reg;
@@ -7015,6 +7023,8 @@ class alignas(VL_CACHE_LINE_BYTES) Vnicore___024root final {
             QData/*63:0*/ nicore__DOT__datapath__DOT__fetch_stage__DOT__io_csr_next_fetch;
             QData/*63:0*/ nicore__DOT__datapath__DOT__fetch_stage__DOT__io_em_pipe_reg_pc;
             QData/*63:0*/ nicore__DOT__datapath__DOT__fetch_stage__DOT__io_jump_addr;
+        };
+        struct {
             QData/*63:0*/ nicore__DOT__datapath__DOT__fetch_stage__DOT__io_icache_cpu_response_data;
             QData/*63:0*/ nicore__DOT__datapath__DOT__fetch_stage__DOT__io_fd_pipe_reg_pc;
             QData/*63:0*/ nicore__DOT__datapath__DOT__fetch_stage__DOT__io_sfence_rs1;
@@ -7023,8 +7033,6 @@ class alignas(VL_CACHE_LINE_BYTES) Vnicore___024root final {
             QData/*63:0*/ nicore__DOT__datapath__DOT__fetch_stage__DOT__iTLB_io_satp;
             QData/*63:0*/ nicore__DOT__datapath__DOT__fetch_stage__DOT__iTLB_io_va;
             QData/*63:0*/ nicore__DOT__datapath__DOT__fetch_stage__DOT__iTLB_io_cache_response_data;
-        };
-        struct {
             QData/*63:0*/ nicore__DOT__datapath__DOT__fetch_stage__DOT__fd_pipe_reg_pc;
             QData/*63:0*/ nicore__DOT__datapath__DOT__fetch_stage__DOT___pc_T_1;
             QData/*63:0*/ nicore__DOT__datapath__DOT__fetch_stage__DOT___next_pc_T_5;
@@ -7081,6 +7089,8 @@ class alignas(VL_CACHE_LINE_BYTES) Vnicore___024root final {
             QData/*63:0*/ nicore__DOT__datapath__DOT__csr__DOT__io_excPC;
             QData/*63:0*/ nicore__DOT__datapath__DOT__csr__DOT__io_sstatus;
             QData/*63:0*/ nicore__DOT__datapath__DOT__csr__DOT__io_satp;
+        };
+        struct {
             QData/*63:0*/ nicore__DOT__datapath__DOT__csr__DOT__io_trapVec;
             QData/*63:0*/ nicore__DOT__datapath__DOT__csr__DOT__io_alu_out;
             QData/*63:0*/ nicore__DOT__datapath__DOT__csr__DOT__medeleg_data;
@@ -7089,8 +7099,6 @@ class alignas(VL_CACHE_LINE_BYTES) Vnicore___024root final {
             QData/*63:0*/ nicore__DOT__datapath__DOT__csr__DOT__mscratch_data;
             QData/*63:0*/ nicore__DOT__datapath__DOT__csr__DOT__mepc_data;
             QData/*62:0*/ nicore__DOT__datapath__DOT__csr__DOT__mcause_code;
-        };
-        struct {
             QData/*63:0*/ nicore__DOT__datapath__DOT__csr__DOT__mtval_data;
             QData/*63:0*/ nicore__DOT__datapath__DOT__csr__DOT__mcycle_data;
             QData/*63:0*/ nicore__DOT__datapath__DOT__csr__DOT__minstret_data;
@@ -7147,6 +7155,8 @@ class alignas(VL_CACHE_LINE_BYTES) Vnicore___024root final {
             QData/*63:0*/ nicore__DOT__datapath__DOT__csr__DOT___csrData_T_176;
             QData/*63:0*/ nicore__DOT__datapath__DOT__csr__DOT___csrData_T_177;
             QData/*63:0*/ nicore__DOT__datapath__DOT__csr__DOT___csrData_T_178;
+        };
+        struct {
             QData/*63:0*/ nicore__DOT__datapath__DOT__csr__DOT___csrData_T_179;
             QData/*63:0*/ nicore__DOT__datapath__DOT__csr__DOT___csrData_T_180;
             QData/*63:0*/ nicore__DOT__datapath__DOT__csr__DOT___csrData_T_181;
@@ -7155,8 +7165,6 @@ class alignas(VL_CACHE_LINE_BYTES) Vnicore___024root final {
             QData/*63:0*/ nicore__DOT__datapath__DOT__csr__DOT___csrData_T_184;
             QData/*63:0*/ nicore__DOT__datapath__DOT__csr__DOT___csrData_T_185;
             QData/*63:0*/ nicore__DOT__datapath__DOT__csr__DOT___csrData_T_186;
-        };
-        struct {
             QData/*63:0*/ nicore__DOT__datapath__DOT__csr__DOT___csrData_T_187;
             QData/*63:0*/ nicore__DOT__datapath__DOT__csr__DOT___csrData_T_188;
             QData/*63:0*/ nicore__DOT__datapath__DOT__csr__DOT___csrData_T_189;
@@ -7213,6 +7221,8 @@ class alignas(VL_CACHE_LINE_BYTES) Vnicore___024root final {
             QData/*63:0*/ nicore__DOT__datapath__DOT__csr__DOT___excValue_T_13;
             QData/*63:0*/ nicore__DOT__datapath__DOT__csr__DOT___excValue_T_14;
             QData/*63:0*/ nicore__DOT__datapath__DOT__csr__DOT__excValue;
+        };
+        struct {
             QData/*63:0*/ nicore__DOT__datapath__DOT__csr__DOT___GEN_343;
             QData/*63:0*/ nicore__DOT__datapath__DOT__csr__DOT___trapVecS_T_4;
             QData/*63:0*/ nicore__DOT__datapath__DOT__csr__DOT___trapVecS_T_5;
@@ -7221,8 +7231,6 @@ class alignas(VL_CACHE_LINE_BYTES) Vnicore___024root final {
             QData/*63:0*/ nicore__DOT__datapath__DOT__csr__DOT___trapVecM_T_5;
             QData/*63:0*/ nicore__DOT__datapath__DOT__csr__DOT___mcycle_data_T_1;
             QData/*63:0*/ nicore__DOT__datapath__DOT__csr__DOT___minstret_data_T_1;
-        };
-        struct {
             QData/*63:0*/ nicore__DOT__datapath__DOT__csr__DOT___GEN_0;
             QData/*63:0*/ nicore__DOT__datapath__DOT__csr__DOT___interrupt_return_addr_T_10;
             QData/*63:0*/ nicore__DOT__datapath__DOT__csr__DOT__interrupt_return_addr;
@@ -7279,6 +7287,8 @@ class alignas(VL_CACHE_LINE_BYTES) Vnicore___024root final {
             VlUnpacked<VlWide<4>/*127:0*/, 64> nicore__DOT__sram3__DOT__mem;
             VlUnpacked<VlWide<4>/*127:0*/, 64> nicore__DOT__sram2__DOT__mem;
             VlUnpacked<VlWide<4>/*127:0*/, 64> nicore__DOT__sram1__DOT__mem;
+        };
+        struct {
             VlUnpacked<VlWide<4>/*127:0*/, 64> nicore__DOT__sram0__DOT__mem;
             VlUnpacked<QData/*63:0*/, 1> __VstlTriggered;
             VlUnpacked<QData/*63:0*/, 2> __VicoTriggered;

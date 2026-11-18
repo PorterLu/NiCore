@@ -1,0 +1,8 @@
+obj_dir/
+*.bin
+!firmware.bin
+*.o
+*.a
+*.so
+*.vcd
+*.fst

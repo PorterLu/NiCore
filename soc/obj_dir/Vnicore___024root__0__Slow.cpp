@@ -2741,7 +2741,7 @@ VL_ATTR_COLD void Vnicore___024root___eval_settle(Vnicore___024root* vlSelf) {
 #ifdef VL_DEBUG
             Vnicore___024root___dump_triggers__stl(vlSelfRef.__VstlTriggered, "stl"s);
 #endif
-            VL_FATAL_MT("../nicore.v", 15118, "", "DIDNOTCONVERGE: Settle region did not converge after '--converge-limit' of 10000 tries");
+            VL_FATAL_MT("../nicore.v", 15122, "", "DIDNOTCONVERGE: Settle region did not converge after '--converge-limit' of 10000 tries");
         }
         __VstlIterCount = ((IData)(1U) + __VstlIterCount);
         vlSelfRef.__VstlPhaseResult = Vnicore___024root___eval_phase__stl(vlSelf);
@@ -2811,6 +2811,8 @@ VL_ATTR_COLD void Vnicore___024root___stl_sequent__TOP__0(Vnicore___024root* vlS
     vlSelfRef.io_pc_debug = vlSelfRef.nicore__DOT__datapath__DOT__memory_stage__DOT__mw_pipe_reg_pc;
     vlSelfRef.io_inst = vlSelfRef.nicore__DOT__datapath__DOT__execute_stage__DOT__em_pipe_reg_inst;
     vlSelfRef.io_commit_inst = vlSelfRef.nicore__DOT__datapath__DOT__memory_stage__DOT__mw_pipe_reg_inst;
+    vlSelfRef.io_commit_valid = vlSelfRef.nicore__DOT__datapath__DOT__memory_stage__DOT__mw_pipe_reg_enable;
+    vlSelfRef.io_commit_pc = vlSelfRef.nicore__DOT__datapath__DOT__memory_stage__DOT__mw_pipe_reg_pc;
     vlSelfRef.io_start = vlSelfRef.nicore__DOT__datapath__DOT__started;
     vlSelfRef.nicore__DOT__datapath__DOT__execute_stage__DOT__divider_io_divw 
         = (0U != (IData)(vlSelfRef.nicore__DOT__datapath__DOT__decode_stage__DOT__de_pipe_reg_wd_type));

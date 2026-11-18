@@ -11,6 +11,7 @@ Vnicore::Vnicore(VerilatedContext* _vcontextp__, const char* _vcname__)
     , vlSymsp{new Vnicore__Syms(contextp(), _vcname__, this)}
     , clock{vlSymsp->TOP.clock}
     , reset{vlSymsp->TOP.reset}
+    , io_commit_valid{vlSymsp->TOP.io_commit_valid}
     , io_start{vlSymsp->TOP.io_start}
     , io_stall{vlSymsp->TOP.io_stall}
     , io_interrupt{vlSymsp->TOP.io_interrupt}
@@ -71,6 +72,7 @@ Vnicore::Vnicore(VerilatedContext* _vcontextp__, const char* _vcname__)
     , io_slave_awaddr{vlSymsp->TOP.io_slave_awaddr}
     , io_slave_araddr{vlSymsp->TOP.io_slave_araddr}
     , io_pc_debug{vlSymsp->TOP.io_pc_debug}
+    , io_commit_pc{vlSymsp->TOP.io_commit_pc}
     , io_master_wdata{vlSymsp->TOP.io_master_wdata}
     , io_master_rdata{vlSymsp->TOP.io_master_rdata}
     , io_slave_wdata{vlSymsp->TOP.io_slave_wdata}

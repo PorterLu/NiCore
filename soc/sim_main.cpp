@@ -81,7 +81,6 @@ int main(int argc, char **argv) {
     top->reset = 0;
 
     uint64_t committed = 0;
-    uint32_t last_pc = 0;
     uint32_t last_commit = 0;
     while (sim_time < max_cycles && !Verilated::gotFinish()) {
         // read address
@@ -134,13 +133,11 @@ int main(int argc, char **argv) {
         // write response
         if (top->io_master_bvalid && top->io_master_bready) top->io_master_bvalid = 0;
 
-        // Commit detection: instruction in MW stage that's not NOP
-        uint32_t inst = top->io_commit_inst;
-        uint32_t pc = (uint32_t)top->io_pc_debug;
-        if (inst != 0 && pc != last_pc) {
-            last_pc = pc;
+        // Commit detection using dedicated retire signal
+        if (top->io_commit_valid) {
+            uint32_t pc = (uint32_t)top->io_commit_pc;
             committed++;
-            // Difftest check at each commit
+            // Difftest check at each commit (optional via DIFFTEST env var)
             if (diff_enabled && !diff_step(pc)) {
                 fprintf(stderr, "[diff] MISMATCH - stopping\n");
                 break;

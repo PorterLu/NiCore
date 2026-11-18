@@ -26,6 +26,8 @@ class DatapathIO extends Bundle{
 	val pc = Output(UInt(64.W))
 	val inst = Output(chiselTypeOf(Instructions.NOP))
 	val commit_inst = Output(chiselTypeOf(Instructions.NOP))
+	val commit_valid = Output(Bool())   // true when an instruction retires this cycle
+	val commit_pc = Output(UInt(64.W))  // PC of the retiring instruction
 	val start = Output(Bool())
 	val stall = Output(Bool())
 	val icache = new CacheIO
@@ -260,6 +262,8 @@ class Datapath extends Module{
 	io.pc := memory_stage.io.mw_pipe_reg.pc
 	io.inst := execute_stage.io.em_pipe_reg.inst
 	io.commit_inst := memory_stage.io.mw_pipe_reg.inst
+	io.commit_valid := memory_stage.io.mw_pipe_reg.enable
+	io.commit_pc := memory_stage.io.mw_pipe_reg.pc
 }
 
 class S011HD1P_X32Y2D128_BW extends BlackBox{
@@ -279,6 +283,8 @@ class myCPU extends Module{
 		val pc_debug = Output(UInt(64.W))
 		val inst = Output(UInt(32.W))
 		val commit_inst = Output(UInt(32.W))
+		val commit_valid = Output(Bool())
+		val commit_pc = Output(UInt(64.W))
 		val start = Output(Bool())
 		val stall = Output(Bool())
 		
@@ -539,6 +545,8 @@ class myCPU extends Module{
 
 	io.inst := datapath.io.inst
 	io.commit_inst := datapath.io.commit_inst
+	io.commit_valid := datapath.io.commit_valid
+	io.commit_pc := datapath.io.commit_pc
 	io.pc_debug := datapath.io.pc
 	io.start := datapath.io.start
 	io.stall := datapath.io.stall

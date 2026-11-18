@@ -25,6 +25,21 @@ void Vnicore___024root___nba_sequent__TOP__1(Vnicore___024root* vlSelf) {
     VlWide<3>/*95:0*/ __Vtemp_3;
     VlWide<4>/*127:0*/ __Vtemp_5;
     // Body
+    vlSelfRef.nicore__DOT__datapath__DOT__fetch_stage__DOT__iTLB_io_stall 
+        = ((IData)(vlSelfRef.__VdfgRegularize_hebeb780c_0_408) 
+           | ((((0x0fU == (IData)(vlSelfRef.nicore__DOT__datapath__DOT__decode_stage__DOT__de_pipe_reg_alu_op)) 
+                | ((0x10U == (IData)(vlSelfRef.nicore__DOT__datapath__DOT__decode_stage__DOT__de_pipe_reg_alu_op)) 
+                   | (IData)(vlSelfRef.nicore__DOT__datapath__DOT__execute_stage__DOT__divider_io_div_signed))) 
+               & (IData)(vlSelfRef.__VdfgRegularize_hebeb780c_0_407)) 
+              | (((~ (IData)(vlSelfRef.nicore__DOT__datapath__DOT__fetch_stage__DOT__iTLB_io_cache_response_ready)) 
+                  & (IData)(vlSelfRef.nicore__DOT__datapath__DOT__fetch_stage_io_icache_cpu_request_valid)) 
+                 | ((IData)(vlSelfRef.nicore__DOT__datapath__DOT__execute_stage__DOT__em_pipe_reg_enable) 
+                    & ((~ (IData)(vlSelfRef.nicore__DOT__datapath__DOT__execute_stage__DOT__em_pipe_reg_is_clint)) 
+                       & (((0x0000100fU == vlSelfRef.nicore__DOT__datapath__DOT__execute_stage__DOT__em_pipe_reg_inst) 
+                           | (IData)(vlSelfRef.__VdfgRegularize_hebeb780c_0_300)) 
+                          & ((0U == (IData)(vlSelfRef.nicore__DOT__datapath__DOT__memory_stage__DOT__dTLB_fault_reg)) 
+                             & ((~ (IData)(vlSelfRef.nicore__DOT__datapath__DOT__memory_stage__DOT__data_cache_tag)) 
+                                | (IData)(vlSelfRef.nicore__DOT__datapath__DOT__memory_stage__DOT__amo_second)))))))));
     vlSelfRef.nicore__DOT__datapath__DOT__execute_stage__DOT__multiplier__DOT___io_result_T_4 
         = ((IData)(vlSelfRef.nicore__DOT__datapath__DOT__execute_stage__DOT__multiplier__DOT__out_high)
             ? vlSelfRef.nicore__DOT__datapath__DOT__execute_stage__DOT__multiplier__DOT__result_s[1U]
@@ -4767,7 +4782,7 @@ void Vnicore___024root___eval(Vnicore___024root* vlSelf) {
 #ifdef VL_DEBUG
             Vnicore___024root___dump_triggers__ico(vlSelfRef.__VicoTriggered, "ico"s);
 #endif
-            VL_FATAL_MT("../nicore.v", 15118, "", "DIDNOTCONVERGE: Input combinational region did not converge after '--converge-limit' of 10000 tries");
+            VL_FATAL_MT("../nicore.v", 15122, "", "DIDNOTCONVERGE: Input combinational region did not converge after '--converge-limit' of 10000 tries");
         }
         __VicoIterCount = ((IData)(1U) + __VicoIterCount);
         vlSelfRef.__VicoPhaseResult = Vnicore___024root___eval_phase__ico(vlSelf);
@@ -4778,7 +4793,7 @@ void Vnicore___024root___eval(Vnicore___024root* vlSelf) {
 #ifdef VL_DEBUG
             Vnicore___024root___dump_triggers__act(vlSelfRef.__VnbaTriggered, "nba"s);
 #endif
-            VL_FATAL_MT("../nicore.v", 15118, "", "DIDNOTCONVERGE: NBA region did not converge after '--converge-limit' of 10000 tries");
+            VL_FATAL_MT("../nicore.v", 15122, "", "DIDNOTCONVERGE: NBA region did not converge after '--converge-limit' of 10000 tries");
         }
         __VnbaIterCount = ((IData)(1U) + __VnbaIterCount);
         vlSelfRef.__VactIterCount = 0U;
@@ -4787,7 +4802,7 @@ void Vnicore___024root___eval(Vnicore___024root* vlSelf) {
 #ifdef VL_DEBUG
                 Vnicore___024root___dump_triggers__act(vlSelfRef.__VactTriggered, "act"s);
 #endif
-                VL_FATAL_MT("../nicore.v", 15118, "", "DIDNOTCONVERGE: Active region did not converge after '--converge-limit' of 10000 tries");
+                VL_FATAL_MT("../nicore.v", 15122, "", "DIDNOTCONVERGE: Active region did not converge after '--converge-limit' of 10000 tries");
             }
             vlSelfRef.__VactIterCount = ((IData)(1U) 
                                          + vlSelfRef.__VactIterCount);

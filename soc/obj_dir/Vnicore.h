@@ -32,6 +32,7 @@ class alignas(VL_CACHE_LINE_BYTES) Vnicore VL_NOT_FINAL : public VerilatedModel 
     // propagate new values into/out from the Verilated model.
     VL_IN8(&clock,0,0);
     VL_IN8(&reset,0,0);
+    VL_OUT8(&io_commit_valid,0,0);
     VL_OUT8(&io_start,0,0);
     VL_OUT8(&io_stall,0,0);
     VL_IN8(&io_interrupt,0,0);
@@ -92,6 +93,7 @@ class alignas(VL_CACHE_LINE_BYTES) Vnicore VL_NOT_FINAL : public VerilatedModel 
     VL_IN(&io_slave_awaddr,31,0);
     VL_IN(&io_slave_araddr,31,0);
     VL_OUT64(&io_pc_debug,63,0);
+    VL_OUT64(&io_commit_pc,63,0);
     VL_OUT64(&io_master_wdata,63,0);
     VL_IN64(&io_master_rdata,63,0);
     VL_IN64(&io_slave_wdata,63,0);

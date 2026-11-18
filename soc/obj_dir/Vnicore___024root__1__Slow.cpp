@@ -2175,6 +2175,8 @@ VL_ATTR_COLD void Vnicore___024root___ctor_var_reset(Vnicore___024root* vlSelf) 
     vlSelf->io_pc_debug = VL_SCOPED_RAND_RESET_Q(64, __VscopeHash, 5567202578083548642ull);
     vlSelf->io_inst = VL_SCOPED_RAND_RESET_I(32, __VscopeHash, 16668489171332404422ull);
     vlSelf->io_commit_inst = VL_SCOPED_RAND_RESET_I(32, __VscopeHash, 283666388918457642ull);
+    vlSelf->io_commit_valid = VL_SCOPED_RAND_RESET_I(1, __VscopeHash, 6520794052704234253ull);
+    vlSelf->io_commit_pc = VL_SCOPED_RAND_RESET_Q(64, __VscopeHash, 12364158074830091946ull);
     vlSelf->io_start = VL_SCOPED_RAND_RESET_I(1, __VscopeHash, 9567792102730658101ull);
     vlSelf->io_stall = VL_SCOPED_RAND_RESET_I(1, __VscopeHash, 6299724908438797665ull);
     vlSelf->io_interrupt = VL_SCOPED_RAND_RESET_I(1, __VscopeHash, 408515240381666009ull);
@@ -2241,6 +2243,8 @@ VL_ATTR_COLD void Vnicore___024root___ctor_var_reset(Vnicore___024root* vlSelf) 
     vlSelf->nicore__DOT__io_pc_debug = VL_SCOPED_RAND_RESET_Q(64, __VscopeHash, 10669956510935842321ull);
     vlSelf->nicore__DOT__io_inst = VL_SCOPED_RAND_RESET_I(32, __VscopeHash, 10509440917759010037ull);
     vlSelf->nicore__DOT__io_commit_inst = VL_SCOPED_RAND_RESET_I(32, __VscopeHash, 5159842777530499344ull);
+    vlSelf->nicore__DOT__io_commit_valid = VL_SCOPED_RAND_RESET_I(1, __VscopeHash, 2588861911950937510ull);
+    vlSelf->nicore__DOT__io_commit_pc = VL_SCOPED_RAND_RESET_Q(64, __VscopeHash, 4340406259182216725ull);
     vlSelf->nicore__DOT__io_start = VL_SCOPED_RAND_RESET_I(1, __VscopeHash, 7928809162915304579ull);
     vlSelf->nicore__DOT__io_stall = VL_SCOPED_RAND_RESET_I(1, __VscopeHash, 11402379100123989351ull);
     vlSelf->nicore__DOT__io_interrupt = VL_SCOPED_RAND_RESET_I(1, __VscopeHash, 16220787427709968839ull);
@@ -2322,6 +2326,8 @@ VL_ATTR_COLD void Vnicore___024root___ctor_var_reset(Vnicore___024root* vlSelf) 
     vlSelf->nicore__DOT__datapath_io_pc = VL_SCOPED_RAND_RESET_Q(64, __VscopeHash, 12075858943827667518ull);
     vlSelf->nicore__DOT__datapath_io_inst = VL_SCOPED_RAND_RESET_I(32, __VscopeHash, 737844029460332744ull);
     vlSelf->nicore__DOT__datapath_io_commit_inst = VL_SCOPED_RAND_RESET_I(32, __VscopeHash, 5579289515202544090ull);
+    vlSelf->nicore__DOT__datapath_io_commit_valid = VL_SCOPED_RAND_RESET_I(1, __VscopeHash, 7756272436585733439ull);
+    vlSelf->nicore__DOT__datapath_io_commit_pc = VL_SCOPED_RAND_RESET_Q(64, __VscopeHash, 5103110057341940836ull);
     vlSelf->nicore__DOT__datapath_io_start = VL_SCOPED_RAND_RESET_I(1, __VscopeHash, 5783951894323180108ull);
     vlSelf->nicore__DOT__datapath_io_stall = VL_SCOPED_RAND_RESET_I(1, __VscopeHash, 194561416752160964ull);
     vlSelf->nicore__DOT__datapath_io_icache_cpu_request_addr = VL_SCOPED_RAND_RESET_I(32, __VscopeHash, 12450201735093866744ull);
@@ -5050,6 +5056,8 @@ VL_ATTR_COLD void Vnicore___024root___ctor_var_reset(Vnicore___024root* vlSelf) 
     vlSelf->nicore__DOT__datapath__DOT__io_pc = VL_SCOPED_RAND_RESET_Q(64, __VscopeHash, 12887215512456763607ull);
     vlSelf->nicore__DOT__datapath__DOT__io_inst = VL_SCOPED_RAND_RESET_I(32, __VscopeHash, 17077831265757300594ull);
     vlSelf->nicore__DOT__datapath__DOT__io_commit_inst = VL_SCOPED_RAND_RESET_I(32, __VscopeHash, 4531678477801951487ull);
+    vlSelf->nicore__DOT__datapath__DOT__io_commit_valid = VL_SCOPED_RAND_RESET_I(1, __VscopeHash, 13230199494927126292ull);
+    vlSelf->nicore__DOT__datapath__DOT__io_commit_pc = VL_SCOPED_RAND_RESET_Q(64, __VscopeHash, 3544231527114050773ull);
     vlSelf->nicore__DOT__datapath__DOT__io_start = VL_SCOPED_RAND_RESET_I(1, __VscopeHash, 15482266664366266117ull);
     vlSelf->nicore__DOT__datapath__DOT__io_stall = VL_SCOPED_RAND_RESET_I(1, __VscopeHash, 116026535258165849ull);
     vlSelf->nicore__DOT__datapath__DOT__io_icache_cpu_request_addr = VL_SCOPED_RAND_RESET_I(32, __VscopeHash, 3063452744418978065ull);
