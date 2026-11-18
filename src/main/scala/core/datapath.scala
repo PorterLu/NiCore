@@ -79,10 +79,12 @@ class Datapath extends Module{
 	//如何更新下一条指令，可以直接更新pc
 	// sfence.vma retires from MEM: flush the younger (already fetched) instructions,
 	// they may have used stale TLB entries, and redirect fetch to sfence+4
-	val sfence_em = memory_stage.io.em_pipe_reg.inst === SFENCE_VMA && memory_stage.io.em_pipe_reg.enable && !stall
+	// NOTE: must not depend combinationally on stall, otherwise
+	// stall -> sfence_em -> tlb_flush -> iTLB abort -> icache_stall -> stall loops
+	val sfence_em = memory_stage.io.em_pipe_reg.inst === SFENCE_VMA && memory_stage.io.em_pipe_reg.enable
 	// writing satp changes the root page table (and maybe ASID): flush both TLBs fully
 	val csr_wen = (csr.io.w_op === CSR.W || csr.io.w_op === CSR.RW || csr.io.w_op === CSR.RS || csr.io.w_op === CSR.RC) && csr.io.mw_enable
-	val satp_flush = csr.io.w_addr === CSR_SATP && csr_wen && !stall
+	val satp_flush = csr.io.w_addr === CSR_SATP && csr_wen
 	val tlb_flush = sfence_em || satp_flush
 
 	val flush_fd = csr.io.flush_mask(0) || (br_flush || jmp_flush) || csr_atomic_flush(0) || icache_flush_tag || dcache_flush_tag || sfence_em

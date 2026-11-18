@@ -63,10 +63,12 @@ class FetchStage extends Module{
 
 	val pc = RegInit("h80000000".U(64.W) - 4.U)
 	// any redirect must take priority over holding pc, so that pc follows the
-	// new control flow even while a fetch/translation is still in flight
-	val fetch_redirect = io.csr_trap || (icache_flush_tag || io.dcache_flush_tag) ||
-						(((io.de_pipe_reg_pc_sel === PC_ALU) && io.de_pipe_reg_enable) || io.brCond_taken) ||
-						io.csr_atomic || io.tlb_flush
+	// new control flow even while a fetch/translation is still in flight.
+	// Redirect sources persist while the pipeline is stalled, and their flush
+	// (flush_fd) suppresses capturing the stale in-flight fetch result. No
+	// combinational abort of the iTLB is needed (and one would create a loop:
+	// stall -> dTLB.wen -> clint -> load forwarding -> brCond -> abort ->
+	// icache_stall -> stall).
 	val next_pc = MuxCase(
 		pc + 4.U,
 		IndexedSeq(
@@ -87,9 +89,7 @@ class FetchStage extends Module{
 	iTLB.io.tlb_flush_asid  := io.sfence_rs2
 	iTLB.io.flush := io.tlb_flush
 	iTLB.io.stall := io.pipeline_stall
-	// on a redirect, abandon any in-flight translation: its result belongs to
-	// the squashed control-flow path
-	iTLB.io.valid := io.tlb_valid && !fetch_redirect
+	iTLB.io.valid := io.tlb_valid
 	iTLB.io.priv := io.mode
 	iTLB.io.mprv := false.B 	//没有启用这个特性
 	iTLB.io.sum := io.sum

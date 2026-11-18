@@ -56,11 +56,22 @@ class StageSpec extends AnyFreeSpec with ChiselScalatestTester {
     }
   }
 
-  def redirectFetch(fetch: FetchStage, target: BigInt): Unit = {
+  def redirectFetch(fetch: FetchStage, fmem: FetchMem, target: BigInt): Unit = {
+    // emulate the csr trap like the real datapath: the trap waits for !stall,
+    // i.e. it fires in the cycle the in-flight translation completes, and its
+    // flush (flush_fd) suppresses capturing the stale result
     fetch.io.csr_trapVec.poke(target.U)
     fetch.io.csr_trap.poke(true.B)
-    fetch.clock.step()
+    fetch.io.flush_fd.poke(true.B)
+    var fired = false
+    for (_ <- 0 until 60 if !fired) {
+      fmem.cycle(fetch)
+      fetch.io.stall.poke((!fetch.io.tlb_ready.peek().litToBoolean).B)
+      fired = fetch.io.tlb_ready.peek().litToBoolean
+      fetch.clock.step()
+    }
     fetch.io.csr_trap.poke(false.B)
+    fetch.io.flush_fd.poke(false.B)
   }
 
   def setupFetch(fetch: FetchStage, mem: mutable.Map[BigInt, BigInt], paging: Boolean): Unit = {
@@ -107,7 +118,7 @@ class StageSpec extends AnyFreeSpec with ChiselScalatestTester {
       setupFetch(fetch, mem, paging = true)
       val log = mutable.ArrayBuffer[BigInt]()
       val fmem = new FetchMem(mem, a => if (a == PA) instWord else mem.getOrElse(a, BigInt(0)), log)
-      redirectFetch(fetch, 0x40001100L)
+      redirectFetch(fetch, fmem, 0x40001100L)
 
       // run until fd_pipe_reg gets the instruction from the translated fetch
       var got = false
@@ -135,7 +146,7 @@ class StageSpec extends AnyFreeSpec with ChiselScalatestTester {
       setupFetch(fetch, mem, paging = true)
       val log = mutable.ArrayBuffer[BigInt]()
       val fmem = new FetchMem(mem, a => mem.getOrElse(a, BigInt(0)), log)
-      redirectFetch(fetch, 0x40001100L)
+      redirectFetch(fetch, fmem, 0x40001100L)
       var fault = BigInt(0)
       var got = false
       for (_ <- 0 until 60 if !got) {
