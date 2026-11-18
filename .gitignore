@@ -342,3 +342,4 @@ hs_err_pid*
 
 .metals/
 .vscode/
+*.v
