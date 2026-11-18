@@ -680,7 +680,7 @@ class Cache(cache_name: String) extends Module{
 
 			fill_block_en := io.mem_io.r.valid
 			
-			when(io.mem_io.r.bits.last){
+			when(io.mem_io.r.valid && io.mem_io.r.bits.last){	// must be qualified by r.valid
 				next_state := sWait_a_cycle_refill
 				index := 0.U
 			}

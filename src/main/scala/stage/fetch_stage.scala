@@ -73,7 +73,9 @@ class FetchStage extends Module{
 		pc + 4.U,
 		IndexedSeq(
 			(io.csr_trap) -> io.csr_trapVec,
-			(icache_flush_tag || io.dcache_flush_tag) -> (io.em_pipe_reg_pc + 4.U),
+			// NOTE: the dcache/icache flush tag redirect is removed: when the
+			// stall drops before the tag clears, it would redirect pc BACK to
+			// em_pc+4 and re-execute already committed instructions
 			(((io.de_pipe_reg_pc_sel === PC_ALU) && io.de_pipe_reg_enable) || io.brCond_taken) -> (io.jump_addr >> 1.U << 1.U),
 			io.csr_atomic -> io.csr_next_fetch,
 			io.tlb_flush -> (io.em_pipe_reg_pc + 4.U),
