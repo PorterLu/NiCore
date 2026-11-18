@@ -187,7 +187,8 @@ class ExecuteStage extends Module{
 		when(io.de_pipe_reg.src1_addr === em_pipe_reg.dest){
 			src1_data := Mux(em_pipe_reg.wb_sel === WB_ALU, em_pipe_reg.alu_out,
 						Mux(em_pipe_reg.wb_sel === WB_PC4, em_pipe_reg.pc + 4.U, 
-							Mux(em_pipe_reg.wb_sel === WB_CSR, em_pipe_reg.csr_read_data, load_data_ext_hazard)))
+							Mux(em_pipe_reg.wb_sel === WB_CSR, em_pipe_reg.csr_read_data, 
+								Mux(io.data_cache_tag, load_data_ext_hazard, io.de_pipe_reg.rs1))))
 		}
 	}.elsewhen(io.mw_pipe_reg_enable && io.mw_pipe_reg_wb_en &&(io.de_pipe_reg.src1_addr === io.mw_pipe_reg_dest) && (io.de_pipe_reg.src1_addr =/= 0.U)){
 		when(io.de_pipe_reg.src1_addr === io.mw_pipe_reg_dest){
@@ -203,7 +204,8 @@ class ExecuteStage extends Module{
 		when(io.de_pipe_reg.src2_addr === em_pipe_reg.dest){
 			src2_data := Mux(em_pipe_reg.wb_sel === WB_ALU, em_pipe_reg.alu_out,
 						Mux(em_pipe_reg.wb_sel === WB_PC4, em_pipe_reg.pc + 4.U, 
-							Mux(em_pipe_reg.wb_sel === WB_CSR, em_pipe_reg.csr_read_data, load_data_ext_hazard)))
+							Mux(em_pipe_reg.wb_sel === WB_CSR, em_pipe_reg.csr_read_data, 
+								Mux(io.data_cache_tag, load_data_ext_hazard, io.de_pipe_reg.rs2))))
 		}
 	}.elsewhen(io.mw_pipe_reg_enable && io.mw_pipe_reg_wb_en &&(io.de_pipe_reg.src2_addr === io.mw_pipe_reg_dest) && 
 				(io.de_pipe_reg.src2_addr =/= 0.U)){

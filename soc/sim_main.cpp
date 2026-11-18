@@ -465,21 +465,19 @@ int main(int argc, char **argv) {
         // t0 = x5, t1 = x6
         uint64_t t0 = top->rootp->ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__regFile__DOT__reg_5;
         uint64_t t1 = top->rootp->ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__regFile__DOT__reg_6;
-        fprintf(stderr, "[regs] x0=%d x5=%d x6=%d x7=%d x8=%d x9=%d x10=%d x11=%d x12=%d x13=%d x14=%d x15=%d x16=%d x17=%d\n",
+        fprintf(stderr, "[wb] wen=%d waddr=%d wdata=%llx\n",
+            (int)top->rootp->ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__io_regFile_wen,
+            (int)top->rootp->ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__io_regFile_waddr,
+            (unsigned long long)top->rootp->ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__io_regFile_wdata);
+        fprintf(stderr, "[regs] x0=%d x5=%d x10=%d x17=%d x21=%d x22=%d x23=%d x24=%d\n",
             (int)top->rootp->ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__regFile__DOT__reg_0,
             (int)top->rootp->ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__regFile__DOT__reg_5,
-            (int)top->rootp->ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__regFile__DOT__reg_6,
-            (int)top->rootp->ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__regFile__DOT__reg_7,
-            (int)top->rootp->ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__regFile__DOT__reg_8,
-            (int)top->rootp->ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__regFile__DOT__reg_9,
             (int)top->rootp->ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__regFile__DOT__reg_10,
-            (int)top->rootp->ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__regFile__DOT__reg_11,
-            (int)top->rootp->ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__regFile__DOT__reg_12,
-            (int)top->rootp->ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__regFile__DOT__reg_13,
-            (int)top->rootp->ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__regFile__DOT__reg_14,
-            (int)top->rootp->ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__regFile__DOT__reg_15,
-            (int)top->rootp->ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__regFile__DOT__reg_16,
-            (int)top->rootp->ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__regFile__DOT__reg_17);
+            (int)top->rootp->ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__regFile__DOT__reg_17,
+            (int)top->rootp->ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__regFile__DOT__reg_21,
+            (int)top->rootp->ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__regFile__DOT__reg_22,
+            (int)top->rootp->ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__regFile__DOT__reg_23,
+            (int)top->rootp->ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__regFile__DOT__reg_24);
     }
     fprintf(stderr, "\n[soc] stopped at %llu cycles, pc=%08llx, committed=%llu CPI=%.2f\n",
             (unsigned long long)sim_time, (unsigned long long)top->io_pc_debug,
