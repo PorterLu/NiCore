@@ -27,7 +27,7 @@ class RegisterFile(readPorts : Int) extends Module{
 
     val reg = RegInit(VecInit(Seq.fill(32)(0.U(64.W))))
 
-    when(io.wen){
+    when(io.wen && io.waddr =/= 0.U){  // never write to x0
         reg(io.waddr) := io.wdata
 	}
  

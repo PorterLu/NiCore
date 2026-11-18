@@ -2348,224 +2348,224 @@ module ysyx_22041812_RegisterFile(
   always @(posedge clock) begin
     if (reset) begin // @[decode_stage.scala 28:22]
       reg_0 <= 64'h0; // @[decode_stage.scala 28:22]
-    end else if (io_wen) begin // @[decode_stage.scala 30:17]
+    end else if (io_wen & io_waddr != 5'h0) begin // @[decode_stage.scala 30:37]
       if (5'h0 == io_waddr) begin // @[decode_stage.scala 31:23]
         reg_0 <= io_wdata; // @[decode_stage.scala 31:23]
       end
     end
     if (reset) begin // @[decode_stage.scala 28:22]
       reg_1 <= 64'h0; // @[decode_stage.scala 28:22]
-    end else if (io_wen) begin // @[decode_stage.scala 30:17]
+    end else if (io_wen & io_waddr != 5'h0) begin // @[decode_stage.scala 30:37]
       if (5'h1 == io_waddr) begin // @[decode_stage.scala 31:23]
         reg_1 <= io_wdata; // @[decode_stage.scala 31:23]
       end
     end
     if (reset) begin // @[decode_stage.scala 28:22]
       reg_2 <= 64'h0; // @[decode_stage.scala 28:22]
-    end else if (io_wen) begin // @[decode_stage.scala 30:17]
+    end else if (io_wen & io_waddr != 5'h0) begin // @[decode_stage.scala 30:37]
       if (5'h2 == io_waddr) begin // @[decode_stage.scala 31:23]
         reg_2 <= io_wdata; // @[decode_stage.scala 31:23]
       end
     end
     if (reset) begin // @[decode_stage.scala 28:22]
       reg_3 <= 64'h0; // @[decode_stage.scala 28:22]
-    end else if (io_wen) begin // @[decode_stage.scala 30:17]
+    end else if (io_wen & io_waddr != 5'h0) begin // @[decode_stage.scala 30:37]
       if (5'h3 == io_waddr) begin // @[decode_stage.scala 31:23]
         reg_3 <= io_wdata; // @[decode_stage.scala 31:23]
       end
     end
     if (reset) begin // @[decode_stage.scala 28:22]
       reg_4 <= 64'h0; // @[decode_stage.scala 28:22]
-    end else if (io_wen) begin // @[decode_stage.scala 30:17]
+    end else if (io_wen & io_waddr != 5'h0) begin // @[decode_stage.scala 30:37]
       if (5'h4 == io_waddr) begin // @[decode_stage.scala 31:23]
         reg_4 <= io_wdata; // @[decode_stage.scala 31:23]
       end
     end
     if (reset) begin // @[decode_stage.scala 28:22]
       reg_5 <= 64'h0; // @[decode_stage.scala 28:22]
-    end else if (io_wen) begin // @[decode_stage.scala 30:17]
+    end else if (io_wen & io_waddr != 5'h0) begin // @[decode_stage.scala 30:37]
       if (5'h5 == io_waddr) begin // @[decode_stage.scala 31:23]
         reg_5 <= io_wdata; // @[decode_stage.scala 31:23]
       end
     end
     if (reset) begin // @[decode_stage.scala 28:22]
       reg_6 <= 64'h0; // @[decode_stage.scala 28:22]
-    end else if (io_wen) begin // @[decode_stage.scala 30:17]
+    end else if (io_wen & io_waddr != 5'h0) begin // @[decode_stage.scala 30:37]
       if (5'h6 == io_waddr) begin // @[decode_stage.scala 31:23]
         reg_6 <= io_wdata; // @[decode_stage.scala 31:23]
       end
     end
     if (reset) begin // @[decode_stage.scala 28:22]
       reg_7 <= 64'h0; // @[decode_stage.scala 28:22]
-    end else if (io_wen) begin // @[decode_stage.scala 30:17]
+    end else if (io_wen & io_waddr != 5'h0) begin // @[decode_stage.scala 30:37]
       if (5'h7 == io_waddr) begin // @[decode_stage.scala 31:23]
         reg_7 <= io_wdata; // @[decode_stage.scala 31:23]
       end
     end
     if (reset) begin // @[decode_stage.scala 28:22]
       reg_8 <= 64'h0; // @[decode_stage.scala 28:22]
-    end else if (io_wen) begin // @[decode_stage.scala 30:17]
+    end else if (io_wen & io_waddr != 5'h0) begin // @[decode_stage.scala 30:37]
       if (5'h8 == io_waddr) begin // @[decode_stage.scala 31:23]
         reg_8 <= io_wdata; // @[decode_stage.scala 31:23]
       end
     end
     if (reset) begin // @[decode_stage.scala 28:22]
       reg_9 <= 64'h0; // @[decode_stage.scala 28:22]
-    end else if (io_wen) begin // @[decode_stage.scala 30:17]
+    end else if (io_wen & io_waddr != 5'h0) begin // @[decode_stage.scala 30:37]
       if (5'h9 == io_waddr) begin // @[decode_stage.scala 31:23]
         reg_9 <= io_wdata; // @[decode_stage.scala 31:23]
       end
     end
     if (reset) begin // @[decode_stage.scala 28:22]
       reg_10 <= 64'h0; // @[decode_stage.scala 28:22]
-    end else if (io_wen) begin // @[decode_stage.scala 30:17]
+    end else if (io_wen & io_waddr != 5'h0) begin // @[decode_stage.scala 30:37]
       if (5'ha == io_waddr) begin // @[decode_stage.scala 31:23]
         reg_10 <= io_wdata; // @[decode_stage.scala 31:23]
       end
     end
     if (reset) begin // @[decode_stage.scala 28:22]
       reg_11 <= 64'h0; // @[decode_stage.scala 28:22]
-    end else if (io_wen) begin // @[decode_stage.scala 30:17]
+    end else if (io_wen & io_waddr != 5'h0) begin // @[decode_stage.scala 30:37]
       if (5'hb == io_waddr) begin // @[decode_stage.scala 31:23]
         reg_11 <= io_wdata; // @[decode_stage.scala 31:23]
       end
     end
     if (reset) begin // @[decode_stage.scala 28:22]
       reg_12 <= 64'h0; // @[decode_stage.scala 28:22]
-    end else if (io_wen) begin // @[decode_stage.scala 30:17]
+    end else if (io_wen & io_waddr != 5'h0) begin // @[decode_stage.scala 30:37]
       if (5'hc == io_waddr) begin // @[decode_stage.scala 31:23]
         reg_12 <= io_wdata; // @[decode_stage.scala 31:23]
       end
     end
     if (reset) begin // @[decode_stage.scala 28:22]
       reg_13 <= 64'h0; // @[decode_stage.scala 28:22]
-    end else if (io_wen) begin // @[decode_stage.scala 30:17]
+    end else if (io_wen & io_waddr != 5'h0) begin // @[decode_stage.scala 30:37]
       if (5'hd == io_waddr) begin // @[decode_stage.scala 31:23]
         reg_13 <= io_wdata; // @[decode_stage.scala 31:23]
       end
     end
     if (reset) begin // @[decode_stage.scala 28:22]
       reg_14 <= 64'h0; // @[decode_stage.scala 28:22]
-    end else if (io_wen) begin // @[decode_stage.scala 30:17]
+    end else if (io_wen & io_waddr != 5'h0) begin // @[decode_stage.scala 30:37]
       if (5'he == io_waddr) begin // @[decode_stage.scala 31:23]
         reg_14 <= io_wdata; // @[decode_stage.scala 31:23]
       end
     end
     if (reset) begin // @[decode_stage.scala 28:22]
       reg_15 <= 64'h0; // @[decode_stage.scala 28:22]
-    end else if (io_wen) begin // @[decode_stage.scala 30:17]
+    end else if (io_wen & io_waddr != 5'h0) begin // @[decode_stage.scala 30:37]
       if (5'hf == io_waddr) begin // @[decode_stage.scala 31:23]
         reg_15 <= io_wdata; // @[decode_stage.scala 31:23]
       end
     end
     if (reset) begin // @[decode_stage.scala 28:22]
       reg_16 <= 64'h0; // @[decode_stage.scala 28:22]
-    end else if (io_wen) begin // @[decode_stage.scala 30:17]
+    end else if (io_wen & io_waddr != 5'h0) begin // @[decode_stage.scala 30:37]
       if (5'h10 == io_waddr) begin // @[decode_stage.scala 31:23]
         reg_16 <= io_wdata; // @[decode_stage.scala 31:23]
       end
     end
     if (reset) begin // @[decode_stage.scala 28:22]
       reg_17 <= 64'h0; // @[decode_stage.scala 28:22]
-    end else if (io_wen) begin // @[decode_stage.scala 30:17]
+    end else if (io_wen & io_waddr != 5'h0) begin // @[decode_stage.scala 30:37]
       if (5'h11 == io_waddr) begin // @[decode_stage.scala 31:23]
         reg_17 <= io_wdata; // @[decode_stage.scala 31:23]
       end
     end
     if (reset) begin // @[decode_stage.scala 28:22]
       reg_18 <= 64'h0; // @[decode_stage.scala 28:22]
-    end else if (io_wen) begin // @[decode_stage.scala 30:17]
+    end else if (io_wen & io_waddr != 5'h0) begin // @[decode_stage.scala 30:37]
       if (5'h12 == io_waddr) begin // @[decode_stage.scala 31:23]
         reg_18 <= io_wdata; // @[decode_stage.scala 31:23]
       end
     end
     if (reset) begin // @[decode_stage.scala 28:22]
       reg_19 <= 64'h0; // @[decode_stage.scala 28:22]
-    end else if (io_wen) begin // @[decode_stage.scala 30:17]
+    end else if (io_wen & io_waddr != 5'h0) begin // @[decode_stage.scala 30:37]
       if (5'h13 == io_waddr) begin // @[decode_stage.scala 31:23]
         reg_19 <= io_wdata; // @[decode_stage.scala 31:23]
       end
     end
     if (reset) begin // @[decode_stage.scala 28:22]
       reg_20 <= 64'h0; // @[decode_stage.scala 28:22]
-    end else if (io_wen) begin // @[decode_stage.scala 30:17]
+    end else if (io_wen & io_waddr != 5'h0) begin // @[decode_stage.scala 30:37]
       if (5'h14 == io_waddr) begin // @[decode_stage.scala 31:23]
         reg_20 <= io_wdata; // @[decode_stage.scala 31:23]
       end
     end
     if (reset) begin // @[decode_stage.scala 28:22]
       reg_21 <= 64'h0; // @[decode_stage.scala 28:22]
-    end else if (io_wen) begin // @[decode_stage.scala 30:17]
+    end else if (io_wen & io_waddr != 5'h0) begin // @[decode_stage.scala 30:37]
       if (5'h15 == io_waddr) begin // @[decode_stage.scala 31:23]
         reg_21 <= io_wdata; // @[decode_stage.scala 31:23]
       end
     end
     if (reset) begin // @[decode_stage.scala 28:22]
       reg_22 <= 64'h0; // @[decode_stage.scala 28:22]
-    end else if (io_wen) begin // @[decode_stage.scala 30:17]
+    end else if (io_wen & io_waddr != 5'h0) begin // @[decode_stage.scala 30:37]
       if (5'h16 == io_waddr) begin // @[decode_stage.scala 31:23]
         reg_22 <= io_wdata; // @[decode_stage.scala 31:23]
       end
     end
     if (reset) begin // @[decode_stage.scala 28:22]
       reg_23 <= 64'h0; // @[decode_stage.scala 28:22]
-    end else if (io_wen) begin // @[decode_stage.scala 30:17]
+    end else if (io_wen & io_waddr != 5'h0) begin // @[decode_stage.scala 30:37]
       if (5'h17 == io_waddr) begin // @[decode_stage.scala 31:23]
         reg_23 <= io_wdata; // @[decode_stage.scala 31:23]
       end
     end
     if (reset) begin // @[decode_stage.scala 28:22]
       reg_24 <= 64'h0; // @[decode_stage.scala 28:22]
-    end else if (io_wen) begin // @[decode_stage.scala 30:17]
+    end else if (io_wen & io_waddr != 5'h0) begin // @[decode_stage.scala 30:37]
       if (5'h18 == io_waddr) begin // @[decode_stage.scala 31:23]
         reg_24 <= io_wdata; // @[decode_stage.scala 31:23]
       end
     end
     if (reset) begin // @[decode_stage.scala 28:22]
       reg_25 <= 64'h0; // @[decode_stage.scala 28:22]
-    end else if (io_wen) begin // @[decode_stage.scala 30:17]
+    end else if (io_wen & io_waddr != 5'h0) begin // @[decode_stage.scala 30:37]
       if (5'h19 == io_waddr) begin // @[decode_stage.scala 31:23]
         reg_25 <= io_wdata; // @[decode_stage.scala 31:23]
       end
     end
     if (reset) begin // @[decode_stage.scala 28:22]
       reg_26 <= 64'h0; // @[decode_stage.scala 28:22]
-    end else if (io_wen) begin // @[decode_stage.scala 30:17]
+    end else if (io_wen & io_waddr != 5'h0) begin // @[decode_stage.scala 30:37]
       if (5'h1a == io_waddr) begin // @[decode_stage.scala 31:23]
         reg_26 <= io_wdata; // @[decode_stage.scala 31:23]
       end
     end
     if (reset) begin // @[decode_stage.scala 28:22]
       reg_27 <= 64'h0; // @[decode_stage.scala 28:22]
-    end else if (io_wen) begin // @[decode_stage.scala 30:17]
+    end else if (io_wen & io_waddr != 5'h0) begin // @[decode_stage.scala 30:37]
       if (5'h1b == io_waddr) begin // @[decode_stage.scala 31:23]
         reg_27 <= io_wdata; // @[decode_stage.scala 31:23]
       end
     end
     if (reset) begin // @[decode_stage.scala 28:22]
       reg_28 <= 64'h0; // @[decode_stage.scala 28:22]
-    end else if (io_wen) begin // @[decode_stage.scala 30:17]
+    end else if (io_wen & io_waddr != 5'h0) begin // @[decode_stage.scala 30:37]
       if (5'h1c == io_waddr) begin // @[decode_stage.scala 31:23]
         reg_28 <= io_wdata; // @[decode_stage.scala 31:23]
       end
     end
     if (reset) begin // @[decode_stage.scala 28:22]
       reg_29 <= 64'h0; // @[decode_stage.scala 28:22]
-    end else if (io_wen) begin // @[decode_stage.scala 30:17]
+    end else if (io_wen & io_waddr != 5'h0) begin // @[decode_stage.scala 30:37]
       if (5'h1d == io_waddr) begin // @[decode_stage.scala 31:23]
         reg_29 <= io_wdata; // @[decode_stage.scala 31:23]
       end
     end
     if (reset) begin // @[decode_stage.scala 28:22]
       reg_30 <= 64'h0; // @[decode_stage.scala 28:22]
-    end else if (io_wen) begin // @[decode_stage.scala 30:17]
+    end else if (io_wen & io_waddr != 5'h0) begin // @[decode_stage.scala 30:37]
       if (5'h1e == io_waddr) begin // @[decode_stage.scala 31:23]
         reg_30 <= io_wdata; // @[decode_stage.scala 31:23]
       end
     end
     if (reset) begin // @[decode_stage.scala 28:22]
       reg_31 <= 64'h0; // @[decode_stage.scala 28:22]
-    end else if (io_wen) begin // @[decode_stage.scala 30:17]
+    end else if (io_wen & io_waddr != 5'h0) begin // @[decode_stage.scala 30:37]
       if (5'h1f == io_waddr) begin // @[decode_stage.scala 31:23]
         reg_31 <= io_wdata; // @[decode_stage.scala 31:23]
       end

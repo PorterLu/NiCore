@@ -250,6 +250,8 @@ int main(int argc, char **argv) {
                 for (int b = 0; b < 8; b++)
                     if (top->io_master_wstrb & (1 << b)) uart_write(a + b, top->io_master_wdata >> (8 * b));
             } else if (in_dram(a)) {
+                if (getenv("SOC_WR")) fprintf(stderr, "[axi-wr] %08llx = %016llx\n",
+                    (unsigned long long)a, (unsigned long long)top->io_master_wdata);
                 if (getenv("SOC_WR")) fprintf(stderr, "[wr] %08llx = %016llx (beat %d/%d)\n",
                     (unsigned long long)a, (unsigned long long)top->io_master_wdata, (int)awr.beat, (int)awr.beats);
                 uint64_t old = rd64(a);
@@ -402,7 +404,7 @@ int main(int argc, char **argv) {
             fprintf(stderr, "[beqz %d] a5(x15)=%016llx a0(x10)=%016llx\n",
                 beqz_count,
                 (unsigned long long)top->rootp->ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__regFile__DOT__reg_15,
-                (unsigned long long)top->rootp->ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__regFile__DOT__reg_10);
+                (unsigned long long)top->rootp->ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__regFile__DOT__reg_17);
         }
         // dump a0 when sbi_strlen is entered (first few times)
         static int strlen_count = 0;
@@ -456,6 +458,29 @@ int main(int argc, char **argv) {
         (unsigned long long)rd64(0x800401f8));
     fprintf(stderr, "[mem] 0x80024418 = %016llx (orig: 0000000000000000)\n",
         (unsigned long long)rd64(0x80024418));
+    // Dump hazard test result from register file
+    {
+        // a0 = x10
+        uint64_t a0 = top->rootp->ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__regFile__DOT__reg_10;
+        // t0 = x5, t1 = x6
+        uint64_t t0 = top->rootp->ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__regFile__DOT__reg_5;
+        uint64_t t1 = top->rootp->ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__regFile__DOT__reg_6;
+        fprintf(stderr, "[regs] x0=%d x5=%d x6=%d x7=%d x8=%d x9=%d x10=%d x11=%d x12=%d x13=%d x14=%d x15=%d x16=%d x17=%d\n",
+            (int)top->rootp->ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__regFile__DOT__reg_0,
+            (int)top->rootp->ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__regFile__DOT__reg_5,
+            (int)top->rootp->ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__regFile__DOT__reg_6,
+            (int)top->rootp->ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__regFile__DOT__reg_7,
+            (int)top->rootp->ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__regFile__DOT__reg_8,
+            (int)top->rootp->ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__regFile__DOT__reg_9,
+            (int)top->rootp->ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__regFile__DOT__reg_10,
+            (int)top->rootp->ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__regFile__DOT__reg_11,
+            (int)top->rootp->ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__regFile__DOT__reg_12,
+            (int)top->rootp->ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__regFile__DOT__reg_13,
+            (int)top->rootp->ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__regFile__DOT__reg_14,
+            (int)top->rootp->ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__regFile__DOT__reg_15,
+            (int)top->rootp->ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__regFile__DOT__reg_16,
+            (int)top->rootp->ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__regFile__DOT__reg_17);
+    }
     fprintf(stderr, "\n[soc] stopped at %llu cycles, pc=%08llx, committed=%llu CPI=%.2f\n",
             (unsigned long long)sim_time, (unsigned long long)top->io_pc_debug,
             (unsigned long long)committed,

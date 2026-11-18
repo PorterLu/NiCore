@@ -25,6 +25,110 @@ void Vysyx_22041812___024root___nba_sequent__TOP__1(Vysyx_22041812___024root* vl
     VlWide<3>/*95:0*/ __Vtemp_3;
     VlWide<4>/*127:0*/ __Vtemp_5;
     // Body
+    vlSelfRef.ysyx_22041812__DOT__datapath__DOT__execute_stage__DOT__multiplier__DOT___io_result_T_4 
+        = ((IData)(vlSelfRef.ysyx_22041812__DOT__datapath__DOT__execute_stage__DOT__multiplier__DOT__out_high)
+            ? vlSelfRef.ysyx_22041812__DOT__datapath__DOT__execute_stage__DOT__multiplier__DOT__result_s[1U]
+            : vlSelfRef.ysyx_22041812__DOT__datapath__DOT__execute_stage__DOT__multiplier__DOT__result_s[0U]);
+    vlSelfRef.ysyx_22041812__DOT__datapath__DOT__execute_stage__DOT__divider_io_divw 
+        = (0U != (IData)(vlSelfRef.ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__de_pipe_reg_wd_type));
+    vlSelfRef.ysyx_22041812__DOT__datapath__DOT__csr__DOT__csrData 
+        = ((0x0c00U == (IData)(vlSelfRef.ysyx_22041812__DOT__datapath__DOT__memory_stage__DOT__mw_pipe_reg_csr_write_addr))
+            ? vlSelfRef.ysyx_22041812__DOT__datapath__DOT__csr__DOT__mcycle_data
+            : ((0x0c02U == (IData)(vlSelfRef.ysyx_22041812__DOT__datapath__DOT__memory_stage__DOT__mw_pipe_reg_csr_write_addr))
+                ? vlSelfRef.ysyx_22041812__DOT__datapath__DOT__csr__DOT__minstret_data
+                : ((0x0100U == (IData)(vlSelfRef.ysyx_22041812__DOT__datapath__DOT__memory_stage__DOT__mw_pipe_reg_csr_write_addr))
+                    ? vlSelfRef.ysyx_22041812__DOT__datapath__DOT__csr__DOT___T
+                    : ((0x0104U == (IData)(vlSelfRef.ysyx_22041812__DOT__datapath__DOT__memory_stage__DOT__mw_pipe_reg_csr_write_addr))
+                        ? vlSelfRef.ysyx_22041812__DOT__datapath__DOT__csr__DOT___T_1
+                        : ((0x0105U == (IData)(vlSelfRef.ysyx_22041812__DOT__datapath__DOT__memory_stage__DOT__mw_pipe_reg_csr_write_addr))
+                            ? vlSelfRef.ysyx_22041812__DOT__datapath__DOT__csr__DOT___T_2
+                            : (((0x0140U == (IData)(vlSelfRef.ysyx_22041812__DOT__datapath__DOT__memory_stage__DOT__mw_pipe_reg_csr_write_addr))
+                                 ? vlSelfRef.ysyx_22041812__DOT__datapath__DOT__csr__DOT__sscratch_data
+                                 : ((0x0141U == (IData)(vlSelfRef.ysyx_22041812__DOT__datapath__DOT__memory_stage__DOT__mw_pipe_reg_csr_write_addr))
+                                     ? vlSelfRef.ysyx_22041812__DOT__datapath__DOT__csr__DOT__sepc_data
+                                     : ((0x0142U == (IData)(vlSelfRef.ysyx_22041812__DOT__datapath__DOT__memory_stage__DOT__mw_pipe_reg_csr_write_addr))
+                                         ? vlSelfRef.ysyx_22041812__DOT__datapath__DOT__csr__DOT___T_3
+                                         : ((0x0143U 
+                                             == (IData)(vlSelfRef.ysyx_22041812__DOT__datapath__DOT__memory_stage__DOT__mw_pipe_reg_csr_write_addr))
+                                             ? vlSelfRef.ysyx_22041812__DOT__datapath__DOT__csr__DOT__stval_data
+                                             : ((0x0144U 
+                                                 == (IData)(vlSelfRef.ysyx_22041812__DOT__datapath__DOT__memory_stage__DOT__mw_pipe_reg_csr_write_addr))
+                                                 ? vlSelfRef.ysyx_22041812__DOT__datapath__DOT__csr__DOT___T_4
+                                                 : 
+                                                ((0x0180U 
+                                                  == (IData)(vlSelfRef.ysyx_22041812__DOT__datapath__DOT__memory_stage__DOT__mw_pipe_reg_csr_write_addr))
+                                                  ? vlSelfRef.ysyx_22041812__DOT__datapath__DOT__fetch_stage__DOT__iTLB_io_satp
+                                                  : 
+                                                 ((- (QData)((IData)(
+                                                                     (0x0f11U 
+                                                                      != (IData)(vlSelfRef.ysyx_22041812__DOT__datapath__DOT__memory_stage__DOT__mw_pipe_reg_csr_write_addr))))) 
+                                                  & ((- (QData)((IData)(
+                                                                        (0x0f12U 
+                                                                         != (IData)(vlSelfRef.ysyx_22041812__DOT__datapath__DOT__memory_stage__DOT__mw_pipe_reg_csr_write_addr))))) 
+                                                     & ((- (QData)((IData)(
+                                                                           (0x0f13U 
+                                                                            != (IData)(vlSelfRef.ysyx_22041812__DOT__datapath__DOT__memory_stage__DOT__mw_pipe_reg_csr_write_addr))))) 
+                                                        & (((0x0300U 
+                                                             == (IData)(vlSelfRef.ysyx_22041812__DOT__datapath__DOT__memory_stage__DOT__mw_pipe_reg_csr_write_addr))
+                                                             ? vlSelfRef.ysyx_22041812__DOT__datapath__DOT__csr__DOT___sstatus_T
+                                                             : 
+                                                            ((0x0301U 
+                                                              == (IData)(vlSelfRef.ysyx_22041812__DOT__datapath__DOT__memory_stage__DOT__mw_pipe_reg_csr_write_addr))
+                                                              ? 0x8000000000001100ULL
+                                                              : 
+                                                             ((0x0302U 
+                                                               == (IData)(vlSelfRef.ysyx_22041812__DOT__datapath__DOT__memory_stage__DOT__mw_pipe_reg_csr_write_addr))
+                                                               ? vlSelfRef.ysyx_22041812__DOT__datapath__DOT__csr__DOT__medeleg_data
+                                                               : 
+                                                              ((0x0303U 
+                                                                == (IData)(vlSelfRef.ysyx_22041812__DOT__datapath__DOT__memory_stage__DOT__mw_pipe_reg_csr_write_addr))
+                                                                ? vlSelfRef.ysyx_22041812__DOT__datapath__DOT__csr__DOT__mideleg_data
+                                                                : 
+                                                               ((0x0304U 
+                                                                 == (IData)(vlSelfRef.ysyx_22041812__DOT__datapath__DOT__memory_stage__DOT__mw_pipe_reg_csr_write_addr))
+                                                                 ? vlSelfRef.ysyx_22041812__DOT__datapath__DOT__csr__DOT___sie_T
+                                                                 : 
+                                                                ((0x0305U 
+                                                                  == (IData)(vlSelfRef.ysyx_22041812__DOT__datapath__DOT__memory_stage__DOT__mw_pipe_reg_csr_write_addr))
+                                                                  ? vlSelfRef.ysyx_22041812__DOT__datapath__DOT__csr__DOT___T_9
+                                                                  : 
+                                                                 (((0x0340U 
+                                                                    == (IData)(vlSelfRef.ysyx_22041812__DOT__datapath__DOT__memory_stage__DOT__mw_pipe_reg_csr_write_addr))
+                                                                    ? vlSelfRef.ysyx_22041812__DOT__datapath__DOT__csr__DOT__mscratch_data
+                                                                    : 
+                                                                   ((0x0341U 
+                                                                     == (IData)(vlSelfRef.ysyx_22041812__DOT__datapath__DOT__memory_stage__DOT__mw_pipe_reg_csr_write_addr))
+                                                                     ? vlSelfRef.ysyx_22041812__DOT__datapath__DOT__csr__DOT__mepc_data
+                                                                     : 
+                                                                    ((0x0342U 
+                                                                      == (IData)(vlSelfRef.ysyx_22041812__DOT__datapath__DOT__memory_stage__DOT__mw_pipe_reg_csr_write_addr))
+                                                                      ? vlSelfRef.ysyx_22041812__DOT__datapath__DOT__csr__DOT___T_10
+                                                                      : 
+                                                                     ((0x0343U 
+                                                                       == (IData)(vlSelfRef.ysyx_22041812__DOT__datapath__DOT__memory_stage__DOT__mw_pipe_reg_csr_write_addr))
+                                                                       ? vlSelfRef.ysyx_22041812__DOT__datapath__DOT__csr__DOT__mtval_data
+                                                                       : 
+                                                                      ((0x0344U 
+                                                                        == (IData)(vlSelfRef.ysyx_22041812__DOT__datapath__DOT__memory_stage__DOT__mw_pipe_reg_csr_write_addr))
+                                                                        ? vlSelfRef.ysyx_22041812__DOT__datapath__DOT__csr__DOT___sip_T
+                                                                        : 
+                                                                       ((0x0b00U 
+                                                                         == (IData)(vlSelfRef.ysyx_22041812__DOT__datapath__DOT__memory_stage__DOT__mw_pipe_reg_csr_write_addr))
+                                                                         ? vlSelfRef.ysyx_22041812__DOT__datapath__DOT__csr__DOT__mcycle_data
+                                                                         : 
+                                                                        (vlSelfRef.ysyx_22041812__DOT__datapath__DOT__csr__DOT__minstret_data 
+                                                                         & (- (QData)((IData)(
+                                                                                (0x0b02U 
+                                                                                == (IData)(vlSelfRef.ysyx_22041812__DOT__datapath__DOT__memory_stage__DOT__mw_pipe_reg_csr_write_addr)))))))))))) 
+                                                                  & (- (QData)((IData)(
+                                                                                (0x0306U 
+                                                                                != (IData)(vlSelfRef.ysyx_22041812__DOT__datapath__DOT__memory_stage__DOT__mw_pipe_reg_csr_write_addr)))))))))))) 
+                                                           & (- (QData)((IData)(
+                                                                                (0x0f14U 
+                                                                                != (IData)(vlSelfRef.ysyx_22041812__DOT__datapath__DOT__memory_stage__DOT__mw_pipe_reg_csr_write_addr))))))))))))))) 
+                               & (- (QData)((IData)(
+                                                    (0x0106U 
+                                                     != (IData)(vlSelfRef.ysyx_22041812__DOT__datapath__DOT__memory_stage__DOT__mw_pipe_reg_csr_write_addr)))))))))));
     vlSelfRef.ysyx_22041812__DOT__datapath__DOT__memory_stage_io_tlb_flush_all 
         = ((0x0180U == (IData)(vlSelfRef.ysyx_22041812__DOT__datapath__DOT__memory_stage__DOT__mw_pipe_reg_csr_write_addr)) 
            & (IData)(vlSelfRef.ysyx_22041812__DOT__datapath__DOT__csr__DOT__writeEn));
