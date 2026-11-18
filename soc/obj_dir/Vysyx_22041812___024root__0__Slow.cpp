@@ -6587,9 +6587,11 @@ VL_ATTR_COLD void Vysyx_22041812___024root___stl_sequent__TOP__0(Vysyx_22041812_
             ? (- vlSelfRef.ysyx_22041812__DOT__datapath__DOT__execute_stage__DOT__multiplier__DOT__src1)
             : vlSelfRef.ysyx_22041812__DOT__datapath__DOT__execute_stage__DOT__multiplier__DOT__src1);
     vlSelfRef.ysyx_22041812__DOT__datapath__DOT__fetch_stage__DOT___next_pc_T_4 
-        = ((IData)(vlSelfRef.ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__de_pipe_reg_enable) 
-           & ((1U == (IData)(vlSelfRef.ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__de_pipe_reg_pc_sel)) 
-              | (IData)(vlSelfRef.ysyx_22041812__DOT__datapath__DOT__execute_stage__DOT__brCond_io_taken)));
+        = (((IData)(vlSelfRef.ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__de_pipe_reg_enable) 
+            & (1U == (IData)(vlSelfRef.ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__de_pipe_reg_pc_sel))) 
+           | ((IData)(vlSelfRef.ysyx_22041812__DOT__datapath__DOT__execute_stage__DOT__brCond_io_taken) 
+              & ((IData)(vlSelfRef.ysyx_22041812__DOT__datapath__DOT__fetch_stage__DOT___T_1) 
+                 & (IData)(vlSelfRef.ysyx_22041812__DOT__datapath__DOT__decode_stage__DOT__de_pipe_reg_enable))));
     vlSelfRef.ysyx_22041812__DOT__datapath__DOT__execute_stage__DOT__alu__DOT___GEN_1[0U] 
         = (IData)(vlSelfRef.ysyx_22041812__DOT__datapath__DOT__execute_stage__DOT__alu_io_A);
     vlSelfRef.ysyx_22041812__DOT__datapath__DOT__execute_stage__DOT__alu__DOT___GEN_1[1U] 

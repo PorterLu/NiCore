@@ -231,7 +231,9 @@ class ExecuteStage extends Module{
 	brCond.io.br_type := io.de_pipe_reg.br_type 							//思考跳转发生时会发生什么？当跳转发生时，前一个周期的指令直接被刷新为nop
 	brCond.io.rs1 := src1_data											//A_data
 	brCond.io.rs2 := src2_data											//B_data
-	io.brCond_taken := brCond.io.taken && io.de_pipe_reg.enable				//taken需要信号有效时才产生作用
+	// Do not let a branch decision propagate while the pipeline is stalled:
+	// during a load-use stall the forwarded data may be stale/wrong.
+	io.brCond_taken := brCond.io.taken && io.de_pipe_reg.enable && !io.stall				//taken需要信号有效时才产生作用
 	io.br_flush := io.brCond_taken
 
 	when(io.flush_em && !io.stall){
