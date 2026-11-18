@@ -11,7 +11,7 @@ Vysyx_22041812__Syms::Vysyx_22041812__Syms(VerilatedContext* contextp, const cha
     , TOP{this, namep}
 {
     // Check resources
-    Verilated::stackCheck(2772);
+    Verilated::stackCheck(2774);
     // Setup sub module instances
     TOP__ysyx_22041812__DOT__dcache__DOT__tag_mem_0.ctor(this, "ysyx_22041812.dcache.tag_mem_0");
     TOP__ysyx_22041812__DOT__dcache__DOT__tag_mem_1.ctor(this, "ysyx_22041812.dcache.tag_mem_1");

@@ -53,6 +53,8 @@ class MemoryStage extends Module{
 		val sum 	 = Input(Bool())
 		val mxr 	 = Input(Bool())
 		val mode 	 = Input(UInt(2.W))
+		val mprv 	 = Input(Bool())
+		val mpp 	 = Input(UInt(2.W))
 		val satp 	 = Input(UInt(64.W))
 		val iTLB_fault = Output(UInt(2.W))
 		val dTLB_fault = Output(UInt(2.W))
@@ -128,7 +130,8 @@ class MemoryStage extends Module{
 	dTLB.io.flush := io.tlb_flush
 	dTLB.io.stall := io.pipeline_stall
 	dTLB.io.valid := io.tlb_valid && ls_stall
-	dTLB.io.priv  := io.mode
+	// MPRV=1: load/store use MPP as privilege level (M-mode proxy)
+	dTLB.io.priv  := Mux(io.mprv, io.mpp, io.mode)
 	dTLB.io.mprv := false.B 
 	dTLB.io.sum	  := io.sum
 	dTLB.io.mxr   := io.mxr

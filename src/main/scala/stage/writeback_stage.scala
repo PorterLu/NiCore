@@ -26,9 +26,12 @@ class WritebackStage extends Module{
 	io.csr_w_addr := io.mw_pipe_reg.csr_write_addr						//csr寄存器地址
 	io.csr_w_data := io.mw_pipe_reg.csr_write_data						//要写的数据
 
+	// Write to the register file even during stalls: the instruction in MW has
+	// already completed, withholding its result only creates stale-read hazards
+	// for younger instructions that enter DE while the pipeline is stalled.
 	io.regFile_wen := ((io.mw_pipe_reg.wb_sel === WB_ALU ||
 						io.mw_pipe_reg.wb_sel === WB_PC4 ||
-						io.mw_pipe_reg.wb_sel === WB_MEM || io.mw_pipe_reg.wb_sel === WB_CSR) && (io.mw_pipe_reg.wb_en)) && io.mw_pipe_reg.enable && !io.stall
+						io.mw_pipe_reg.wb_sel === WB_MEM || io.mw_pipe_reg.wb_sel === WB_CSR) && (io.mw_pipe_reg.wb_en)) && io.mw_pipe_reg.enable
 	io.regFile_waddr := io.mw_pipe_reg.dest
 	io.regFile_wdata := Mux(io.mw_pipe_reg.wb_sel === WB_ALU, io.mw_pipe_reg.alu_out,
 							Mux(io.mw_pipe_reg.wb_sel === WB_PC4, io.mw_pipe_reg.pc + 4.U, 

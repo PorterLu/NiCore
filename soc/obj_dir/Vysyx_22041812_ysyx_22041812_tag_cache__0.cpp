@@ -992,7 +992,7 @@ void Vysyx_22041812_ysyx_22041812_tag_cache___nba_sequent__TOP__ysyx_22041812__D
         vlSelfRef.io_tag_read_tag = vlSelfRef.tag_mem_0_tag;
         vlSelfRef.io_tag_read_valid = vlSelfRef.tag_mem_0_valid;
     }
-    vlSelfRef.__VdfgRegularize_hebeb780c_0_433 = ((IData)(vlSelfRef.io_tag_read_valid) 
+    vlSelfRef.__VdfgRegularize_hebeb780c_0_432 = ((IData)(vlSelfRef.io_tag_read_valid) 
                                                   & (IData)(vlSelfRef.io_tag_read_dirty));
 }
 
@@ -1001,7 +1001,7 @@ void Vysyx_22041812_ysyx_22041812_tag_cache___nba_sequent__TOP__ysyx_22041812__D
     Vysyx_22041812__Syms* const __restrict vlSymsp VL_ATTR_UNUSED = vlSelf->vlSymsp;
     auto& vlSelfRef = std::ref(*vlSelf).get();
     // Body
-    vlSelfRef.__VdfgRegularize_hebeb780c_0_63 = ((IData)(vlSelfRef.io_tag_read_valid) 
+    vlSelfRef.__VdfgRegularize_hebeb780c_0_64 = ((IData)(vlSelfRef.io_tag_read_valid) 
                                                  & ((IData)(vlSymsp->TOP__ysyx_22041812__DOT__dcache__DOT__tag_mem_1.io_tag_read_valid) 
                                                     & ((IData)(vlSymsp->TOP__ysyx_22041812__DOT__dcache__DOT__tag_mem_2.io_tag_read_valid) 
                                                        & (IData)(vlSymsp->TOP__ysyx_22041812__DOT__dcache__DOT__tag_mem_3.io_tag_read_valid))));
@@ -2108,7 +2108,7 @@ void Vysyx_22041812_ysyx_22041812_tag_cache___nba_sequent__TOP__ysyx_22041812__D
         vlSelfRef.io_tag_read_tag = vlSelfRef.tag_mem_0_tag;
         vlSelfRef.io_tag_read_valid = vlSelfRef.tag_mem_0_valid;
     }
-    vlSelfRef.__VdfgRegularize_hebeb780c_0_432 = ((IData)(vlSelfRef.io_tag_read_valid) 
+    vlSelfRef.__VdfgRegularize_hebeb780c_0_431 = ((IData)(vlSelfRef.io_tag_read_valid) 
                                                   & (IData)(vlSelfRef.io_tag_read_dirty));
 }
 
@@ -2563,7 +2563,7 @@ void Vysyx_22041812_ysyx_22041812_tag_cache___nba_sequent__TOP__ysyx_22041812__D
         vlSelfRef.io_tag_read_tag = vlSelfRef.tag_mem_0_tag;
         vlSelfRef.io_tag_read_valid = vlSelfRef.tag_mem_0_valid;
     }
-    vlSelfRef.__VdfgRegularize_hebeb780c_0_431 = ((IData)(vlSelfRef.io_tag_read_valid) 
+    vlSelfRef.__VdfgRegularize_hebeb780c_0_430 = ((IData)(vlSelfRef.io_tag_read_valid) 
                                                   & (IData)(vlSelfRef.io_tag_read_dirty));
 }
 
@@ -3018,7 +3018,7 @@ void Vysyx_22041812_ysyx_22041812_tag_cache___nba_sequent__TOP__ysyx_22041812__D
         vlSelfRef.io_tag_read_tag = vlSelfRef.tag_mem_0_tag;
         vlSelfRef.io_tag_read_valid = vlSelfRef.tag_mem_0_valid;
     }
-    vlSelfRef.__VdfgRegularize_hebeb780c_0_430 = ((IData)(vlSelfRef.io_tag_read_valid) 
+    vlSelfRef.__VdfgRegularize_hebeb780c_0_429 = ((IData)(vlSelfRef.io_tag_read_valid) 
                                                   & (IData)(vlSelfRef.io_tag_read_dirty));
 }
 
@@ -4149,7 +4149,7 @@ void Vysyx_22041812_ysyx_22041812_tag_cache___nba_sequent__TOP__ysyx_22041812__D
     Vysyx_22041812__Syms* const __restrict vlSymsp VL_ATTR_UNUSED = vlSelf->vlSymsp;
     auto& vlSelfRef = std::ref(*vlSelf).get();
     // Body
-    vlSelfRef.__VdfgRegularize_hebeb780c_0_56 = ((IData)(vlSelfRef.io_tag_read_valid) 
+    vlSelfRef.__VdfgRegularize_hebeb780c_0_57 = ((IData)(vlSelfRef.io_tag_read_valid) 
                                                  & ((IData)(vlSymsp->TOP__ysyx_22041812__DOT__icache__DOT__tag_mem_1.io_tag_read_valid) 
                                                     & ((IData)(vlSymsp->TOP__ysyx_22041812__DOT__icache__DOT__tag_mem_2.io_tag_read_valid) 
                                                        & (IData)(vlSymsp->TOP__ysyx_22041812__DOT__icache__DOT__tag_mem_3.io_tag_read_valid))));

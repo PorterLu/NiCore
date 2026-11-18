@@ -273,7 +273,7 @@ class MstatusCsr extends CSR_Bundle {
 	tvm   := 0.U(1.W)
 	mxr   := data(19)
     sum   := data(18)
-	mprv  := 0.U(1.W)
+	mprv  := data(17)
 	xs	  := 0.U(2.W)
 	fs	  := 0.U(2.W)
     mpp   := data(12, 11)

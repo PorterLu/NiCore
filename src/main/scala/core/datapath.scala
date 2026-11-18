@@ -213,6 +213,8 @@ class Datapath extends Module{
 	memory_stage.io.sum := sum
 	memory_stage.io.mxr := mxr 
 	memory_stage.io.mode := csr.io.mode
+	memory_stage.io.mprv := csr.io.mprv
+	memory_stage.io.mpp := csr.io.mpp
 	memory_stage.io.satp := satp
 	memory_stage.io.flush_mw := flush_mw
 	memory_stage.io.flush_em := flush_em

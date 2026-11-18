@@ -89,6 +89,50 @@ object CSR{
 	// machine counters
 	val CSR_MCYCLE 		= 0xb00.U(12.W)
 	val CSR_MINSTRET	= 0xb02.U(12.W)
+
+	// ---- M-mode CSRs required by OpenSBI ----
+	val CSR_MCOUNTINHIBIT = 0x320.U(12.W)
+	val CSR_MENVCFG    = 0x30a.U(12.W)
+	val CSR_MSECCFG   = 0x747.U(12.W)
+	val CSR_SENVCFG   = 0x10a.U(12.W)
+	val CSR_MCONFIGPTR = 0xf15.U(12.W)
+	// trigger CSRs (debug)
+	val CSR_TSELECT    = 0x7a0.U(12.W)
+	val CSR_TDATA1     = 0x7a1.U(12.W)
+	val CSR_TDATA2     = 0x7a2.U(12.W)
+	val CSR_TDATA3     = 0x7a3.U(12.W)
+	val CSR_MCONTEXT   = 0x7a8.U(12.W)
+	// PMP
+	val CSR_PMPCFG0    = 0x3a0.U(12.W)
+	val CSR_PMPCFG1    = 0x3a1.U(12.W)
+	val CSR_PMPCFG2    = 0x3a2.U(12.W)
+	val CSR_PMPCFG3    = 0x3a3.U(12.W)
+	// performance counters
+	val CSR_MHPMEVENT3  = 0x323.U(12.W)
+	val CSR_MHPMEVENT4  = 0x324.U(12.W)
+	val CSR_MHPMEVENT5  = 0x325.U(12.W)
+	val CSR_MHPMEVENT6  = 0x326.U(12.W)
+	val CSR_MHPMCOUNTER3 = 0xb03.U(12.W)
+	val CSR_MHPMCOUNTER4 = 0xb04.U(12.W)
+	val CSR_MHPMCOUNTER5 = 0xb05.U(12.W)
+	val CSR_MHPMCOUNTER6 = 0xb06.U(12.W)
+	// pmpaddr0-15
+	val CSR_PMPADDR0  = 0x3b0.U(12.W)
+	val CSR_PMPADDR1  = 0x3b1.U(12.W)
+	val CSR_PMPADDR2  = 0x3b2.U(12.W)
+	val CSR_PMPADDR3  = 0x3b3.U(12.W)
+	val CSR_PMPADDR4  = 0x3b4.U(12.W)
+	val CSR_PMPADDR5  = 0x3b5.U(12.W)
+	val CSR_PMPADDR6  = 0x3b6.U(12.W)
+	val CSR_PMPADDR7  = 0x3b7.U(12.W)
+	val CSR_PMPADDR8  = 0x3b8.U(12.W)
+	val CSR_PMPADDR9  = 0x3b9.U(12.W)
+	val CSR_PMPADDR10 = 0x3ba.U(12.W)
+	val CSR_PMPADDR11 = 0x3bb.U(12.W)
+	val CSR_PMPADDR12 = 0x3bc.U(12.W)
+	val CSR_PMPADDR13 = 0x3bd.U(12.W)
+	val CSR_PMPADDR14 = 0x3be.U(12.W)
+	val CSR_PMPADDR15 = 0x3bf.U(12.W)
 }
 
 import ExceptCause._
@@ -133,6 +177,8 @@ class CSR extends Module{
 		val mstatus = Output(UInt(64.W))
 		val sstatus = Output(UInt(64.W))
 		val satp    = Output(UInt(64.W))
+	val mprv    = Output(Bool())
+	val mpp     = Output(UInt(2.W))
 		val trapVec = Output(UInt(64.W))
 		val stall = Input(Bool())
 		val trap = Output(Bool())
@@ -176,36 +222,65 @@ class CSR extends Module{
 	val scause 	= RegInit(ScauseCsr.default)
 	val stval	= RegInit(StvalCsr.default)
 	val satp	= RegInit(SatpCsr.default)
+
+	// PMP registers (no hardware enforcement yet, just storage)
+	val pmpcfg0  = RegInit(0.U(64.W))
+	val pmpcfg1  = RegInit(0.U(64.W))
+	val pmpcfg2  = RegInit(0.U(64.W))
+	val pmpcfg3  = RegInit(0.U(64.W))
+	val pmpaddr  = RegInit(VecInit(Seq.fill(16)(0.U(64.W))))
+	val pmpaddr0 = WireDefault(pmpaddr(0))
+	val pmpaddr1 = WireDefault(pmpaddr(1))
+	val pmpaddr2 = WireDefault(pmpaddr(2))
+	val pmpaddr3 = WireDefault(pmpaddr(3))
+	val pmpaddr4 = WireDefault(pmpaddr(4))
+	val pmpaddr5 = WireDefault(pmpaddr(5))
+	val pmpaddr6 = WireDefault(pmpaddr(6))
+	val pmpaddr7 = WireDefault(pmpaddr(7))
+	val pmpaddr8 = WireDefault(pmpaddr(8))
+	val pmpaddr9 = WireDefault(pmpaddr(9))
+	val pmpaddr10 = WireDefault(pmpaddr(10))
+	val pmpaddr11 = WireDefault(pmpaddr(11))
+	val pmpaddr12 = WireDefault(pmpaddr(12))
+	val pmpaddr13 = WireDefault(pmpaddr(13))
+	val pmpaddr14 = WireDefault(pmpaddr(14))
+	val pmpaddr15 = WireDefault(pmpaddr(15))
+	val menvcfg  = RegInit(0.U(64.W))
+	val senvcfg  = RegInit(0.U(64.W))
+	val mseccfg  = RegInit(0.U(64.W))
+	val mcountinhibit = RegInit(0.U(64.W))
+	val mhpmevent = RegInit(VecInit(Seq.fill(4)(0.U(64.W))))
+	val mhpmcounter = RegInit(VecInit(Seq.fill(4)(0.U(64.W))))
 	val cycle 	= mcycle.asUInt
 	val instret = minstret.asUInt
 
 	//																writable				
 	//														readable |
-	val default = 					List(0.U, 				false.B,false.B);
+	val default = 					List(0.U(64.W), false.B, false.B);
 	val csrTable = Array(
 		BitPat(CSR_CYCLE)		->	List(cycle, 			true.B,	false.B),
 		BitPat(CSR_INSTRET) 	->	List(instret, 			true.B,	false.B),
 		BitPat(CSR_SSTATUS)		->	List(sstatus.asUInt, 	true.B,	true.B),
 		BitPat(CSR_SIE)			->	List(sie.asUInt,		true.B,	true.B),
 		BitPat(CSR_STVEC)		-> 	List(stvec.asUInt,		true.B,	true.B),
-		BitPat(CSR_SCOUNTEREN)	-> 	List(0.U,				true.B,	true.B),
+		BitPat(CSR_SCOUNTEREN)	-> 	List(0.U(64.W),				true.B,	true.B),
 		BitPat(CSR_SSCRATCH)	-> 	List(sscratch.asUInt,	true.B,	true.B),
 		BitPat(CSR_SEPC)		->	List(sepc.asUInt,		true.B,	true.B),
 		BitPat(CSR_SCAUSE)		-> 	List(scause.asUInt,		true.B,	true.B),
 		BitPat(CSR_STVAL)		->	List(stval.asUInt,		true.B,	true.B),
 		BitPat(CSR_SIP)			->	List(sip.asUInt,		true.B,	true.B),
 		BitPat(CSR_SATP)		->	List(satp.asUInt,		true.B,	true.B),
-		BitPat(CSR_MVENDERID)	->	List(0.U,				true.B,	false.B),
-		BitPat(CSR_MARCHID)		-> 	List(0.U,				true.B,	false.B),
-		BitPat(CSR_MIMPID)		->	List(0.U,				true.B,	false.B),
-		BitPat(CSR_MHARTID)		->	List(0.U,				true.B,	false.B),
+		BitPat(CSR_MVENDERID)	->	List(0.U(64.W),				true.B,	false.B),
+		BitPat(CSR_MARCHID)		-> 	List(0.U(64.W),				true.B,	false.B),
+		BitPat(CSR_MIMPID)		->	List(0.U(64.W),				true.B,	false.B),
+		BitPat(CSR_MHARTID)		->	List(0.U(64.W),				true.B,	false.B),
 		BitPat(CSR_MSTATUS)		->	List(mstatus.asUInt,	true.B,	true.B),
 		BitPat(CSR_MISA)		->	List(misa.asUInt,		true.B,	false.B),
 		BitPat(CSR_MEDELEG)		->	List(medeleg.asUInt,	true.B,	true.B),
 		BitPat(CSR_MIDELEG)		->	List(mideleg.asUInt,	true.B,	true.B),
 		BitPat(CSR_MIE)			->	List(mie.asUInt,		true.B,	true.B),
 		BitPat(CSR_MTVEC)		->	List(mtvec.asUInt,		true.B,	true.B),
-		BitPat(CSR_MCOUNTEREN)	->	List(0.U,				true.B,	true.B),
+		BitPat(CSR_MCOUNTEREN)	->	List(0.U(64.W),				true.B,	true.B),
 		BitPat(CSR_MSCRATCH)	->	List(mscratch.asUInt,	true.B,	true.B),
 		BitPat(CSR_MEPC)		->	List(mepc.asUInt,		true.B,	true.B),
 		BitPat(CSR_MCAUSE)		-> 	List(mcause.asUInt,		true.B,	true.B),
@@ -213,12 +288,57 @@ class CSR extends Module{
 		BitPat(CSR_MIP)			->	List(mip.asUInt,		true.B,	true.B),
 		BitPat(CSR_MCYCLE)		->	List(cycle,				true.B,	true.B),
 		BitPat(CSR_MINSTRET)	->	List(instret,			true.B,	true.B),
+		// PMP
+		BitPat(CSR_PMPCFG0)		->	List(pmpcfg0,			true.B,	true.B),
+		BitPat(CSR_PMPCFG1)		->	List(pmpcfg1,			true.B,	true.B),
+		BitPat(CSR_PMPCFG2)		->	List(pmpcfg2,			true.B,	true.B),
+		BitPat(CSR_PMPCFG3)		->	List(pmpcfg3,			true.B,	true.B),
+		// envcfg / mconfigptr / counters
+		BitPat(CSR_MENVCFG)		->	List(menvcfg,			true.B,	true.B),
+		BitPat(CSR_SENVCFG)		->	List(senvcfg,			true.B,	true.B),
+		BitPat(CSR_MSECCFG)		->	List(mseccfg,			true.B,	true.B),
+		BitPat(CSR_MCONFIGPTR)	->	List(0.U(64.W),				true.B,	false.B),
+		BitPat(CSR_MCOUNTINHIBIT)->	List(mcountinhibit,	true.B,	true.B),
+		// trigger (read 0, no write)
+		BitPat(CSR_TSELECT)		->	List(0.U(64.W),				true.B,	false.B),
+		BitPat(CSR_TDATA1)		->	List(0.U(64.W),				true.B,	false.B),
+		BitPat(CSR_TDATA2)		->	List(0.U(64.W),				true.B,	false.B),
+		BitPat(CSR_TDATA3)		->	List(0.U(64.W),				true.B,	false.B),
+		BitPat(CSR_MCONTEXT)	->	List(0.U(64.W),				true.B,	false.B),
+		// performance counters
+		BitPat(CSR_MHPMEVENT3)	->	List(mhpmevent(0),		true.B,	true.B),
+		BitPat(CSR_MHPMEVENT4)	->	List(mhpmevent(1),		true.B,	true.B),
+		BitPat(CSR_MHPMEVENT5)	->	List(mhpmevent(2),		true.B,	true.B),
+		BitPat(CSR_MHPMEVENT6)	->	List(mhpmevent(3),		true.B,	true.B),
+		BitPat(CSR_MHPMCOUNTER3)->	List(mhpmcounter(0),	true.B,	true.B),
+		BitPat(CSR_MHPMCOUNTER4)->	List(mhpmcounter(1),	true.B,	true.B),
+		BitPat(CSR_MHPMCOUNTER5)->	List(mhpmcounter(2),	true.B,	true.B),
+		BitPat(CSR_MHPMCOUNTER6)->	List(mhpmcounter(3),	true.B,	true.B),
+		// pmpaddr0-15
+		BitPat(CSR_PMPADDR0)	->	List(pmpaddr0,			true.B,	true.B),
+		BitPat(CSR_PMPADDR1)	->	List(pmpaddr1,			true.B,	true.B),
+		BitPat(CSR_PMPADDR2)	->	List(pmpaddr2,			true.B,	true.B),
+		BitPat(CSR_PMPADDR3)	->	List(pmpaddr3,			true.B,	true.B),
+		BitPat(CSR_PMPADDR4)	->	List(pmpaddr4,			true.B,	true.B),
+		BitPat(CSR_PMPADDR5)	->	List(pmpaddr5,			true.B,	true.B),
+		BitPat(CSR_PMPADDR6)	->	List(pmpaddr6,			true.B,	true.B),
+		BitPat(CSR_PMPADDR7)	->	List(pmpaddr7,			true.B,	true.B),
+		BitPat(CSR_PMPADDR8)	->	List(pmpaddr8,			true.B,	true.B),
+		BitPat(CSR_PMPADDR9)	->	List(pmpaddr9,			true.B,	true.B),
+		BitPat(CSR_PMPADDR10)	->	List(pmpaddr10,			true.B,	true.B),
+		BitPat(CSR_PMPADDR11)	->	List(pmpaddr11,			true.B,	true.B),
+		BitPat(CSR_PMPADDR12)	->	List(pmpaddr12,			true.B,	true.B),
+		BitPat(CSR_PMPADDR13)	->	List(pmpaddr13,			true.B,	true.B),
+		BitPat(CSR_PMPADDR14)	->	List(pmpaddr14,			true.B,	true.B),
+		BitPat(CSR_PMPADDR15)	->	List(pmpaddr15,			true.B,	true.B),
 	)
 
 	io.mode := mode
 	io.mstatus := mstatus.asUInt
 	io.sstatus := sstatus.asUInt
 	io.satp    := satp.asUInt
+	io.mprv    := mstatus.mprv
+	io.mpp     := mstatus.mpp
 	//csr这里要处理enable信号用于提示哪些流水寄存器中的信息不可用，下面每一个从io中得到的信息都要进行有效性判断
 	//从csrTable获取，寄存器中存储的信息，并且得知是否可读可写
 	val data :: (readable: Bool)  :: (writable: Bool) :: Nil = ListLookup(io.r_addr, default, csrTable)		//读这里不判断有效性，因为不影响之后运行流的处理
@@ -237,12 +357,13 @@ class CSR extends Module{
 
 	//准备要写入csr的数据
 	val csrData :: _ :: _ :: Nil = ListLookup(io.w_addr, default, csrTable)
+	val csrData64 = csrData(63, 0)
 	val writeEn = (io.w_op === W || io.w_op === RW || io.w_op === RC || io.w_op === RS) && io.mw_enable
-	val writeData = MuxLookup(io.w_op, csrData, Seq(
+	val writeData = MuxLookup(io.w_op, csrData64, Seq(
 		W 	-> io.w_data,
 		RW 	-> io.w_data,
-		RS	-> (csrData | io.w_data),
-		RC 	-> (csrData & ~io.w_data)
+		RS	-> (csrData64 | io.w_data),
+		RC 	-> (csrData64 & ~io.w_data)
 	))
 
 	/*
@@ -405,6 +526,27 @@ class CSR extends Module{
 			when(io.w_addr === CSR_MEPC){ mepc <= writeData }
 			when(io.w_addr === CSR_MCAUSE){ mcause <= writeData }
 			when(io.w_addr === CSR_MTVAL){ mtval <= writeData }
+			when(io.w_addr === CSR_PMPCFG0){ pmpcfg0 <= writeData }
+			when(io.w_addr === CSR_PMPCFG1){ pmpcfg1 <= writeData }
+			when(io.w_addr === CSR_PMPCFG2){ pmpcfg2 <= writeData }
+			when(io.w_addr === CSR_PMPCFG3){ pmpcfg3 <= writeData }
+			for(i <- 0 until 16){
+				when(io.w_addr === ("h3b0".U(12.W) + i.U)){
+					pmpaddr(i) <= writeData
+				}
+			}
+			when(io.w_addr === CSR_MENVCFG){ menvcfg <= writeData }
+			when(io.w_addr === CSR_SENVCFG){ senvcfg <= writeData }
+			when(io.w_addr === CSR_MSECCFG){ mseccfg <= writeData }
+			when(io.w_addr === CSR_MCOUNTINHIBIT){ mcountinhibit <= writeData }
+			when(io.w_addr === CSR_MHPMEVENT3){ mhpmevent(0) <= writeData }
+			when(io.w_addr === CSR_MHPMEVENT4){ mhpmevent(1) <= writeData }
+			when(io.w_addr === CSR_MHPMEVENT5){ mhpmevent(2) <= writeData }
+			when(io.w_addr === CSR_MHPMEVENT6){ mhpmevent(3) <= writeData }
+			when(io.w_addr === CSR_MHPMCOUNTER3){ mhpmcounter(0) <= writeData }
+			when(io.w_addr === CSR_MHPMCOUNTER4){ mhpmcounter(1) <= writeData }
+			when(io.w_addr === CSR_MHPMCOUNTER5){ mhpmcounter(2) <= writeData }
+			when(io.w_addr === CSR_MHPMCOUNTER6){ mhpmcounter(3) <= writeData }
 		}.elsewhen(handIntS){
 			sepc 	<= 	interrupt_return_addr//考虑跳转指令时发生中断的情况,Mux((hasExc || io.isSret || io.isMret) && io.em_enable, io.excPC,  interrupt_return_addr)
 			scause 	<= cause

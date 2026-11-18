@@ -416,12 +416,12 @@ class alignas(VL_CACHE_LINE_BYTES) Vysyx_22041812_ysyx_22041812_tag_cache final 
         CData/*0:0*/ _GEN_252;
         CData/*0:0*/ _GEN_253;
         CData/*0:0*/ _GEN_254;
-        CData/*0:0*/ __VdfgRegularize_hebeb780c_0_56;
-        CData/*0:0*/ __VdfgRegularize_hebeb780c_0_63;
+        CData/*0:0*/ __VdfgRegularize_hebeb780c_0_57;
+        CData/*0:0*/ __VdfgRegularize_hebeb780c_0_64;
+        CData/*0:0*/ __VdfgRegularize_hebeb780c_0_429;
         CData/*0:0*/ __VdfgRegularize_hebeb780c_0_430;
         CData/*0:0*/ __VdfgRegularize_hebeb780c_0_431;
         CData/*0:0*/ __VdfgRegularize_hebeb780c_0_432;
-        CData/*0:0*/ __VdfgRegularize_hebeb780c_0_433;
         IData/*21:0*/ io_tag_write_tag;
         IData/*21:0*/ io_tag_read_tag;
         IData/*21:0*/ tag_mem_0_tag;

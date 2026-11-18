@@ -37,6 +37,8 @@ class RegisterFile(readPorts : Int) extends Module{
 	for(i <- 0 until readPorts){
 		when(io.raddr(i) === 0.U){              //写zero寄存器做特殊判断
 			io.rdata(i) := 0.U
+		}.elsewhen(io.wen && (io.raddr(i) === io.waddr)){	// write-read bypass
+			io.rdata(i) := io.wdata
 		}.otherwise{
 			io.rdata(i) := reg(io.raddr(i))
 		}
