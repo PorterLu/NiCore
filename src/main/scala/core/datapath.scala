@@ -563,6 +563,6 @@ object Driver extends App{
 	(new chisel3.stage.ChiselStage).execute(args, Seq(
 		chisel3.stage.ChiselGeneratorAnnotation(() => new myCPU()),
 		firrtl.stage.RunFirrtlTransformAnnotation(new AddModulePrefix()),
-		ModulePrefixAnnotation("ysyx_22041812_")
+		ModulePrefixAnnotation("nicore_")
 	))
 }

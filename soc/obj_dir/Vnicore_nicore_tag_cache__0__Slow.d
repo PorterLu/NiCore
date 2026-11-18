@@ -1,0 +1,12 @@
+Vnicore_nicore_tag_cache__0__Slow.o: \
+  /Users/porterlu/NiCore/soc/obj_dir/Vnicore__pch.h \
+  /opt/homebrew/Cellar/verilator/5.050/share/verilator/include/verilated.h \
+  /opt/homebrew/Cellar/verilator/5.050/share/verilator/include/verilated_config.h \
+  /opt/homebrew/Cellar/verilator/5.050/share/verilator/include/verilatedos.h \
+  /opt/homebrew/Cellar/verilator/5.050/share/verilator/include/verilated_types.h \
+  /opt/homebrew/Cellar/verilator/5.050/share/verilator/include/verilated_funcs.h \
+  /Users/porterlu/NiCore/soc/obj_dir/Vnicore__Syms.h \
+  /Users/porterlu/NiCore/soc/obj_dir/Vnicore.h \
+  /Users/porterlu/NiCore/soc/obj_dir/Vnicore___024root.h \
+  /Users/porterlu/NiCore/soc/obj_dir/Vnicore_nicore_tag_cache.h \
+  Vnicore_nicore_tag_cache__0__Slow.cpp Vnicore__pch.h
