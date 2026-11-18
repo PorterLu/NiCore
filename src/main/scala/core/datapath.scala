@@ -49,7 +49,8 @@ class Datapath extends Module{
 	val sstatus = csr.io.sstatus
 	val sum = sstatus(18)
 	val mxr = sstatus(19)
-	val is_page = !csr.io.mode(1) && !satp(63, 60)
+	// Sv39 paging is active in S/U mode when satp.MODE == 8
+	val is_page = !csr.io.mode(1) && (satp(63, 60) === 8.U)
 
 	//必须使得enable信号为false时，对应的流水线寄存器中输出的内容不对CPU状态机的运行产生影响
 	val icache_flush_tag = fetch_stage.io.icache_flush_tag
@@ -61,7 +62,8 @@ class Datapath extends Module{
 	val data_cache_response_data = WireInit(0.U(64.W))
 	val dcache_stall = (execute_stage.io.em_pipe_reg.ld_type.orR || execute_stage.io.em_pipe_reg.st_type.orR || 
 						execute_stage.io.em_pipe_reg.inst === FENCE_I) && 
-						execute_stage.io.em_pipe_reg.enable && !data_cache_tag && !(execute_stage.io.em_pipe_reg.is_clint) 
+						execute_stage.io.em_pipe_reg.enable && !data_cache_tag && !(execute_stage.io.em_pipe_reg.is_clint) &&
+						(memory_stage.io.dTLB_fault === 0.U)
 	val icache_stall = !io.icache.cpu_response.ready && fetch_stage.io.icache.cpu_request.valid
 	val itlb_stall = !fetch_stage.io.tlb_ready
 	val dtlb_stall = !memory_stage.io.tlb_ready
@@ -75,8 +77,16 @@ class Datapath extends Module{
 
 	//csr的刷新，中间不会插入新的指令，那么取指的时候要把地址设为什么，这个地址默认设为当前指令的下一条指令如何，这个判断会复杂很多
 	//如何更新下一条指令，可以直接更新pc
-	val flush_fd = csr.io.flush_mask(0) || (br_flush || jmp_flush) || csr_atomic_flush(0) || icache_flush_tag || dcache_flush_tag
-	val flush_de = csr.io.flush_mask(1)	|| (br_flush || jmp_flush) || csr_atomic_flush(1) || icache_flush_tag || dcache_flush_tag	// && !stall
+	// sfence.vma retires from MEM: flush the younger (already fetched) instructions,
+	// they may have used stale TLB entries, and redirect fetch to sfence+4
+	val sfence_em = memory_stage.io.em_pipe_reg.inst === SFENCE_VMA && memory_stage.io.em_pipe_reg.enable && !stall
+	// writing satp changes the root page table (and maybe ASID): flush both TLBs fully
+	val csr_wen = (csr.io.w_op === CSR.W || csr.io.w_op === CSR.RW || csr.io.w_op === CSR.RS || csr.io.w_op === CSR.RC) && csr.io.mw_enable
+	val satp_flush = csr.io.w_addr === CSR_SATP && csr_wen && !stall
+	val tlb_flush = sfence_em || satp_flush
+
+	val flush_fd = csr.io.flush_mask(0) || (br_flush || jmp_flush) || csr_atomic_flush(0) || icache_flush_tag || dcache_flush_tag || sfence_em
+	val flush_de = csr.io.flush_mask(1)	|| (br_flush || jmp_flush) || csr_atomic_flush(1) || icache_flush_tag || dcache_flush_tag || sfence_em	// && !stall
 	val flush_em = csr.io.flush_mask(2)	|| csr_atomic_flush(2) || (icache_flush_tag || dcache_flush_tag)							// && !stall
 	val flush_mw = csr.io.flush_mask(3) || csr_atomic_flush(3)
 
@@ -124,8 +134,9 @@ class Datapath extends Module{
 	fetch_stage.io.stall := stall 
 	fetch_stage.io.pipeline_stall := pipeline_stall
 	fetch_stage.io.tlb_valid := is_page
-	fetch_stage.io.sfence_rs1 := execute_stage.io.em_pipe_reg.sfence_rs1
-	fetch_stage.io.sfence_rs2 := execute_stage.io.em_pipe_reg.sfence_rs2
+	fetch_stage.io.sfence_rs1 := Mux(satp_flush, 0.U, memory_stage.io.em_pipe_reg.sfence_rs1)
+	fetch_stage.io.sfence_rs2 := Mux(satp_flush, 0.U, memory_stage.io.em_pipe_reg.sfence_rs2)
+	fetch_stage.io.tlb_flush := tlb_flush
 	fetch_stage.io.sum := sum
 	fetch_stage.io.mxr := mxr
 	fetch_stage.io.mode := csr.io.mode
@@ -228,7 +239,8 @@ class Datapath extends Module{
 	csr.io.iTLB_fault := memory_stage.io.iTLB_fault
 	csr.io.dTLB_fault := memory_stage.io.dTLB_fault
 	memory_stage.io.dcache_flush_tag := dcache_flush_tag
-	memory_stage.io.dTLB_flush_tag := execute_stage.io.dTLB_flush_tag
+	memory_stage.io.tlb_flush := tlb_flush
+	memory_stage.io.tlb_flush_all := satp_flush
 
 	writeback_stage.io.mw_pipe_reg <> memory_stage.io.mw_pipe_reg
 	writeback_stage.io.stall := stall

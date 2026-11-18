@@ -41,7 +41,6 @@ class ExecuteStage extends Module{
 		val mw_pipe_reg_csr_read_data = Input(UInt(64.W))
 		val mw_pipe_reg_load_data = Input(UInt(64.W))
 		val dTLB_ready = Input(Bool())
-		val dTLB_flush_tag = Output(Bool())
 	})
 
 	val em_pipe_reg = RegInit(
@@ -79,7 +78,6 @@ class ExecuteStage extends Module{
 	val multiplier = Module(new Multiplier)
 	val divider = Module(new Divider)
 	val dcache_flush_tag = RegInit(false.B)	
-	val dTLB_flush_tag = RegInit(false.B)
 	val alu_out = alu.io.out
 	val alu_sum = alu.io.sum
 
@@ -95,17 +93,6 @@ class ExecuteStage extends Module{
 		}
 	}
 	io.dcache_flush_tag := dcache_flush_tag
-
-	when(!io.stall && io.flush_em){
-		dTLB_flush_tag := false.B
-	}.elsewhen(io.de_pipe_reg.inst === SFENCE_VMA && !io.stall){
-		dTLB_flush_tag := true.B
-	}.otherwise{
-		when(io.dTLB_ready){
-			dTLB_flush_tag := false.B
-		}
-	}
-	io.dTLB_flush_tag := dTLB_flush_tag
 
 	val computation_result = WireInit(0.U(64.W))
 	val src1_data = WireInit(0.U(64.W))

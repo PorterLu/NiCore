@@ -41,7 +41,7 @@ class FetchStage extends Module{
 		val sfence_rs2 = Input(UInt(64.W))
 		val tlb_valid = Input(Bool())
 		val tlb_ready = Output(Bool())
-		val iTLB_flush_tag = Output(Bool())
+		val tlb_flush = Input(Bool())
 		//val tlb_data = Output(UInt(64.W))
 		val sum 	= Input(Bool())
 		val mxr 	= Input(Bool())
@@ -60,7 +60,6 @@ class FetchStage extends Module{
 	)
 
 	val icache_flush_tag = RegInit(false.B)
-	val iTLB_flush_tag = RegInit(false.B)
 
 	val pc = RegInit("h80000000".U(64.W) - 4.U)
 	val next_pc = MuxCase(
@@ -69,6 +68,7 @@ class FetchStage extends Module{
 			(!io.started && io.stall) -> pc,
 			(io.csr_trap) -> io.csr_trapVec,
 			(icache_flush_tag || io.dcache_flush_tag) -> (io.em_pipe_reg_pc + 4.U),
+			io.tlb_flush -> (io.em_pipe_reg_pc + 4.U),
 			(((io.de_pipe_reg_pc_sel === PC_ALU) && io.de_pipe_reg_enable) || io.brCond_taken) -> (io.jump_addr >> 1.U << 1.U),
 			io.csr_atomic -> io.csr_next_fetch
 		)
@@ -80,7 +80,7 @@ class FetchStage extends Module{
 	val iTLB = Module(new TLB("iTLB"))
 	iTLB.io.tlb_flush_vpn   := io.sfence_rs1(38, 12)
 	iTLB.io.tlb_flush_asid  := io.sfence_rs2
-	iTLB.io.flush := iTLB_flush_tag 	//false.B
+	iTLB.io.flush := io.tlb_flush
 	iTLB.io.stall := io.pipeline_stall
 	iTLB.io.valid := io.tlb_valid
 	iTLB.io.priv := io.mode
@@ -118,17 +118,6 @@ class FetchStage extends Module{
 		}
 	}
 
-	when(!io.stall && io.flush_em){
-		iTLB_flush_tag   := false.B
-	}.elsewhen(io.de_pipe_reg_inst === SFENCE_VMA && !io.stall){
-		iTLB_flush_tag   := true.B 
-	}.otherwise{
-		when(iTLB.io.tlb_ready){
-			iTLB_flush_tag := false.B
-		}
-	}
-
-	io.iTLB_flush_tag   := iTLB_flush_tag
 	io.icache_flush_tag := icache_flush_tag
 
 	io.icache.accessType := word.asUInt

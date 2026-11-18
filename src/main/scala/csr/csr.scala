@@ -315,10 +315,12 @@ class CSR extends Module{
 							Cat(false.B, excCause))
 	
 	//printf(p"trap_cause:${Hexadecimal(cause)}\n")
-	val excValue = Mux((excCause === EXC_LOAD_ADDR) || (excCause === EXC_STORE_ADDR) ,io.alu_out,
-							Mux((excCause === EXC_BRK_POINT) || (excCause === EXC_INST_ADDR), io.excPC,
-									Mux(excCause === EXC_ILL_INST, io.inst, 0.U))
-						) 
+	val excValue = Mux(excCause === EXC_INST_PAGE, io.excPC,
+							Mux((excCause === EXC_LOAD_PAGE) || (excCause === EXC_STORE_PAGE) || 
+								(excCause === EXC_LOAD_ADDR) || (excCause === EXC_STORE_ADDR) ,io.alu_out,
+								Mux((excCause === EXC_BRK_POINT) || (excCause === EXC_INST_ADDR), io.excPC,
+										Mux(excCause === EXC_ILL_INST, io.inst, 0.U))
+							)) 
 
 	//陷入的地址判断，只有一种情况会有偏移，那就是在在向量模式并且是终端，在direct模式下永远是直接进入stvec或者mtvec的地址
 	val trapVecS = Mux(stvec.mode(0) && hasInt, (stvec.base + cause(63, 0)), stvec.base) << 2

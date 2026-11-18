@@ -46,7 +46,8 @@ class MemoryStage extends Module{
 
 		val tlb_valid = Input(Bool())
 		val tlb_ready = Output(Bool())
-		val dTLB_flush_tag = Input(Bool())
+		val tlb_flush = Input(Bool())
+		val tlb_flush_all = Input(Bool())
 		//val tlb_data = Output(UInt(64.W))
 		val sum 	 = Input(Bool())
 		val mxr 	 = Input(Bool())
@@ -78,9 +79,9 @@ class MemoryStage extends Module{
 	val ls_stall = Mux(io.stall, (io.em_pipe_reg.ld_type.orR || io.em_pipe_reg.st_type.orR) && io.em_pipe_reg.enable && (!io.em_pipe_reg.is_clint), 
 										(io.de_pipe_reg_ld_type.orR || io.de_pipe_reg_st_type.orR) && io.de_pipe_reg_enable && !io.is_clint && !io.flush_em)
 
-	dTLB.io.tlb_flush_vpn   := io.em_pipe_reg.sfence_rs1(38, 12)
-	dTLB.io.tlb_flush_asid  := io.em_pipe_reg.sfence_rs2
-	dTLB.io.flush := io.dTLB_flush_tag
+	dTLB.io.tlb_flush_vpn   := Mux(io.tlb_flush_all, 0.U, io.em_pipe_reg.sfence_rs1(38, 12))
+	dTLB.io.tlb_flush_asid  := Mux(io.tlb_flush_all, 0.U, io.em_pipe_reg.sfence_rs2)
+	dTLB.io.flush := io.tlb_flush
 	dTLB.io.stall := io.pipeline_stall
 	dTLB.io.valid := io.tlb_valid && ls_stall
 	dTLB.io.priv  := io.mode
@@ -101,13 +102,22 @@ class MemoryStage extends Module{
 	}
 	io.tlb_ready := tlb_tag
 
+	// dTLB faults are only one cycle long in the TLB, but are consumed one cycle
+	// later (tlb_ready is registered), so hold the fault code until then.
+	val dTLB_fault_reg = RegInit(0.U(2.W))
+	dTLB_fault_reg := 0.U
+	when(dTLB.io.fault =/= 0.U){
+		dTLB_fault_reg := dTLB.io.fault
+	}
+	io.dTLB_fault := dTLB_fault_reg
+
 	val data_cache_tag = RegInit(false.B)
 	val clint = Module(new clint)
 	val data_cache_response_data = RegInit(0.U(64.W))
 
 	when(!io.stall){
 		data_cache_tag := false.B
-	}.elsewhen(io.dcache.cpu_request.valid && io.dcache.cpu_response.ready){
+	}.elsewhen(io.dcache.cpu_response.ready && Mux(io.tlb_valid, dTLB.io.tlb_request.valid, io.dcache.cpu_request.valid)){
 		data_cache_tag := true.B
 		data_cache_response_data := io.dcache.cpu_response.data
 	}
@@ -180,7 +190,6 @@ class MemoryStage extends Module{
 	io.csr_store_misalign := io.em_pipe_reg.csr_store_misalign
 	io.csr_load_misalign := io.em_pipe_reg.csr_load_misalign
 	io.iTLB_fault := io.em_pipe_reg.iTLB_fault
-	io.dTLB_fault := dTLB.io.fault
 	io.csr_alu_out := io.em_pipe_reg.alu_out
 	
 	when(io.flush_mw && !io.stall){
