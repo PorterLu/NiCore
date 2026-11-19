@@ -145,7 +145,8 @@ class DecodeStage extends Module{
 					Mux(control.io.csr_cmd === CSR_RW, CSR.RW,
 						Mux((control.io.csr_cmd === CSR_RC)&&(src1_addr === 0.U), CSR.R,
 							Mux((control.io.csr_cmd === CSR_RS) && (src1_addr === 0.U), CSR.R,
-								Mux(control.io.csr_cmd === CSR_RS, CSR.RS, CSR.N)
+								Mux(control.io.csr_cmd === CSR_RS, CSR.RS,
+									Mux(control.io.csr_cmd === CSR_RC, CSR.RC, CSR.N))
 							)
 						)
 					)
