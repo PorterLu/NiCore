@@ -296,7 +296,7 @@ class Cache(cache_name: String) extends Module{
 				next_state := sFlush
 			}.elsewhen(io.cpu_request.valid && 
 					align_addr >= "h80000000".U && 
-					align_addr <= "h88000000".U){
+					align_addr < "h90000000".U){		// the RAM: 256 MiB
 				next_state := sMatch
 			}.elsewhen(io.cpu_request.valid){
 				when(io.cpu_request.rw){

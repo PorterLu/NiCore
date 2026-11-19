@@ -332,7 +332,7 @@ class Cache(cache_name: String) extends Module{
 		is(sIdle){
 			//if(cache_name == "inst_cache"){
 			//printf("sIdle\n")}
-			when(io.cpu_request.valid && io.cpu_request.addr >= "h80000000".U && io.cpu_request.addr <= "h88000000".U){
+			when(io.cpu_request.valid && io.cpu_request.addr >= "h80000000".U && io.cpu_request.addr < "h90000000".U){
 				next_state := sMatch
 				//printf("Yes\n")
 				//is_match := tag_mem.map{k => ((k.io.tag_read.tag === cpu_request_addr_tag) && (k.io.tag_read.valid))}
@@ -506,7 +506,7 @@ class Cache(cache_name: String) extends Module{
 					}
 				}
 				
-				when(io.cpu_request.valid && io.cpu_request.addr >= "h80000000".U && io.cpu_request.addr <= "h88000000".U){
+				when(io.cpu_request.valid && io.cpu_request.addr >= "h80000000".U && io.cpu_request.addr < "h90000000".U){
 					next_state := sMatch
 				}.otherwise{
 					next_state := sIdle

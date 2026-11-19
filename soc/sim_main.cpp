@@ -26,7 +26,7 @@
 #include "difftest.h"
 
 #define DRAM_BASE   0x80000000ull
-#define DRAM_SIZE   (128ull * 1024 * 1024)
+#define DRAM_SIZE   (256ull * 1024 * 1024)
 #define UART_BASE   0x10000000ull
 #define UART_SIZE   0x100ull
 #define CLINT_BASE  0x02000000ull
@@ -257,7 +257,7 @@ int main(int argc, char **argv) {
     const bool trace_commits = getenv("TRACE_COMMIT") != nullptr;
     // PROGRESS=<cycles> reports the position and the traps taken so far
     const uint64_t progress = getenv("PROGRESS") ? strtoull(getenv("PROGRESS"), nullptr, 0) : 0;
-    uint64_t interrupts[16] = {}, exceptions[16] = {}, last_pc = 0;
+    uint64_t interrupts[32] = {}, exceptions[32] = {}, last_pc = 0;
 
     dram = static_cast<uint8_t *>(calloc(DRAM_SIZE, 1));
     FILE *file = fopen(image, "rb");
@@ -351,14 +351,17 @@ int main(int argc, char **argv) {
         const uint64_t hw_pending = (top->io_timer_interrupt ? 1ull << 7 : 0) |
                                     (top->io_soft_interrupt ? 1ull << 3 : 0);
         if (top->io_trap_valid) {
-            ((top->io_trap_cause >> 63) ? interrupts : exceptions)[top->io_trap_cause & 15]++;
+            ((top->io_trap_cause >> 63) ? interrupts : exceptions)[top->io_trap_cause & 31]++;
             if (trace_commits)
-                fprintf(stderr, "[trap] cause=%llx epc=%llx tval=%llx\n",
+                fprintf(stderr, "[trap] cause=%llx epc=%llx tval=%llx tval2=%llx tinst=%llx\n",
                         (unsigned long long)top->io_trap_cause,
                         (unsigned long long)top->io_trap_epc,
-                        (unsigned long long)top->io_trap_tval);
-            diff.trap(top->io_trap_cause, top->io_trap_epc, top->io_trap_tval,
-                      hw_pending | hw_pending_before);
+                        (unsigned long long)top->io_trap_tval,
+                        (unsigned long long)top->io_trap_tval2,
+                        (unsigned long long)top->io_trap_tinst);
+            diff.trap({top->io_trap_cause, top->io_trap_epc, top->io_trap_tval,
+                       top->io_trap_tval2, top->io_trap_tinst,
+                       hw_pending | hw_pending_before});
         }
         hw_pending_before = hw_pending;
 
@@ -390,11 +393,11 @@ int main(int argc, char **argv) {
                     (unsigned long long)cycles, (unsigned long long)committed,
                     (unsigned long long)last_pc, (unsigned long long)clint_mtime,
                     (unsigned long long)clint_mtimecmp);
-            for (int i = 0; i < 16; i++)
+            for (int i = 0; i < 32; i++)
                 if (interrupts[i])
                     fprintf(stderr, " %d:%llu", i, (unsigned long long)interrupts[i]);
             fprintf(stderr, ", exceptions");
-            for (int i = 0; i < 16; i++)
+            for (int i = 0; i < 32; i++)
                 if (exceptions[i])
                     fprintf(stderr, " %d:%llu", i, (unsigned long long)exceptions[i]);
             fprintf(stderr, "\n");

@@ -21,7 +21,9 @@
 
 struct Difftest {
     struct Regs { uint64_t gpr[32]; uint64_t pc; };
-    struct Trap { uint64_t cause, epc, tval, hw_pending; };
+    // tval2 and tinst are what a guest-page fault writes to mtval2/htval and
+    // mtinst/htinst
+    struct Trap { uint64_t cause, epc, tval, tval2, tinst, hw_pending; };
     struct Commit { uint64_t pc; uint32_t inst; bool wb_en; unsigned wb_addr; uint64_t wb_data; };
     struct Store { uint64_t addr, data; uint8_t mask; };
 
@@ -93,9 +95,9 @@ struct Difftest {
 
     // The core took a trap. hw_pending holds the pending bits wired to
     // devices (MSIP, MTIP, MEIP) at that moment.
-    void trap(uint64_t cause, uint64_t epc, uint64_t tval, uint64_t hw_pending) {
+    void trap(const Trap &t) {
         if (enabled)
-            traps.push_back({cause, epc, tval, hw_pending});
+            traps.push_back(t);
     }
 
     // After FENCE.I the RAM itself must hold everything the core stored: the
@@ -150,7 +152,7 @@ struct Difftest {
             return fail(c);
         }
         for (int i = 0; i < taken; i++) {
-            struct { uint64_t cause, epc, tval; } r;
+            struct { uint64_t cause, epc, tval, tval2, tinst; } r;
             ref_get_trap(i, &r);
             if (traps.empty() || is_interrupt(traps.front())) {
                 fprintf(stderr, "\n[diff] reference took exception %llu at %llx (tval %llx), the core did not\n",
@@ -160,12 +162,16 @@ struct Difftest {
             }
             const Trap t = traps.front();
             traps.pop_front();
-            if (t.cause != r.cause || t.epc != r.epc || t.tval != r.tval) {
-                fprintf(stderr, "\n[diff] exception differs: core cause=%llu epc=%llx tval=%llx, "
-                                "reference cause=%llu epc=%llx tval=%llx\n",
+            if (t.cause != r.cause || t.epc != r.epc || t.tval != r.tval ||
+                t.tval2 != r.tval2 || t.tinst != r.tinst) {
+                fprintf(stderr, "\n[diff] exception differs: core cause=%llu epc=%llx tval=%llx "
+                                "tval2=%llx tinst=%llx, reference cause=%llu epc=%llx tval=%llx "
+                                "tval2=%llx tinst=%llx\n",
                         (unsigned long long)t.cause, (unsigned long long)t.epc,
-                        (unsigned long long)t.tval, (unsigned long long)r.cause,
-                        (unsigned long long)r.epc, (unsigned long long)r.tval);
+                        (unsigned long long)t.tval, (unsigned long long)t.tval2,
+                        (unsigned long long)t.tinst, (unsigned long long)r.cause,
+                        (unsigned long long)r.epc, (unsigned long long)r.tval,
+                        (unsigned long long)r.tval2, (unsigned long long)r.tinst);
                 return fail(c);
             }
         }
@@ -271,7 +277,11 @@ private:
             {"sepc", 0x141}, {"scause", 0x142}, {"stval", 0x143}, {"satp", 0x180},
             {"mtvec", 0x305}, {"stvec", 0x105}, {"mie", 0x304}, {"mip", 0x344},
             {"mideleg", 0x303}, {"medeleg", 0x302},
+            {"hstatus", 0x600}, {"hedeleg", 0x602}, {"hideleg", 0x603}, {"hgatp", 0x680},
+            {"htval", 0x643}, {"vsstatus", 0x200}, {"vsepc", 0x241}, {"vscause", 0x242},
+            {"vstval", 0x243}, {"vsatp", 0x280}, {"vstvec", 0x205},
         };
+        // the privilege level, with 4 added in a guest (VS or VU mode)
         fprintf(stderr, "[diff] reference: priv=%llu", (unsigned long long)ref_get_priv());
         for (const auto &r : csrs)
             fprintf(stderr, " %s=%llx", r.name, (unsigned long long)ref_get_csr(r.no));
