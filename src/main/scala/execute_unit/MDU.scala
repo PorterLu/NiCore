@@ -186,6 +186,7 @@ class Divider extends Module{
 	val div_state = RegInit(sIdle)
 	val is_w = RegInit(false.B)
 	val is_sign = RegInit(false.B)
+	val by_zero = RegInit(false.B)
 	val next_state = WireInit(sIdle)
 
 	io.div_ready := div_state === sIdle
@@ -240,6 +241,7 @@ class Divider extends Module{
 				is_sign := io.div_signed
 				sign_a := Mux(io.divw, io.dividend(31), io.dividend(63))
 				sign_b := Mux(io.divw, io.divisor(31), io.divisor(63))
+				by_zero := Mux(io.divw, io.divisor(31, 0) === 0.U, io.divisor.asUInt === 0.U)
 
 			}.otherwise{
 				next_state := sIdle
@@ -257,7 +259,7 @@ class Divider extends Module{
 
 			when(is_w){
 				mid64_result := (dividend - divisor)(63, 0)
-				when(!mid64_result(63)){
+				when(dividend(63, 0) >= divisor(63, 0)){
 					dividend := Cat(0.U(64.W), mid64_result)
 					result := (result << 1.U) | 1.U
 					//printf(p"dividend:${Cat(0.U(64.W), mid64_result)}; result:${(result << 1.U) | 1.U}\n")
@@ -272,7 +274,7 @@ class Divider extends Module{
 
 			when(!is_w){
 				mid128_result := dividend - divisor
-				when(!mid128_result(127)){
+				when(dividend >= divisor){
 					dividend := mid128_result
 					result := (result << 1.U) | 1.U
 					//printf(p"dividend:${mid128_result}; result:${(result << 1.U) | 1.U}\n")
@@ -291,13 +293,13 @@ class Divider extends Module{
 			//dividend := Mux((!sign_a && !sign_b) || (!sign_a && sign_b), -dividend, dividend)
 			//printf(p"${Hexadecimal(result)}; ${Hexadecimal(dividend)}\n")
 			io.out_valid := true.B
-			when(is_sign){
-				io.quotient := Mux(sign_a ^ sign_b, -result, result)(63, 0).asSInt
-				io.remainder := Mux((sign_a && sign_b) || (sign_a && !sign_b), -dividend, dividend)(63, 0).asSInt
-			}.otherwise{
-				io.quotient := result(63, 0).asSInt
-				io.remainder := dividend(63, 0).asSInt
-			}
+			// A division by zero returns all ones and the dividend as the
+			// remainder; 32-bit results are sign extended from bit 31.
+			val quotient = Mux(is_sign && (sign_a ^ sign_b), -result, result)(63, 0)
+			val remainder = Mux(is_sign && sign_a, -dividend, dividend)(63, 0)
+			io.quotient := Mux(by_zero, -1.S(64.W),
+								Mux(is_w, quotient(31, 0).asSInt, quotient.asSInt))
+			io.remainder := Mux(is_w, remainder(31, 0).asSInt, remainder.asSInt)
 			//printf(p"${Hexadecimal(result)}; ${Hexadecimal(dividend)}\n")
 			next_state := sIdle
 		}
