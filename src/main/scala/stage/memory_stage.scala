@@ -23,6 +23,8 @@ class MemoryStage extends Module{
 		val de_pipe_reg_ld_type = Input(UInt(3.W))
 		val de_pipe_reg_st_type = Input(UInt(3.W))
 		val de_pipe_reg_enable = Input(Bool())
+		val de_pipe_reg_hlsv = Input(Bool())
+		val de_pipe_reg_hlvx = Input(Bool())
 		val dcache_flush_tag = Input(Bool())
 		val alu_out = Input(UInt(64.W))
 		val src2_data = Input(UInt(64.W))
@@ -36,7 +38,8 @@ class MemoryStage extends Module{
 		val csr_isMret = Output(Bool())
 		val csr_excPC = Output(UInt(64.W)) 
 		val csr_jump_taken = Output(Bool()) 
-		val csr_is_illegal = Output(Bool()) 
+		val csr_is_illegal = Output(Bool())
+		val csr_is_virtual = Output(Bool())
 		val csr_inst_misalign = Output(Bool())
 		val csr_store_misalign = Output(Bool())
 		val csr_load_misalign = Output(Bool())
@@ -45,20 +48,40 @@ class MemoryStage extends Module{
 		val clint_timer_valid = Output(Bool())
 		val clint_soft_valid = Output(Bool())
 
-		val tlb_valid = Input(Bool())
 		val tlb_ready = Output(Bool())
 		val tlb_flush = Input(Bool())
-		val tlb_flush_all = Input(Bool())
+		val tlb_flush_virt = Input(Bool())
+		val tlb_flush_page = Input(Bool())
+		val tlb_flush_va = Input(UInt(64.W))
 		val amo_busy = Output(Bool())
-		//val tlb_data = Output(UInt(64.W))
+		// What decides how a data access is translated: the mode (with V
+		// for a guest), mstatus.MPRV with MPP and MPV, hstatus.SPVP for
+		// HLV and HSV, and the address translation CSRs. sum and mxr are
+		// those of sstatus, vs_sum and vs_mxr those of vsstatus.
 		val sum 	 = Input(Bool())
 		val mxr 	 = Input(Bool())
+		val vs_sum 	 = Input(Bool())
+		val vs_mxr 	 = Input(Bool())
 		val mode 	 = Input(UInt(2.W))
+		val virt 	 = Input(Bool())
 		val mprv 	 = Input(Bool())
 		val mpp 	 = Input(UInt(2.W))
+		val mpv 	 = Input(Bool())
+		val spvp 	 = Input(Bool())
 		val satp 	 = Input(UInt(64.W))
+		val vsatp 	 = Input(UInt(64.W))
+		val hgatp 	 = Input(UInt(64.W))
 		val iTLB_fault = Output(UInt(2.W))
+		val iTLB_guest = Output(Bool())
+		val iTLB_gpa = Output(UInt(64.W))
+		val iTLB_pte = Output(Bool())
 		val dTLB_fault = Output(UInt(2.W))
+		val dTLB_guest = Output(Bool())
+		val dTLB_gpa = Output(UInt(64.W))
+		val dTLB_pte = Output(Bool())
+		// the data access of the instruction in EM is one of a guest: its
+		// address is a guest virtual address
+		val data_virt = Output(Bool())
 		// the instruction in EM raises a data page fault or is misaligned:
 		// it gets no data and must not hold the pipeline
 		val em_fault = Output(Bool())
@@ -132,6 +155,23 @@ class MemoryStage extends Module{
 
 	val dTLB = Module(new TLB("dTLB"))
 	val tlb_store_mask = WireInit(0.U(8.W))
+
+	// The mode a data access is made in. HLV and HSV access the memory of
+	// the guest whatever the current mode is; otherwise MPRV substitutes
+	// the mode in MPP and MPV.
+	def access_priv(hlsv: Bool): UInt = Mux(hlsv, Cat(false.B, io.spvp), Mux(io.mprv, io.mpp, io.mode))
+	def access_virt(hlsv: Bool): Bool = hlsv || Mux(io.mprv, io.mpv && io.mpp =/= 3.U, io.virt)
+	// the access in flight is the one of the instruction in EM when the
+	// pipeline is stalled and of the one in execute otherwise
+	val acc_hlsv = Mux(io.stall, io.em_pipe_reg.hlsv, io.de_pipe_reg_hlsv)
+	val acc_hlvx = Mux(io.stall, io.em_pipe_reg.hlvx, io.de_pipe_reg_hlvx)
+	val acc_priv = access_priv(acc_hlsv)
+	val acc_virt = access_virt(acc_hlsv)
+	// a guest address is translated when either stage is: Sv39 by vsatp,
+	// Sv39x4 by hgatp
+	val tlb_valid = Mux(acc_virt, io.vsatp(63, 60) === 8.U || io.hgatp(63, 60) === 8.U,
+								  acc_priv =/= 3.U && io.satp(63, 60) === 8.U)
+	io.data_virt := access_virt(io.em_pipe_reg.hlsv)
 	val de_is_amo = io.de_pipe_reg_ld_type.orR && io.de_pipe_reg_st_type.orR &&
 					(io.de_pipe_reg_ld_type =/= LD_XXX) && (io.de_pipe_reg_st_type =/= ST_XXX)
 	val em_misalign = io.em_pipe_reg.csr_load_misalign || io.em_pipe_reg.csr_store_misalign
@@ -152,28 +192,32 @@ class MemoryStage extends Module{
 	val mem_done = (data_cache_tag && !amo_second) || dTLB_fault_reg =/= 0.U
 	io.em_fault := dTLB_fault_reg =/= 0.U || em_misalign
 
-	dTLB.io.tlb_flush_vpn   := Mux(io.tlb_flush_all, 0.U, io.em_pipe_reg.sfence_rs1(38, 12))
-	dTLB.io.tlb_flush_asid  := Mux(io.tlb_flush_all, 0.U, io.em_pipe_reg.sfence_rs2)
 	dTLB.io.flush := io.tlb_flush
+	dTLB.io.flush_virt := io.tlb_flush_virt
+	dTLB.io.flush_page := io.tlb_flush_page
+	dTLB.io.flush_va := io.tlb_flush_va
 	// The data TLB must advance while its own translation is the source of the
 	// pipeline stall; otherwise a hit can wait for a response forever.
 	dTLB.io.stall := false.B
-	dTLB.io.valid := io.tlb_valid && ls_stall && !(io.stall && mem_done)
-	// MPRV=1: load/store use MPP as privilege level (M-mode proxy)
-	dTLB.io.priv  := Mux(io.mprv, io.mpp, io.mode)
-	dTLB.io.mprv := false.B 
-	dTLB.io.sum	  := io.sum
-	dTLB.io.mxr   := io.mxr
+	dTLB.io.valid := tlb_valid && ls_stall && !(io.stall && mem_done)
+	dTLB.io.virt  := acc_virt
+	dTLB.io.priv  := acc_priv
+	dTLB.io.sum	  := Mux(acc_virt, io.vs_sum, io.sum)
+	// sstatus.MXR of the hypervisor also applies to the pages of a guest
+	dTLB.io.mxr   := Mux(acc_virt, io.vs_mxr || io.mxr, io.mxr)
+	dTLB.io.gmxr  := io.mxr
+	dTLB.io.hlvx  := acc_hlvx
 	// stores, SC and AMO need store permission even while they only read
 	dTLB.io.wen   := Mux(io.stall, io.em_pipe_reg.st_type.orR, io.de_pipe_reg_st_type.orR)
 	dTLB.io.rw    := wen_final
-	dTLB.io.satp  := io.satp
+	dTLB.io.satp  := Mux(acc_virt, io.vsatp, io.satp)
+	dTLB.io.hgatp := io.hgatp
 	dTLB.io.va	  := Mux(io.stall, io.em_pipe_reg.alu_out, io.alu_out)
 	dTLB.io.mask  := tlb_store_mask
 	dTLB.io.cache_response <> io.dcache.cpu_response
 
 	val tlb_tag = RegInit(false.B)
-	when(!io.tlb_valid){
+	when(!tlb_valid){
 		tlb_tag := true.B
 	}.elsewhen(dTLB.io.tlb_ready){
 		tlb_tag := true.B
@@ -185,19 +229,28 @@ class MemoryStage extends Module{
 	// A dTLB fault is one cycle long in the TLB, but the trap is only taken once
 	// no other stage stalls the pipeline: hold the fault code until the
 	// instruction leaves EM.
+	val dTLB_guest_reg = RegInit(false.B)
+	val dTLB_gpa_reg = RegInit(0.U(64.W))
+	val dTLB_pte_reg = RegInit(false.B)
 	when(dTLB.io.fault =/= 0.U){
 		dTLB_fault_reg := dTLB.io.fault
+		dTLB_guest_reg := dTLB.io.fault_guest
+		dTLB_gpa_reg := dTLB.io.fault_gpa
+		dTLB_pte_reg := dTLB.io.fault_pte
 	}.elsewhen(!io.stall){
 		dTLB_fault_reg := 0.U
 	}
 	io.dTLB_fault := dTLB_fault_reg
+	io.dTLB_guest := dTLB_guest_reg
+	io.dTLB_gpa := dTLB_gpa_reg
+	io.dTLB_pte := dTLB_pte_reg
 
 	val data_cache_response_data = RegInit(0.U(64.W))
 
 	// with paging only the response to the translated access counts, not the
 	// responses to the page table reads of the walk
 	val mem_response = io.dcache.cpu_response.ready &&
-		Mux(io.tlb_valid, dTLB.io.fetch_request.valid || io.dcache_flush_tag, io.dcache.cpu_request.valid)
+		Mux(tlb_valid, dTLB.io.fetch_request.valid || io.dcache_flush_tag, io.dcache.cpu_request.valid)
 	when(mem_response){
 		data_cache_tag := true.B
 		data_cache_response_data := io.dcache.cpu_response.data
@@ -243,9 +296,9 @@ class MemoryStage extends Module{
 
 	io.em_enable := io.em_pipe_reg.enable
 	io.dcache.flush := io.dcache_flush_tag
-	io.dcache.cpu_request.valid := Mux(io.tlb_valid, (ls_stall && !dTLB.io.tlb_ready && dTLB.io.tlb_request.valid) || (io.dcache_flush_tag)&&(!data_cache_tag) ,(ls_stall || (io.dcache_flush_tag)) && (!data_cache_tag || (is_amo && amo_second)))
-	io.dcache.cpu_request.rw := Mux(io.tlb_valid, dTLB.io.tlb_request.rw, wen_final)
-	io.dcache.cpu_request.addr := Mux(io.tlb_valid, dTLB.io.tlb_request.addr, Mux(io.stall, io.em_pipe_reg.alu_out, io.alu_out))
+	io.dcache.cpu_request.valid := Mux(tlb_valid, (ls_stall && !dTLB.io.tlb_ready && dTLB.io.tlb_request.valid) || (io.dcache_flush_tag)&&(!data_cache_tag) ,(ls_stall || (io.dcache_flush_tag)) && (!data_cache_tag || (is_amo && amo_second)))
+	io.dcache.cpu_request.rw := Mux(tlb_valid, dTLB.io.tlb_request.rw, wen_final)
+	io.dcache.cpu_request.addr := Mux(tlb_valid, dTLB.io.tlb_request.addr, Mux(io.stall, io.em_pipe_reg.alu_out, io.alu_out))
 	io.dcache.cpu_request.data := Mux(amo_second && is_amo, amo_store_data,
 									Mux(io.stall, io.em_pipe_reg.st_data << (io.em_pipe_reg.alu_out(2, 0) << 3.U), io.src2_data << (io.alu_out(2, 0) << 3.U))(63, 0))
 	val accessType_stall = Mux((io.em_pipe_reg.ld_type === 7.U) || (io.em_pipe_reg.st_type === 4.U), double.asUInt, 
@@ -299,10 +352,14 @@ class MemoryStage extends Module{
 	io.csr_excPC := io.em_pipe_reg.pc 
 	io.csr_jump_taken := io.em_pipe_reg.jump_taken
 	io.csr_is_illegal := io.em_pipe_reg.csr_is_illegal
+	io.csr_is_virtual := io.em_pipe_reg.csr_is_virtual
 	io.csr_inst_misalign := io.em_pipe_reg.csr_inst_misalign
 	io.csr_store_misalign := io.em_pipe_reg.csr_store_misalign
 	io.csr_load_misalign := io.em_pipe_reg.csr_load_misalign
 	io.iTLB_fault := io.em_pipe_reg.iTLB_fault
+	io.iTLB_guest := io.em_pipe_reg.iTLB_guest
+	io.iTLB_gpa := io.em_pipe_reg.iTLB_gpa
+	io.iTLB_pte := io.em_pipe_reg.iTLB_pte
 	io.csr_alu_out := io.em_pipe_reg.alu_out
 	
 	when(io.flush_mw && !io.stall){

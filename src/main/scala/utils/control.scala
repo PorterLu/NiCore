@@ -176,14 +176,30 @@ object Control{
 		CSRRWI	->	List(PC_0,		A_XXX,	B_XXX,	 W_D,	IMM_Z,		ALU_XXX,		BR_XXX,		ST_XXX,		LD_XXX,		WB_CSR,		Y,		CSR_MODE_U,	CSR_RW,			N,		N), //Y
 		CSRRSI	->	List(PC_0,		A_XXX,	B_XXX,	 W_D,	IMM_Z,		ALU_XXX,		BR_XXX,		ST_XXX,		LD_XXX,		WB_CSR,		Y,		CSR_MODE_U,	CSR_RS,			N,		N), //Y
 		CSRRCI	->	List(PC_0,		A_XXX,	B_XXX,	 W_D,	IMM_Z,		ALU_XXX,		BR_XXX,		ST_XXX,		LD_XXX,		WB_CSR,		Y,		CSR_MODE_U,	CSR_RC,			N,		N), //Y
-		MRET 	-> 	List(PC_EPC,	A_XXX,	B_XXX,	 W_D,	IMM_X,		ALU_XXX,		BR_XXX,		ST_XXX,		LD_XXX,		WB_CSR,		N,		CSR_MODE_M,	CSR_NOP,		N,		N), //Y
-		SRET	-> 	List(PC_EPC,	A_XXX,	B_XXX,	 W_D,	IMM_X,		ALU_XXX,		BR_XXX,		ST_XXX,		LD_XXX,		WB_CSR,		N,		CSR_MODE_S,	CSR_NOP,		N,		N), //Y
+		MRET 	-> 	List(PC_EPC,	A_XXX,	B_XXX,	 W_D,	IMM_X,		ALU_XXX,		BR_XXX,		ST_XXX,		LD_XXX,		WB_CSR,		N,		CSR_MODE_U,	CSR_NOP,		N,		N), //Y
+		SRET	-> 	List(PC_EPC,	A_XXX,	B_XXX,	 W_D,	IMM_X,		ALU_XXX,		BR_XXX,		ST_XXX,		LD_XXX,		WB_CSR,		N,		CSR_MODE_U,	CSR_NOP,		N,		N), //Y
 		ECALL 	-> 	List(PC_4,		A_XXX,	B_XXX,	 W_D,	IMM_X,		ALU_XXX,		BR_XXX,		ST_XXX,		LD_XXX,		WB_CSR,		N,		CSR_MODE_U,	CSR_NOP,		N,		N),
 		EBREAK 	->	List(PC_4,		A_XXX,	B_XXX,	 W_D,	IMM_X,		ALU_XXX,		BR_XXX,		ST_XXX,		LD_XXX,		WB_CSR,		N,		CSR_MODE_U,	CSR_NOP,		N,		N),
 		FENCE_I	->	List(PC_0,		A_XXX,	B_XXX,	 W_D,	IMM_X,		ALU_XXX,		BR_XXX,		ST_XXX,		LD_XXX,		WB_ALU,		N,		CSR_MODE_U,	CSR_NOP,		N,		N),
 		FENCE	->	List(PC_4,		A_XXX,	B_XXX,	 W_D,	IMM_X,		ALU_XXX,		BR_XXX,		ST_XXX,		LD_XXX,		WB_ALU,		N,		CSR_MODE_U,	CSR_NOP,		N,		N),	// treated as a nop
 		WFI		->	List(PC_4,		A_XXX,	B_XXX,	 W_D,	IMM_X,		ALU_XXX,		BR_XXX,		ST_XXX,		LD_XXX,		WB_ALU,		N,		CSR_MODE_U,	CSR_NOP,		N,		N),	// treated as a nop
-		SFENCE_VMA -> List(PC_4,	A_XXX,	B_XXX,	 W_D,	IMM_U,		ALU_COPY_B,	 	BR_XXX, 	ST_XXX, 	LD_XXX,		WB_ALU,		Y,		CSR_MODE_S,	CSR_NOP,		Y,		N)
+		SFENCE_VMA -> List(PC_4,	A_XXX,	B_XXX,	 W_D,	IMM_X,		ALU_XXX,		BR_XXX,		ST_XXX,		LD_XXX,		WB_ALU,		N,		CSR_MODE_U,	CSR_NOP,		N,		N),
+		// hypervisor extension: address = rs1, HSV stores rs2
+		HLV_B ->	List(PC_4,		A_RS1,	B_XXX,	 W_D,	IMM_X,		ALU_COPY_A,	BR_XXX, 	ST_XXX, 	LD_LB,		WB_MEM,		Y,		CSR_MODE_U,	CSR_NOP, 		N,		N),
+		HLV_BU ->	List(PC_4,		A_RS1,	B_XXX,	 W_D,	IMM_X,		ALU_COPY_A,	BR_XXX, 	ST_XXX, 	LD_LBU,		WB_MEM,		Y,		CSR_MODE_U,	CSR_NOP, 		N,		N),
+		HLV_H ->	List(PC_4,		A_RS1,	B_XXX,	 W_D,	IMM_X,		ALU_COPY_A,	BR_XXX, 	ST_XXX, 	LD_LH,		WB_MEM,		Y,		CSR_MODE_U,	CSR_NOP, 		N,		N),
+		HLV_HU ->	List(PC_4,		A_RS1,	B_XXX,	 W_D,	IMM_X,		ALU_COPY_A,	BR_XXX, 	ST_XXX, 	LD_LHU,		WB_MEM,		Y,		CSR_MODE_U,	CSR_NOP, 		N,		N),
+		HLVX_HU ->	List(PC_4,		A_RS1,	B_XXX,	 W_D,	IMM_X,		ALU_COPY_A,	BR_XXX, 	ST_XXX, 	LD_LHU,		WB_MEM,		Y,		CSR_MODE_U,	CSR_NOP, 		N,		N),
+		HLV_W ->	List(PC_4,		A_RS1,	B_XXX,	 W_D,	IMM_X,		ALU_COPY_A,	BR_XXX, 	ST_XXX, 	LD_LW,		WB_MEM,		Y,		CSR_MODE_U,	CSR_NOP, 		N,		N),
+		HLV_WU ->	List(PC_4,		A_RS1,	B_XXX,	 W_D,	IMM_X,		ALU_COPY_A,	BR_XXX, 	ST_XXX, 	LD_LWU,		WB_MEM,		Y,		CSR_MODE_U,	CSR_NOP, 		N,		N),
+		HLVX_WU ->	List(PC_4,		A_RS1,	B_XXX,	 W_D,	IMM_X,		ALU_COPY_A,	BR_XXX, 	ST_XXX, 	LD_LWU,		WB_MEM,		Y,		CSR_MODE_U,	CSR_NOP, 		N,		N),
+		HLV_D ->	List(PC_4,		A_RS1,	B_XXX,	 W_D,	IMM_X,		ALU_COPY_A,	BR_XXX, 	ST_XXX, 	LD_LD,		WB_MEM,		Y,		CSR_MODE_U,	CSR_NOP, 		N,		N),
+		HSV_B ->	List(PC_4,		A_RS1,	B_RS2,	 W_D,	IMM_X,		ALU_COPY_A,	BR_XXX, 	ST_SB,		LD_XXX,		WB_ALU,		N,		CSR_MODE_U,	CSR_NOP, 		N,		N),
+		HSV_H ->	List(PC_4,		A_RS1,	B_RS2,	 W_D,	IMM_X,		ALU_COPY_A,	BR_XXX, 	ST_SH,		LD_XXX,		WB_ALU,		N,		CSR_MODE_U,	CSR_NOP, 		N,		N),
+		HSV_W ->	List(PC_4,		A_RS1,	B_RS2,	 W_D,	IMM_X,		ALU_COPY_A,	BR_XXX, 	ST_SW,		LD_XXX,		WB_ALU,		N,		CSR_MODE_U,	CSR_NOP, 		N,		N),
+		HSV_D ->	List(PC_4,		A_RS1,	B_RS2,	 W_D,	IMM_X,		ALU_COPY_A,	BR_XXX, 	ST_SD,		LD_XXX,		WB_ALU,		N,		CSR_MODE_U,	CSR_NOP, 		N,		N),
+		HFENCE_VVMA ->	List(PC_4,		A_XXX,	B_XXX,	 W_D,	IMM_X,		ALU_XXX,		BR_XXX,		ST_XXX,		LD_XXX,		WB_ALU,		N,		CSR_MODE_U,	CSR_NOP,		N,		N),
+		HFENCE_GVMA ->	List(PC_4,		A_XXX,	B_XXX,	 W_D,	IMM_X,		ALU_XXX,		BR_XXX,		ST_XXX,		LD_XXX,		WB_ALU,		N,		CSR_MODE_U,	CSR_NOP,		N,		N)
 	)
 }
 
@@ -209,9 +225,6 @@ class ControlSignals extends Bundle{
 class Control extends Module{
 	val io = IO(new ControlSignals)
 	val ctrlSignals = ListLookup(io.inst, Control.default, Control.map)
-	val isSFENCE = io.inst(6, 0) === "b1110011".U &&
-							 io.inst(14, 12) === 0.U &&
-							 io.inst(31, 25) === "b0001001".U
 
 	io.pc_sel := ctrlSignals(0)
 
@@ -228,6 +241,6 @@ class Control extends Module{
 	io.wb_en := ctrlSignals(10).asBool
 	io.prv := ctrlSignals(11)
 	io.csr_cmd := ctrlSignals(12)
-	io.is_illegal := ctrlSignals(13).asBool && !isSFENCE
+	io.is_illegal := ctrlSignals(13).asBool
 	io.is_kill := ctrlSignals(14)
 }

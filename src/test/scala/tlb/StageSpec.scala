@@ -106,12 +106,16 @@ class StageSpec extends AnyFreeSpec with ChiselScalatestTester {
     fetch.io.flush_em.poke(false.B)
     fetch.io.brCond_taken.poke(false.B)
     fetch.io.jump_addr.poke(0x80000000L.U)
-    fetch.io.sfence_rs1.poke(0.U)
-    fetch.io.sfence_rs2.poke(0.U)
     fetch.io.tlb_valid.poke(paging.B)
     fetch.io.tlb_flush.poke(false.B)
+    fetch.io.tlb_flush_virt.poke(false.B)
+    fetch.io.tlb_flush_page.poke(false.B)
+    fetch.io.tlb_flush_va.poke(0.U)
+    fetch.io.virt.poke(false.B)
     fetch.io.sum.poke(false.B)
     fetch.io.mxr.poke(false.B)
+    fetch.io.gmxr.poke(false.B)
+    fetch.io.hgatp.poke(0.U)
     fetch.io.mode.poke(CSR_MODE_S.litValue.U)
     fetch.io.satp.poke(satp(ASID, ROOT_PPN).U)
     fetch.io.icache.cpu_response.data.poke(0.U)
@@ -198,6 +202,8 @@ class StageSpec extends AnyFreeSpec with ChiselScalatestTester {
       _.is_clint -> false.B, _.csr_inst_mode -> 0.U, _.csr_is_illegal -> false.B,
       _.csr_inst_misalign -> false.B, _.csr_load_misalign -> false.B,
       _.csr_store_misalign -> false.B, _.iTLB_fault -> 0.U,
+      _.csr_is_virtual -> false.B, _.iTLB_guest -> false.B, _.iTLB_gpa -> 0.U,
+      _.iTLB_pte -> false.B, _.hlsv -> false.B, _.hlvx -> false.B,
       _.sfence_rs1 -> 0.U, _.sfence_rs2 -> 0.U, _.amo_op -> Control.AMO_NONE, _.enable -> true.B)
     lit
   }
@@ -215,12 +221,25 @@ class StageSpec extends AnyFreeSpec with ChiselScalatestTester {
     ms.io.alu_out.poke(emLit.alu_out.litValue.U)
     ms.io.src2_data.poke(0.U)
     ms.io.is_clint.poke(false.B)
-    ms.io.tlb_valid.poke(paging.B)
+    ms.io.de_pipe_reg_hlsv.poke(false.B)
+    ms.io.de_pipe_reg_hlvx.poke(false.B)
     ms.io.tlb_flush.poke(false.B)
-    ms.io.tlb_flush_all.poke(false.B)
+    ms.io.tlb_flush_virt.poke(false.B)
+    ms.io.tlb_flush_page.poke(false.B)
+    ms.io.tlb_flush_va.poke(0.U)
     ms.io.sum.poke(false.B)
     ms.io.mxr.poke(false.B)
-    ms.io.mode.poke(CSR_MODE_S.litValue.U)
+    ms.io.vs_sum.poke(false.B)
+    ms.io.vs_mxr.poke(false.B)
+    ms.io.virt.poke(false.B)
+    ms.io.mprv.poke(false.B)
+    ms.io.mpp.poke(0.U)
+    ms.io.mpv.poke(false.B)
+    ms.io.spvp.poke(false.B)
+    ms.io.vsatp.poke(0.U)
+    ms.io.hgatp.poke(0.U)
+    // S mode with satp.MODE = Sv39 translates, M mode does not
+    ms.io.mode.poke((if (paging) CSR_MODE_S else CSR_MODE_M).litValue.U)
     ms.io.satp.poke(satp(ASID, ROOT_PPN).U)
     ms.io.dcache.cpu_response.data.poke(0.U)
     ms.io.dcache.cpu_response.ready.poke(false.B)

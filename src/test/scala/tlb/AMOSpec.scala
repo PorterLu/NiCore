@@ -23,6 +23,8 @@ class AMOSpec extends AnyFreeSpec with ChiselScalatestTester {
       _.is_clint -> false.B, _.csr_inst_mode -> 0.U, _.csr_is_illegal -> false.B,
       _.csr_inst_misalign -> false.B, _.csr_load_misalign -> false.B,
       _.csr_store_misalign -> false.B, _.iTLB_fault -> 0.U,
+      _.csr_is_virtual -> false.B, _.iTLB_guest -> false.B, _.iTLB_gpa -> 0.U,
+      _.iTLB_pte -> false.B, _.hlsv -> false.B, _.hlvx -> false.B,
       _.sfence_rs1 -> 0.U, _.sfence_rs2 -> 0.U, _.amo_op -> amoOp, _.enable -> true.B)
 
   def emStore(va: BigInt = ADDR, st: UInt = ST_SD, data: BigInt = 0) =
@@ -41,12 +43,24 @@ class AMOSpec extends AnyFreeSpec with ChiselScalatestTester {
     ms.io.alu_out.poke(em.alu_out.litValue.U)
     ms.io.src2_data.poke(0.U)
     ms.io.is_clint.poke(false.B)
-    ms.io.tlb_valid.poke(false.B)          // bare mode: no paging
+    ms.io.de_pipe_reg_hlsv.poke(false.B)
+    ms.io.de_pipe_reg_hlvx.poke(false.B)
     ms.io.tlb_flush.poke(false.B)
-    ms.io.tlb_flush_all.poke(false.B)
+    ms.io.tlb_flush_virt.poke(false.B)
+    ms.io.tlb_flush_page.poke(false.B)
+    ms.io.tlb_flush_va.poke(0.U)
     ms.io.sum.poke(false.B)
     ms.io.mxr.poke(false.B)
-    ms.io.mode.poke(CSR_MODE_M.litValue.U)
+    ms.io.vs_sum.poke(false.B)
+    ms.io.vs_mxr.poke(false.B)
+    ms.io.virt.poke(false.B)
+    ms.io.mprv.poke(false.B)
+    ms.io.mpp.poke(0.U)
+    ms.io.mpv.poke(false.B)
+    ms.io.spvp.poke(false.B)
+    ms.io.vsatp.poke(0.U)
+    ms.io.hgatp.poke(0.U)
+    ms.io.mode.poke(CSR_MODE_M.litValue.U)   // M mode: no paging
     ms.io.satp.poke(0.U)
     ms.io.dcache.cpu_response.data.poke(0.U)
     ms.io.dcache.cpu_response.ready.poke(false.B)

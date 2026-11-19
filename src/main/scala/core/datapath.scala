@@ -68,6 +68,8 @@ class DatapathIO extends Bundle{
 	val trap_cause = Output(UInt(64.W))
 	val trap_epc = Output(UInt(64.W))
 	val trap_tval = Output(UInt(64.W))
+	val trap_tval2 = Output(UInt(64.W))
+	val trap_tinst = Output(UInt(64.W))
 	val store_valid = Output(Bool())
 	val store_addr = Output(UInt(64.W))
 	val store_data = Output(UInt(64.W))
@@ -98,11 +100,13 @@ class Datapath extends Module{
 	val sstatus = csr.io.sstatus
 	val sum = sstatus(18)
 	val mxr = sstatus(19)
-	// Sv39 paging is active in S/U mode when satp.MODE == 8. Data accesses
-	// use the effective privilege: MPP while mstatus.MPRV is set.
-	val is_page = !csr.io.mode(1) && (satp(63, 60) === 8.U)
-	val data_mode = Mux(csr.io.mprv, csr.io.mpp, csr.io.mode)
-	val is_page_data = !data_mode(1) && (satp(63, 60) === 8.U)
+	// V: the hart runs a guest (VS or VU mode)
+	val virt = csr.io.virt
+	// Instruction fetch is translated in S/U mode when satp.MODE == 8, and
+	// in a guest when vsatp or hgatp select a mode. The memory stage
+	// decides the same for each data access.
+	val is_page = Mux(virt, csr.io.vsatp(63, 60) === 8.U || csr.io.hgatp(63, 60) === 8.U,
+						!csr.io.mode(1) && (satp(63, 60) === 8.U))
 
 	//必须使得enable信号为false时，对应的流水线寄存器中输出的内容不对CPU状态机的运行产生影响
 	val icache_flush_tag = fetch_stage.io.icache_flush_tag
@@ -137,16 +141,29 @@ class Datapath extends Module{
 	// NOTE: must not depend combinationally on stall, otherwise
 	// stall -> sfence_em -> tlb_flush -> iTLB abort -> icache_stall -> stall loops
 	val sfence_em = memory_stage.io.em_pipe_reg.inst === SFENCE_VMA && memory_stage.io.em_pipe_reg.enable
-	// writing satp changes the root page table (and maybe ASID): flush both TLBs fully
+	// HFENCE.VVMA and HFENCE.GVMA: the translations of guest addresses
+	val hfence_v_em = memory_stage.io.em_pipe_reg.inst === HFENCE_VVMA && memory_stage.io.em_pipe_reg.enable
+	val hfence_g_em = memory_stage.io.em_pipe_reg.inst === HFENCE_GVMA && memory_stage.io.em_pipe_reg.enable
+	val tlb_fence_em = sfence_em || hfence_v_em || hfence_g_em
+	// writing satp, vsatp or hgatp changes the root page table: flush the
+	// translations made through it from both TLBs
 	val csr_wen = (csr.io.w_op === CSR.W || csr.io.w_op === CSR.RW || csr.io.w_op === CSR.RS || csr.io.w_op === CSR.RC) && csr.io.mw_enable
-	val satp_flush = csr.io.w_addr === CSR_SATP && csr_wen
-	val tlb_flush = sfence_em || satp_flush
+	val satp_flush = csr_wen && (csr.io.w_addr === CSR_SATP || csr.io.w_addr === CSR_VSATP || csr.io.w_addr === CSR_HGATP)
+	val tlb_flush = tlb_fence_em || satp_flush
+	// The TLBs hold translations of guest addresses apart from the others.
+	// SFENCE.VMA drops those of the mode it is executed in, the HFENCEs
+	// and vsatp and hgatp those of guests. A fence with an address in rs1
+	// only drops that page; HFENCE.GVMA names a guest physical address,
+	// which the entries do not record.
+	val tlb_flush_virt = Mux(satp_flush, csr.io.w_addr =/= CSR_SATP, !sfence_em || virt)
+	val tlb_flush_page = !satp_flush && !hfence_g_em && memory_stage.io.em_pipe_reg.inst(19, 15) =/= 0.U
+	val tlb_flush_va = memory_stage.io.em_pipe_reg.sfence_rs1
 	// SFENCE.VMA, FENCE.I and a write to satp change how the instructions
 	// behind them are fetched: when such an instruction leaves EM (or MW for
 	// the CSR write), everything younger is flushed and fetched again from
 	// the instruction after it.
 	val fence_i_em = execute_stage.io.em_pipe_reg.inst === FENCE_I && execute_stage.io.em_pipe_reg.enable
-	val serialize_em = sfence_em || fence_i_em
+	val serialize_em = tlb_fence_em || fence_i_em
 	val serial_redirect = RegInit(false.B)
 	val serial_redirect_pc = RegInit("h80000000".U(64.W))
 
@@ -208,13 +225,19 @@ class Datapath extends Module{
 	fetch_stage.io.stall := stall 
 	fetch_stage.io.pipeline_stall := pipeline_stall
 	fetch_stage.io.tlb_valid := is_page
-	fetch_stage.io.sfence_rs1 := Mux(satp_flush, 0.U, memory_stage.io.em_pipe_reg.sfence_rs1)
-	fetch_stage.io.sfence_rs2 := Mux(satp_flush, 0.U, memory_stage.io.em_pipe_reg.sfence_rs2)
 	fetch_stage.io.tlb_flush := tlb_flush
-	fetch_stage.io.sum := sum
-	fetch_stage.io.mxr := mxr
+	fetch_stage.io.tlb_flush_virt := tlb_flush_virt
+	fetch_stage.io.tlb_flush_page := tlb_flush_page
+	fetch_stage.io.tlb_flush_va := tlb_flush_va
+	// a guest is translated by vsatp and with SUM and MXR of vsstatus;
+	// sstatus.MXR of the hypervisor applies to both stages
+	fetch_stage.io.virt := virt
+	fetch_stage.io.sum := Mux(virt, csr.io.vs_sum, sum)
+	fetch_stage.io.mxr := Mux(virt, csr.io.vs_mxr || mxr, mxr)
+	fetch_stage.io.gmxr := mxr
 	fetch_stage.io.mode := csr.io.mode
-	fetch_stage.io.satp := satp
+	fetch_stage.io.satp := Mux(virt, csr.io.vsatp, satp)
+	fetch_stage.io.hgatp := csr.io.hgatp
 	fetch_stage.io.csr_trap := csr.io.trap
 	fetch_stage.io.csr_trapVec := csr.io.trapVec
 	fetch_stage.io.csr_next_fetch := csr_next_fetch
@@ -243,7 +266,11 @@ class Datapath extends Module{
 	csr.io.r_addr := decode_stage.io.csr_r_addr
 	decode_stage.io.csr_mode := csr.io.mode
 	decode_stage.io.csr_r_data := csr.io.r_data
-	decode_stage.io.csr_accessType_illegal := csr.io.accessType_illegal
+	csr.io.d_inst := fetch_stage.io.fd_pipe_reg.inst
+	csr.io.d_hlsv := decode_stage.io.hlsv
+	decode_stage.io.csr_illegal := csr.io.d_illegal
+	decode_stage.io.csr_virtual := csr.io.d_virtual
+	decode_stage.io.csr_target := csr.io.r_target
 	decode_stage.io.regFile_wen := writeback_stage.io.regFile_wen
 	decode_stage.io.regFile_waddr := writeback_stage.io.regFile_waddr
 	decode_stage.io.regFile_wdata := writeback_stage.io.regFile_wdata
@@ -286,13 +313,19 @@ class Datapath extends Module{
 
 	memory_stage.io.stall := stall
 	memory_stage.io.pipeline_stall := pipeline_stall
-	memory_stage.io.tlb_valid := is_page_data
 	memory_stage.io.sum := sum
-	memory_stage.io.mxr := mxr 
+	memory_stage.io.mxr := mxr
+	memory_stage.io.vs_sum := csr.io.vs_sum
+	memory_stage.io.vs_mxr := csr.io.vs_mxr
 	memory_stage.io.mode := csr.io.mode
+	memory_stage.io.virt := virt
 	memory_stage.io.mprv := csr.io.mprv
 	memory_stage.io.mpp := csr.io.mpp
+	memory_stage.io.mpv := csr.io.mpv
+	memory_stage.io.spvp := csr.io.spvp
 	memory_stage.io.satp := satp
+	memory_stage.io.vsatp := csr.io.vsatp
+	memory_stage.io.hgatp := csr.io.hgatp
 	memory_stage.io.flush_mw := flush_mw
 	memory_stage.io.flush_em := flush_em
 	memory_stage.io.alu_out := execute_stage.io.alu_out
@@ -301,6 +334,8 @@ class Datapath extends Module{
 	memory_stage.io.de_pipe_reg_st_type := decode_stage.io.de_pipe_reg.st_type
 	memory_stage.io.de_pipe_reg_ld_type := decode_stage.io.de_pipe_reg.ld_type
 	memory_stage.io.de_pipe_reg_enable := decode_stage.io.de_pipe_reg.enable
+	memory_stage.io.de_pipe_reg_hlsv := decode_stage.io.de_pipe_reg.hlsv
+	memory_stage.io.de_pipe_reg_hlvx := decode_stage.io.de_pipe_reg.hlvx
 	data_cache_tag := memory_stage.io.data_cache_tag
 	data_cache_response_data := memory_stage.io.data_cache_response_data
 	memory_stage.io.em_pipe_reg <> execute_stage.io.em_pipe_reg
@@ -314,15 +349,25 @@ class Datapath extends Module{
 	csr.io.jump_addr := memory_stage.io.alu_out
 	csr.io.alu_out := memory_stage.io.csr_alu_out
 	csr.io.is_illegal := memory_stage.io.csr_is_illegal
+	csr.io.is_virtual := memory_stage.io.csr_is_virtual
 	csr.io.inst_misalign := memory_stage.io.csr_inst_misalign
 	csr.io.store_misalign := memory_stage.io.csr_store_misalign
 	csr.io.load_misalign := memory_stage.io.csr_load_misalign
 	csr.io.em_enable := memory_stage.io.em_enable
 	csr.io.iTLB_fault := memory_stage.io.iTLB_fault
+	csr.io.iTLB_guest := memory_stage.io.iTLB_guest
+	csr.io.iTLB_gpa := memory_stage.io.iTLB_gpa
+	csr.io.iTLB_pte := memory_stage.io.iTLB_pte
 	csr.io.dTLB_fault := memory_stage.io.dTLB_fault
+	csr.io.dTLB_guest := memory_stage.io.dTLB_guest
+	csr.io.dTLB_gpa := memory_stage.io.dTLB_gpa
+	csr.io.dTLB_pte := memory_stage.io.dTLB_pte
+	csr.io.data_virt := memory_stage.io.data_virt
 	memory_stage.io.dcache_flush_tag := dcache_flush_tag
 	memory_stage.io.tlb_flush := tlb_flush
-	memory_stage.io.tlb_flush_all := satp_flush
+	memory_stage.io.tlb_flush_virt := tlb_flush_virt
+	memory_stage.io.tlb_flush_page := tlb_flush_page
+	memory_stage.io.tlb_flush_va := tlb_flush_va
 
 	writeback_stage.io.mw_pipe_reg <> memory_stage.io.mw_pipe_reg
 	writeback_stage.io.stall := stall
@@ -348,6 +393,8 @@ class Datapath extends Module{
 	io.trap_cause := csr.io.trap_cause
 	io.trap_epc := csr.io.trap_epc
 	io.trap_tval := csr.io.trap_tval
+	io.trap_tval2 := csr.io.trap_tval2
+	io.trap_tinst := csr.io.trap_tinst
 	io.store_valid := memory_stage.io.store_valid
 	io.store_addr := memory_stage.io.store_addr
 	io.store_data := memory_stage.io.store_data
@@ -380,13 +427,15 @@ class myCPU extends Module{
 		val trap_cause = Output(UInt(64.W))
 		val trap_epc = Output(UInt(64.W))
 		val trap_tval = Output(UInt(64.W))
+		val trap_tval2 = Output(UInt(64.W))
+		val trap_tinst = Output(UInt(64.W))
 		val store_valid = Output(Bool())
 		val store_addr = Output(UInt(64.W))
 		val store_data = Output(UInt(64.W))
 		val store_mask = Output(UInt(8.W))
 		val start = Output(Bool())
 		val stall = Output(Bool())
-		
+
 		val interrupt = Input(Bool())
 		val timer_interrupt = Input(Bool())
 		val soft_interrupt = Input(Bool())
@@ -657,6 +706,8 @@ class myCPU extends Module{
 	io.trap_cause := datapath.io.trap_cause
 	io.trap_epc := datapath.io.trap_epc
 	io.trap_tval := datapath.io.trap_tval
+	io.trap_tval2 := datapath.io.trap_tval2
+	io.trap_tinst := datapath.io.trap_tinst
 	io.store_valid := datapath.io.store_valid
 	io.store_addr := datapath.io.store_addr
 	io.store_data := datapath.io.store_data

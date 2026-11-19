@@ -191,7 +191,7 @@ class ScauseCsr extends CSR_Bundle {
   override def <=(data: UInt) = {
     requireWidth(data)
     int   := data(63)
-    code  := Cat(0.U(59.W), data(3, 0))
+    code  := Cat(0.U(58.W), data(4, 0))
   }
 }
 
@@ -233,7 +233,9 @@ object SatpCsr extends CSR_Object[SatpCsr] {
 // machine status register
 class MstatusCsr extends CSR_Bundle {
   val sd    = Bool()
-  val wpri0 = UInt(25.W)
+  val wpri0 = UInt(23.W)
+  val mpv   = Bool()		// the mode before the trap was a guest mode
+  val gva   = Bool()		// mtval holds a guest virtual address
   val mbe 	= Bool()
   val sbe 	= Bool()
   val sxl	= UInt(2.W)
@@ -262,15 +264,17 @@ class MstatusCsr extends CSR_Bundle {
   override def <=(data: UInt) = {
     requireWidth(data)
 	sd	  := 0.U(1.W)
-	wpri0 := 0.U(25.W)
+	wpri0 := 0.U(23.W)
+	mpv   := data(39)
+	gva   := data(38)
 	mbe   := 0.U(1.W)
 	sbe   := 0.U(1.W)
 	sxl	  := 0.U(2.W)
 	uxl   := 0.U(2.W)
 	wpri1 := 0.U(9.W)
-	tsr   := 0.U(1.W)
-	tw 	  := 0.U(1.W)
-	tvm   := 0.U(1.W)
+	tsr   := data(22)
+	tw 	  := data(21)
+	tvm   := data(20)
 	mxr   := data(19)
     sum   := data(18)
 	mprv  := data(17)
@@ -305,8 +309,8 @@ class MisaCsr extends CSR_Bundle {
 
 object MisaCsr extends CSR_Object[MisaCsr] {
   def apply() = new MisaCsr
-  // RV64IMA with S and U mode
-  override def default() = "h8000000000141101".U.asTypeOf(apply())
+  // RV64IMAH with S and U mode
+  override def default() = "h8000000000141181".U.asTypeOf(apply())
 }
 
 // machine exception delegation register
@@ -316,7 +320,7 @@ class MedelegCsr extends CSR_Bundle {
   //instruction misaligned; illegal inst; breakpoint,; load misaligned; store misaligned; ecall from u; ecall from s, ecall from m;
   override def <=(d: UInt) = {
     requireWidth(d)
-    data  := d & "hf7ff".U
+    data  := d & "hf0f7ff".U
   }
 }
 
@@ -342,15 +346,15 @@ object MidelegCsr extends CSR_Object[MidelegCsr] {
 class MieCsr extends CSR_Bundle {
   val wpri0 = UInt(52.W)
   val meie  = Bool()
-  val wpri1 = Bool()
+  val vseie = Bool()
   val seie  = Bool()
   val wpri2 = Bool()
   val mtie  = Bool()
-  val wpri3 = Bool()
+  val vstie = Bool()
   val stie  = Bool()
   val wpri4 = Bool()
   val msie  = Bool()
-  val wpri5 = Bool()
+  val vssie = Bool()
   val ssie  = Bool()
   val wpri6 = Bool()
 
@@ -358,15 +362,15 @@ class MieCsr extends CSR_Bundle {
     requireWidth(data)
 	wpri0 := 0.U(52.W)
     meie  := data(11)
-	wpri1 := 0.U(1.W)
+	vseie := data(10)
     seie  := data(9)
 	wpri2 := 0.U(1.W)
     mtie  := data(7)
-	wpri3 := 0.U(1.W)
+	vstie := data(6)
     stie  := data(5)
 	wpri4 := 0.U(1.W)
     msie  := data(3)
-	wpri5 := 0.U(1.W)
+	vssie := data(2)
     ssie  := data(1)
 	wpri6 := 0.U(1.W)
   }
@@ -380,31 +384,31 @@ object MieCsr extends CSR_Object[MieCsr] {
 class MipCsr extends CSR_Bundle {
   val wpri0 = UInt(52.W)
   val meip  = Bool()
-  val wpri1 = Bool()
+  val vseip = Bool()
   val seip  = Bool()
   val wpri2 = Bool()
   val mtip  = Bool()
-  val wpri3 = Bool()
+  val vstip = Bool()
   val stip  = Bool()
   val wpri4 = Bool()
   val msip  = Bool()
-  val wpri5 = Bool()
+  val vssip = Bool()
   val ssip  = Bool()
   val wpri6 = Bool()
 
   override def <=(data: UInt) = {
     requireWidth(data)
 	wpri0 := 0.U(52.W)
-	meip  := data(11) 
-	wpri1 := 0.U(1.W)
+	meip  := data(11)
+	vseip := data(10)
     seip  := data(9)
 	wpri2 := 0.U(1.W)
 	mtip  := data(7)
-	wpri3 := 0.U(1.W)
+	vstip := data(6)
     stip  := data(5)
 	wpri4 := 0.U(1.W)
 	msip  := data(3)
-	wpri5 := 0.U(1.W)
+	vssip := data(2)
     ssip  := data(1)
 	wpri6 := 0.U(1.W)
   }
@@ -465,7 +469,7 @@ class McauseCsr extends CSR_Bundle {
   override def <=(data: UInt) = {
     requireWidth(data)
     int   := data(63)
-    code  := Cat(0.U(59.W), data(3, 0))
+    code  := Cat(0.U(58.W), data(4, 0))
   }
 }
 

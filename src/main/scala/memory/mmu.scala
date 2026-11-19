@@ -1,11 +1,11 @@
 package myCPU
 
-import chisel3._ 
+import chisel3._
 import chisel3.util._
 import chisel3.experimental.ChiselEnum
-import cache_single_port._ 
+import cache_single_port._
 
-import CSR._ 
+import CSR._
 
 /*
 *	SATP of RV64
@@ -15,11 +15,12 @@ import CSR._
 * 		4			16					44
 */
 
+// The size of a page is its level in the page table: 0, 1, 2
 object pageSize extends ChiselEnum{
 	val pg_4k, pg_2m, pg_1g = Value
 }
 
-import pageSize._ 
+import pageSize._
 
 class PTE extends Bundle{
 	val reserved = UInt(10.W)
@@ -32,188 +33,162 @@ class PTE extends Bundle{
 	val X 		 = Bool()
 	val W		 = Bool()
 	val R 		 = Bool()
-	val V 		 = Bool() 
-
-	def privCheck(priv: UInt, sum: Bool) : Bool = {
-		// S mode can access supervisor pages always, and user pages only when SUM is set
-		MuxLookup(priv, true.B, Seq(
-			CSR_MODE_U -> U,
-			CSR_MODE_S -> (!U || sum),
-			CSR_MODE_M -> true.B
-		))
-	}
-
-	def fetchCheck(priv: UInt, sum: Bool) : Bool = {
-		Mux(priv === CSR_MODE_S, !U, privCheck(priv, sum)) && X
-	}
-
-	def lsCheck(priv: UInt, sum: Bool, is_load: Bool, mxr: Bool) : Bool = {
-		privCheck(priv, sum) && Mux(is_load, R || (mxr && X), W)
-	} 
+	val V 		 = Bool()
 }
 
-object TLBEntry{
-	def apply(): TLBEntry = {
-		val tmp = Wire(new TLBEntry)
-		tmp.vpn := 0.U 
-		tmp.ppn := 0.U 
-		tmp.asid := 0.U 
-		tmp.size := 0.U 
-		tmp.RSW := 0.U
-		tmp.D := false.B
-		tmp.A := false.B 
-		tmp.G := false.B 
-		tmp.U := false.B
-		tmp.X := false.B 
-		tmp.W := false.B 
-		tmp.R := false.B 
-		tmp.V := false.B
-		tmp
+// What a leaf permits. `fetch` is an instruction fetch, `execute` a load
+// that needs execute instead of read permission (HLVX), `store` an access
+// that needs write permission. The A bit is checked when a PTE is read.
+object PagePerm{
+	// Sv39 by satp, or the VS-stage of a guest by vsatp
+	def stage1(R: Bool, W: Bool, X: Bool, U: Bool, D: Bool, priv: UInt, sum: Bool, mxr: Bool,
+			   fetch: Bool, execute: Bool, store: Bool): Bool = {
+		// S mode reaches user pages only for data and with SUM
+		val mode_ok = Mux(priv === CSR_MODE_U, U, Mux(fetch, !U, !U || sum))
+		val kind_ok = Mux(fetch || execute, X, Mux(store, W, R || (mxr && X)))
+		mode_ok && kind_ok && (!store || D)
+	}
+
+	// guest-physical stage: every access counts as a user access
+	def guest(R: Bool, W: Bool, X: Bool, D: Bool, mxr: Bool,
+			  fetch: Bool, execute: Bool, store: Bool): Bool = {
+		Mux(fetch || execute, X, Mux(store, W, R || (mxr && X))) && (!store || D)
 	}
 }
 
+// One translation, of a virtual address (`virt` clear) or of a guest virtual
+// address through both stages (`virt` set) to a physical address. It keeps
+// the permissions of each stage; its size is the smaller of the two pages.
 class TLBEntry extends Bundle{
-	val vpn		= UInt(27.W)
+	val valid	= Bool()
+	val virt	= Bool()
+	val vpn		= UInt(52.W)
 	val ppn 	= UInt(44.W)
-	val asid 	= UInt(16.W)
 	val size 	= UInt(2.W)
-	val RSW 	= UInt(2.W) 
+	val s1 		= Bool()		// translated by satp or vsatp (clear: vsatp is bare)
 	val D 		= Bool()
-	val A		= Bool()
-	val G 		= Bool()
 	val U 		= Bool()
 	val X 		= Bool()
 	val W 		= Bool()
 	val R 		= Bool()
-	val V 		= Bool()
+	val g 		= Bool()		// translated by hgatp
+	val gD 		= Bool()
+	val gX 		= Bool()
+	val gW 		= Bool()
+	val gR 		= Bool()
 
-	def fromPTE(src: PTE, va: UInt, satp_asid: UInt, pgsize:  UInt): Unit = {
-		when(src.V){												// only fill valid entries
-			RSW := src.RSW
-			D := src.D
-			A := src.A
-			G := src.G
-			U := src.U
-			X := src.X
-			W := src.W
-			R := src.R
-			V := src.V
-			ppn := src.ppn
-			size := pgsize
-			asid := satp_asid
-			vpn := Mux(pgsize === pg_4k.asUInt, va(38, 12),
-					Mux(pgsize === pg_2m.asUInt, Cat(va(38, 21), 0.U(9.W)),
-						Cat(va(38, 30), 0.U(18.W))))
-		}
+	def covers(page: UInt): Bool = {
+		MuxLookup(size, vpn === page, Seq(
+			pg_2m.asUInt -> (vpn(51, 9) === page(51, 9)),
+			pg_1g.asUInt -> (vpn(51, 18) === page(51, 18))
+		))
 	}
 
-	def checkHit(va: UInt, access_asid: UInt): Bool = {
-		val ok = WireDefault(false.B)
-		when(size === pg_4k.asUInt){
-			ok := va(63,12).asSInt === vpn.asSInt && (asid === access_asid || G)
-		}.elsewhen(size === pg_2m.asUInt){
-			ok := va(63, 21).asSInt === vpn(26, 9).asSInt && (asid === access_asid || G)
-		}.elsewhen(size === pg_1g.asUInt){
-			ok := va(63, 30).asSInt === vpn(26, 18).asSInt && (asid === access_asid || G)
-		}
-		ok && V
+	def hit(va: UInt, guest: Bool): Bool = {
+		valid && virt === guest && covers(va(63, 12))
 	}
 
-	def va2pa(va: UInt): UInt = {
-		val pa = WireDefault(0.U)
-		when(size === pg_4k.asUInt){
-			pa := Cat(ppn, va(11, 0)).asUInt
-		}.elsewhen(size === pg_2m.asUInt){
-			pa := Cat(ppn(43, 9), va(20, 0)).asUInt
-		}.elsewhen(size === pg_1g.asUInt){
-			pa := Cat(ppn(43, 18), va(29, 0)).asUInt
-		}
-		pa
-	}
-
-	def invalidate(): Unit = {
-		V := false.B
-	}
-
-	def fetchCheck(priv: UInt, sum: Bool) : Bool = {
-		Mux(priv === CSR_MODE_S, !U, privCheck(priv, sum)) && X
-	}
-
-	def lsCheck(priv: UInt, sum: Bool, is_load: Bool, mxr: Bool) : Bool = {
-		privCheck(priv, sum) && Mux(is_load, R || (mxr && X), W)
-	}
-
-	def privCheck(priv: UInt, sum: Bool) : Bool = {
-		MuxLookup(priv, true.B, Seq(
-			CSR_MODE_U -> U,
-			CSR_MODE_S -> (!U || sum),
-			CSR_MODE_M -> true.B
+	def pa(va: UInt): UInt = {
+		MuxLookup(size, Cat(ppn, va(11, 0)), Seq(
+			pg_2m.asUInt -> Cat(ppn(43, 9), va(20, 0)),
+			pg_1g.asUInt -> Cat(ppn(43, 18), va(29, 0))
 		))
 	}
 }
-
 
 object Page_fault extends ChiselEnum{
 	val no_page_falut, inst_page_fault, load_page_fault, store_page_fault = Value
 }
 
 object TLB_state extends ChiselEnum{
-	val sIdle, sMatch, sFlush, sFirstLevel, sSecondLevel, sThridLevel, sPrivCheck, sData, sWrite = Value
+	val sIdle, sMatch, sFlush, sStage1, sGuest, sData = Value
 }
 
-import Page_fault._ 
-import TLB_state._ 
+import Page_fault._
+import TLB_state._
+
+// Address translation with a 16-entry TLB and the page-table walker.
+//
+// io.satp selects stage 1: Sv39 by satp, or for a guest (io.virt) the
+// VS-stage by vsatp. A guest address then passes the guest-physical stage,
+// Sv39x4 by hgatp, and so does the address of every VS-stage page table
+// entry the walker reads. The accessed and dirty bits are never updated: a
+// leaf with A clear, or with D clear on a store, faults.
 class TLB(tlb_name: String) extends Module{
 	val io = IO(new Bundle{
 		val stall = Input(Bool())
 		val valid = Input(Bool())
+		val virt  = Input(Bool())		// the address is one of a guest
 		val priv  = Input(UInt(2.W))
-		val mprv = Input(Bool())
 		val sum	  = Input(Bool())
 		val mxr   = Input(Bool())
+		val gmxr  = Input(Bool())		// MXR for the guest-physical stage
+		val hlvx  = Input(Bool())		// a load that needs execute permission
 		val wen   = Input(Bool())		// access needs store permission
 		val rw    = Input(Bool())		// direction of the translated request
 		val satp  = Input(UInt(64.W))
+		val hgatp = Input(UInt(64.W))
 		val va 	  = Input(UInt(64.W))
 		val mask  = Input(UInt(8.W))
 
 		val fault  = Output(UInt(2.W))
+		// a guest-page fault: the guest physical address that has no
+		// translation, and whether it is the address of a VS-stage PTE
+		val fault_guest = Output(Bool())
+		val fault_gpa = Output(UInt(64.W))
+		val fault_pte = Output(Bool())
 		val tlb_ready = Output(Bool())
-		val tlb_flush_asid = Input(UInt(16.W))
-		val tlb_flush_vpn = Input(UInt(27.W))
 
+		// drop the entries of guests (flush_virt) or the others, all of
+		// them or those that translate the page of flush_va
 		val flush = Input(Bool())
+		val flush_virt = Input(Bool())
+		val flush_page = Input(Bool())
+		val flush_va = Input(UInt(64.W))
+
 		val tlb_request = Output(new CPU_Request)
 		val fetch_request = Output(new CPU_Request)
 		val cache_response = Input(new CPU_Response)
 	})
 
-	val tlb_type = if(tlb_name == "iTLB") true.B else false.B
+	val is_fetch = (tlb_name == "iTLB").B
  	val tlb_state = RegInit(sIdle)
 	val next_state = WireDefault(sIdle)
 	// latch the virtual address when the translation starts; io.va may change
 	// (e.g. fetch redirect) while the walk is in progress
 	val va_reg = RegInit(0.U(64.W))
-	val vpn 	= va_reg(38, 12)
 	val tlbe 	= RegInit(0.U.asTypeOf(Vec(16, new TLBEntry)))
-	val random 	= Counter(16)
-	val asid = io.satp(60, 44)
-	val matchList = RegInit(VecInit(Seq.fill(16)(false.B)))
-	val pte_reg = RegInit(0.U.asTypeOf(new PTE))
+	val victim 	= Counter(16)
 	// PTE freshly read from memory this cycle (combinational view of cache_response.data)
 	val pte_in = io.cache_response.data.asTypeOf(new PTE)
-	val ppn_base = Cat(io.satp(43, 0), 0.U(12.W)).asUInt
-	val ppn2 	= vpn(26, 18)
-	val ppn1 	= vpn(17, 9)
-	val ppn0	= vpn(8, 0)
-	val page_size_reg = RegInit(0.U(2.W))
+
+	val s1_on = io.satp(63, 60) === 8.U
+	val g_on = io.virt && io.hgatp(63, 60) === 8.U
+
+	// stage 1: level of the PTE being read, its address, and the leaf
+	val s1_level = RegInit(0.U(2.W))
+	val pte_addr = RegInit(0.U(56.W))
+	val s1_pte = RegInit(0.U.asTypeOf(new PTE))
+	val s1_size = RegInit(0.U(2.W))
+	// guest-physical stage: the guest physical address being translated, the
+	// table and level of the PTE being read, and the leaf
+	val g_addr = RegInit(0.U(64.W))
+	val g_implicit = RegInit(false.B)	// g_addr is the address of a stage 1 PTE
+	val g_level = RegInit(0.U(2.W))
+	val g_table = RegInit(0.U(44.W))
+	val g_pte = RegInit(0.U.asTypeOf(new PTE))
+	val g_size = RegInit(0.U(2.W))
+	val final_pa = RegInit(0.U(56.W))
 	// whether the current translation came from a page walk (and hence should be filled into the TLB)
 	val walked = RegInit(false.B)
+	val flush_virt = RegInit(false.B)
+	val flush_page = RegInit(false.B)
+	val flush_vpn = RegInit(0.U(52.W))
 
-	io.tlb_request.addr  := 0.U 
-	io.tlb_request.data  := 0.U 
-	io.tlb_request.mask  := 0.U 
-	io.tlb_request.rw 	 := false.B 
+	io.tlb_request.addr  := 0.U
+	io.tlb_request.data  := 0.U
+	io.tlb_request.mask  := 0.U
+	io.tlb_request.rw 	 := false.B
 	io.tlb_request.valid := false.B
 	io.fetch_request.addr := 0.U
 	io.fetch_request.data := 0.U
@@ -221,14 +196,54 @@ class TLB(tlb_name: String) extends Module{
 	io.fetch_request.rw := false.B
 	io.fetch_request.valid := false.B
 	io.fault := no_page_falut.asUInt
+	io.fault_guest := false.B
+	io.fault_gpa := g_addr
+	io.fault_pte := g_implicit
 	io.tlb_ready := false.B
 
-	def raise_fault(): UInt = {
-		Mux(tlb_type, inst_page_fault.asUInt, Mux(io.wen, store_page_fault.asUInt, load_page_fault.asUInt))
+	def page_fault(): Unit = {
+		io.fault := Mux(is_fetch, inst_page_fault.asUInt, Mux(io.wen, store_page_fault.asUInt, load_page_fault.asUInt))
+		io.tlb_ready := true.B
+		next_state := sIdle
 	}
 
-	def permCheck(p : PTE) : Bool = {
-		Mux(tlb_type, p.fetchCheck(io.priv, io.sum), p.lsCheck(io.priv, io.sum, !io.wen, io.mxr))
+	def guest_fault(): Unit = {
+		page_fault()
+		io.fault_guest := true.B
+	}
+
+	// the address a leaf of `level` maps `addr` to
+	def compose(ppn: UInt, level: UInt, addr: UInt): UInt = {
+		MuxLookup(level, Cat(ppn, addr(11, 0)), Seq(
+			1.U -> Cat(ppn(43, 9), addr(20, 0)),
+			2.U -> Cat(ppn(43, 18), addr(29, 0))
+		))
+	}
+
+	// a superpage must be aligned
+	def aligned(ppn: UInt, level: UInt): Bool = {
+		MuxLookup(level, true.B, Seq(
+			1.U -> (ppn(8, 0) === 0.U),
+			2.U -> (ppn(17, 0) === 0.U)
+		))
+	}
+
+	def start_guest(addr: UInt, for_pte: Bool): Unit = {
+		g_addr := addr
+		g_implicit := for_pte
+		g_level := 2.U
+		g_table := io.hgatp(43, 0)
+		next_state := sGuest
+	}
+
+	// read the stage 1 PTE at `addr`, which for a guest is a guest physical address
+	def read_stage1(addr: UInt): Unit = {
+		when(g_on){
+			start_guest(addr, true.B)
+		}.otherwise{
+			pte_addr := addr
+			next_state := sStage1
+		}
 	}
 
 	switch(tlb_state){
@@ -237,10 +252,12 @@ class TLB(tlb_name: String) extends Module{
 			io.tlb_ready := !io.valid
 			when(!io.stall){
 				when(io.flush){
+					flush_virt := io.flush_virt
+					flush_page := io.flush_page
+					flush_vpn := io.flush_va(63, 12)
 					next_state := sFlush
 				}.elsewhen(io.valid){
 					va_reg := io.va
-					matchList := tlbe.map{k => k.checkHit(io.va, asid)}
 					next_state := sMatch
 				}
 			}
@@ -249,17 +266,9 @@ class TLB(tlb_name: String) extends Module{
 			next_state := sFlush
 			io.tlb_ready := true.B
 			when(!io.stall){
-				val flush_all_vpn = io.tlb_flush_vpn === 0.U		// sfence rs1 == x0
-				val flush_all_asid = io.tlb_flush_asid === 0.U	// sfence rs2 == x0
-				for(i <- 0 until 16){
-					val e = tlbe(i.U)
-					val vpn_cover = Mux(e.size === pg_4k.asUInt, e.vpn === io.tlb_flush_vpn,
-									Mux(e.size === pg_2m.asUInt, e.vpn(26, 9) === io.tlb_flush_vpn(26, 9),
-										e.vpn(26, 18) === io.tlb_flush_vpn(26, 18)))
-					// global entries are only flushed when rs2 == x0 (all ASIDs)
-					val asid_cover = flush_all_asid || (e.asid === io.tlb_flush_asid && !e.G)
-					when((flush_all_vpn || vpn_cover) && asid_cover){
-						e.invalidate()
+				for(e <- tlbe){
+					when(e.virt === flush_virt && (!flush_page || e.covers(flush_vpn))){
+						e.valid := false.B
 					}
 				}
 				next_state := sIdle
@@ -268,150 +277,145 @@ class TLB(tlb_name: String) extends Module{
 		is(sMatch){
 			next_state := sMatch
 			when(!io.stall){
-				when(va_reg(63, 39) =/= Fill(25, va_reg(38))){
-					io.fault := raise_fault()
-					io.tlb_ready := true.B
-					next_state := sIdle
-				}.elsewhen(matchList.reduce(_|_)){
-					// check the permission of the matched entries only
-					val permList = for(i <- 0 until 16) yield {
-						matchList(i) && Mux(tlb_type, tlbe(i.U).fetchCheck(io.priv, io.sum), 
-													tlbe(i.U).lsCheck(io.priv, io.sum, !io.wen, io.mxr))
+				val hits = VecInit(tlbe.map(_.hit(va_reg, io.virt)))
+				val hit = hits.asUInt.orR
+				val index = PriorityEncoder(hits)
+				val e = tlbe(index)
+				val allowed =
+					(!e.s1 || PagePerm.stage1(e.R, e.W, e.X, e.U, e.D, io.priv, io.sum, io.mxr, is_fetch, io.hlvx, io.wen)) &&
+					(!e.g || PagePerm.guest(e.gR, e.gW, e.gX, e.gD, io.gmxr, is_fetch, io.hlvx, io.wen))
+				when(hit && allowed){
+					walked := false.B
+					final_pa := e.pa(va_reg)
+					next_state := sData
+				}.otherwise{
+					// An entry that does not permit the access is dropped and
+					// the page table walked again: the walk finds the fault.
+					when(hit){
+						tlbe(index).valid := false.B
 					}
-					when(!permList.reduce(_|_)){
-						io.fault := raise_fault()
-						io.tlb_ready := true.B
-						next_state := sIdle
-					}.otherwise{
-						walked := false.B
-						for(i <- 0 until 16){
-							when(matchList(i)){
-								pte_reg := Cat(0.U(10.W), tlbe(i.U).ppn, tlbe(i.U).asUInt(9, 0)).asTypeOf(new PTE)
-								page_size_reg := tlbe(i.U).size
-							}
-						}
-						next_state := sPrivCheck 
-					}
-				}.otherwise{				// TLB miss, walk the page table in memory
 					walked := true.B
-					next_state := sThridLevel	
-				}	
+					when(!s1_on){
+						// a guest without paging of its own: the address is guest physical
+						start_guest(va_reg, false.B)
+					}.elsewhen(va_reg(63, 39) =/= Fill(25, va_reg(38))){
+						page_fault()
+					}.otherwise{
+						s1_level := 2.U
+						read_stage1(Cat(io.satp(43, 0), 0.U(12.W)) + (va_reg(38, 30) << 3.U))
+					}
+				}
 			}
 		}
-		is(sThridLevel){
-			next_state := sThridLevel
-			io.tlb_request.addr := (ppn_base + (ppn2 << 3.U))(31, 0)
-			io.tlb_request.valid := true.B 
-			io.tlb_request.rw := false.B
-			io.tlb_request.mask := 0.U
+		is(sStage1){
+			next_state := sStage1
+			io.tlb_request.addr := pte_addr(31, 0)
+			io.tlb_request.valid := true.B
 			when(!io.stall && io.cache_response.ready){
-				pte_reg := pte_in
 				when(!pte_in.V || (!pte_in.R && pte_in.W)){
-					io.fault := raise_fault()
-					io.tlb_ready := true.B
-					next_state := sIdle
-				}.elsewhen(pte_in.R || pte_in.X){			// 1G leaf
-					page_size_reg := pg_1g.asUInt
-					when(pte_in.asUInt(27, 10) =/= 0.U){	// superpage must be aligned
-						io.fault := raise_fault()
-						io.tlb_ready := true.B
-						next_state := sIdle
+					page_fault()
+				}.elsewhen(!(pte_in.R || pte_in.X)){		// pointer to the next level
+					when(s1_level === 0.U){
+						page_fault()
 					}.otherwise{
-						next_state := sPrivCheck
+						val index = Mux(s1_level === 2.U, va_reg(29, 21), va_reg(20, 12))
+						s1_level := s1_level - 1.U
+						read_stage1(Cat(pte_in.ppn, 0.U(12.W)) + (index << 3.U))
 					}
 				}.otherwise{
-					next_state := sSecondLevel
-				}
-			}
-		}
-		is(sSecondLevel){
-			next_state := sSecondLevel
-			io.tlb_request.addr := (Cat(pte_reg.ppn, 0.U(12.W)) + (ppn1 << 3.U))(31, 0)
-			io.tlb_request.valid := true.B 
-			io.tlb_request.rw 	:= false.B 
-			io.tlb_request.mask := 0.U 			
-			when(!io.stall && io.cache_response.ready){
-				pte_reg := pte_in
-				when(!pte_in.V || (!pte_in.R && pte_in.W)){
-					io.fault := raise_fault()
-					io.tlb_ready := true.B
-					next_state := sIdle
-				}.elsewhen(pte_in.R || pte_in.X){			// 2M leaf
-					page_size_reg := pg_2m.asUInt
-					when(pte_in.asUInt(18, 10) =/= 0.U){	// superpage must be aligned
-						io.fault := raise_fault()
-						io.tlb_ready := true.B
-						next_state := sIdle
+					val permitted = PagePerm.stage1(pte_in.R, pte_in.W, pte_in.X, pte_in.U, pte_in.D,
+						io.priv, io.sum, io.mxr, is_fetch, io.hlvx, io.wen)
+					when(!aligned(pte_in.ppn, s1_level) || !permitted || !pte_in.A){
+						page_fault()
 					}.otherwise{
-						next_state := sPrivCheck
+						val addr = compose(pte_in.ppn, s1_level, va_reg)
+						s1_pte := pte_in
+						s1_size := s1_level
+						when(g_on){
+							start_guest(addr, false.B)
+						}.otherwise{
+							final_pa := addr
+							next_state := sData
+						}
 					}
-				}.otherwise{
-					next_state := sFirstLevel
-				}
-			} 
-		}
-		is(sFirstLevel){
-			next_state := sFirstLevel
-			io.tlb_request.addr := (Cat(pte_reg.ppn, 0.U(12.W)) + (ppn0 << 3.U))(31, 0)
-			io.tlb_request.valid := true.B 
-			io.tlb_request.rw 	  := false.B
-			io.tlb_request.mask  := 0.U
-			when(!io.stall && io.cache_response.ready){
-				pte_reg := pte_in
-				when(!pte_in.V || (!pte_in.R && pte_in.W) || !(pte_in.R || pte_in.X)){	// leaf required at level 0
-					io.fault := raise_fault()
-					io.tlb_ready := true.B
-					next_state := sIdle
-				}.otherwise{
-					page_size_reg := pg_4k.asUInt
-					next_state := sPrivCheck
 				}
 			}
 		}
-		is(sPrivCheck){
-			next_state := sPrivCheck
-			when(!permCheck(pte_reg)){
-				io.fault := raise_fault()
-				io.tlb_ready := true.B
-				next_state := sIdle
-			}.elsewhen(!pte_reg.A || (io.wen && !pte_reg.D)){
-				io.fault := raise_fault()
-				io.tlb_ready := true.B
-				next_state := sIdle
-			}.otherwise{
-				next_state := sData
+		is(sGuest){
+			next_state := sGuest
+			// Sv39x4: 41 address bits, the root table has 2048 entries
+			val index = MuxLookup(g_level, g_addr(40, 30), Seq(
+				1.U -> g_addr(29, 21),
+				0.U -> g_addr(20, 12)
+			))
+			io.tlb_request.addr := (Cat(g_table, 0.U(12.W)) + (index << 3.U))(31, 0)
+			io.tlb_request.valid := g_addr(63, 41) === 0.U
+			when(!io.stall){
+				when(g_addr(63, 41) =/= 0.U){
+					guest_fault()
+				}.elsewhen(io.cache_response.ready){
+					when(!pte_in.V || (!pte_in.R && pte_in.W)){
+						guest_fault()
+					}.elsewhen(!(pte_in.R || pte_in.X)){
+						when(g_level === 0.U){
+							guest_fault()
+						}.otherwise{
+							g_table := pte_in.ppn
+							g_level := g_level - 1.U
+						}
+					}.otherwise{
+						// the page tables of the guest are read, nothing else
+						val permitted = Mux(g_implicit, pte_in.R,
+							PagePerm.guest(pte_in.R, pte_in.W, pte_in.X, pte_in.D, io.gmxr, is_fetch, io.hlvx, io.wen))
+						val addr = compose(pte_in.ppn, g_level, g_addr)
+						when(!aligned(pte_in.ppn, g_level) || !pte_in.U || !pte_in.A || !permitted){
+							guest_fault()
+						}.elsewhen(g_implicit){
+							pte_addr := addr
+							next_state := sStage1
+						}.otherwise{
+							g_pte := pte_in
+							g_size := g_level
+							final_pa := addr
+							next_state := sData
+						}
+					}
+				}
 			}
 		}
 		is(sData){						// issue the translated memory access
-			next_state := sData 
-			io.tlb_request.valid := true.B 
+			next_state := sData
+			io.tlb_request.valid := true.B
 			io.tlb_request.rw 	  := io.rw
 			io.tlb_request.mask  := io.mask
-			val pa = WireDefault(0.U(56.W))
-			when(page_size_reg === pg_1g.asUInt){
-				pa := Cat(pte_reg.ppn(43, 18), va_reg(29, 0))
-			}.elsewhen(page_size_reg === pg_2m.asUInt){
-				pa := Cat(pte_reg.ppn(43, 9), va_reg(20, 0))
-			}.elsewhen(page_size_reg === pg_4k.asUInt){
-				pa := Cat(pte_reg.ppn, va_reg(11, 0))
-			}
-			io.tlb_request.addr := pa(31, 0)
-			io.fetch_request.addr := pa(31, 0)
-			io.fetch_request.data := 0.U
-			io.fetch_request.mask := 0.U
-			io.fetch_request.rw := false.B
+			io.tlb_request.addr := final_pa(31, 0)
+			io.fetch_request.addr := final_pa(31, 0)
 			io.fetch_request.valid := true.B
 
-			// only refill after a page walk; use the PTE from the walk, not the data response
-			when(walked){
-				tlbe(random.value).fromPTE(pte_reg, va_reg, asid, page_size_reg)
-			}
 			when(!io.stall && io.cache_response.ready){
 				next_state := sIdle
 				io.tlb_ready := true.B
-				// the next walk fills the next entry
+				// only refill after a page walk; the next walk fills the next entry
 				when(walked){
-					random.inc()
+					val e = tlbe(victim.value)
+					e.valid := true.B
+					e.virt := io.virt
+					e.vpn := va_reg(63, 12)
+					e.ppn := final_pa(55, 12)
+					e.size := Mux(s1_on && g_on, Mux(s1_size < g_size, s1_size, g_size),
+								Mux(s1_on, s1_size, g_size))
+					e.s1 := s1_on
+					e.D := s1_pte.D
+					e.U := s1_pte.U
+					e.X := s1_pte.X
+					e.W := s1_pte.W
+					e.R := s1_pte.R
+					e.g := g_on
+					e.gD := g_pte.D
+					e.gX := g_pte.X
+					e.gW := g_pte.W
+					e.gR := g_pte.R
+					victim.inc()
 				}
 			}
 		}
@@ -427,6 +431,7 @@ class TLB(tlb_name: String) extends Module{
 			io.tlb_ready := true.B
 		}
 		io.fault := no_page_falut.asUInt
+		io.fault_guest := false.B
 		io.tlb_request.valid := false.B
 	}
 

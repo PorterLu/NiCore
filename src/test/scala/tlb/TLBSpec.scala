@@ -18,13 +18,13 @@ class TLBSpec extends AnyFreeSpec with ChiselScalatestTester {
   final val F_G = 0x020
   final val F_A = 0x040
   final val F_D = 0x080
+  final val F_ALL = F_V | F_R | F_W | F_X | F_A | F_D
 
   def pte(ppn: BigInt, flags: Int): BigInt = (ppn << 10) | flags
-  def satp(asid: BigInt, ppn: BigInt): BigInt = (BigInt(8) << 60) | (asid << 44) | ppn
+  def satp(ppn: BigInt): BigInt = (BigInt(8) << 60) | ppn
 
   val ROOT_PPN = BigInt(0x12345)
   val ROOT     = ROOT_PPN << 12          // 0x12345000
-  val ASID     = BigInt(1)
 
   // a small page table: va 0x40001000 -> pa (0x44444 << 12)
   def map4k(va: BigInt, pa_ppn: BigInt, flags: Int, mem: mutable.Map[BigInt, BigInt]): Unit = {
@@ -38,24 +38,45 @@ class TLBSpec extends AnyFreeSpec with ChiselScalatestTester {
     mem((l0ppn << 12) + vpn0 * 8) = pte(pa_ppn, flags)           // leaf
   }
 
+  // The guest: its page tables are at the same guest physical addresses as
+  // the tables above, and its first GiB of guest physical memory is the GiB
+  // at 0x80000000. The root table of the guest-physical stage is at HROOT.
+  val HROOT_PPN = BigInt(0x50000)
+  val HROOT     = HROOT_PPN << 12
+  val GBASE     = BigInt(0x80000000L)
+  def hgatp: BigInt = (BigInt(8) << 60) | HROOT_PPN
+  def mapGuest(va: BigInt, gpa_ppn: BigInt, flags: Int, gflags: Int, mem: mutable.Map[BigInt, BigInt]): Unit = {
+    val vpn = va >> 12
+    mem(HROOT) = pte(GBASE >> 12, gflags)                        // 1 GiB leaf
+    mem(GBASE + ROOT + ((vpn >> 18) & 0x1ff) * 8) = pte(0x22222, F_V)
+    mem(GBASE + 0x22222000L + ((vpn >> 9) & 0x1ff) * 8) = pte(0x33333, F_V)
+    mem(GBASE + 0x33333000L + (vpn & 0x1ff) * 8) = pte(gpa_ppn, flags)
+  }
+
   def newMem(): mutable.Map[BigInt, BigInt] = mutable.Map[BigInt, BigInt]()
 
   def setup(dut: TLB, mem: mutable.Map[BigInt, BigInt],
             va: BigInt = BigInt(0x40001100), wen: Boolean = false,
-            priv: BigInt = CSR_MODE_S.litValue, sum: Boolean = false, mxr: Boolean = false): Unit = {
+            priv: BigInt = CSR_MODE_S.litValue, sum: Boolean = false, mxr: Boolean = false,
+            virt: Boolean = false, stage1: Boolean = true, hlvx: Boolean = false): Unit = {
     dut.io.stall.poke(false.B)
     dut.io.valid.poke(false.B)
+    dut.io.virt.poke(virt.B)
     dut.io.priv.poke(priv.U)
-    dut.io.mprv.poke(false.B)
     dut.io.sum.poke(sum.B)
     dut.io.mxr.poke(mxr.B)
+    dut.io.gmxr.poke(false.B)
+    dut.io.hlvx.poke(hlvx.B)
     dut.io.wen.poke(wen.B)
-    dut.io.satp.poke(satp(ASID, ROOT_PPN).U)
+    dut.io.rw.poke(false.B)
+    dut.io.satp.poke((if (stage1) satp(ROOT_PPN) else BigInt(0)).U)
+    dut.io.hgatp.poke((if (virt) hgatp else BigInt(0)).U)
     dut.io.va.poke(va.U)
     dut.io.mask.poke(0xff.U)
-    dut.io.tlb_flush_asid.poke(0.U)
-    dut.io.tlb_flush_vpn.poke(0.U)
     dut.io.flush.poke(false.B)
+    dut.io.flush_virt.poke(false.B)
+    dut.io.flush_page.poke(false.B)
+    dut.io.flush_va.poke(0.U)
     dut.io.cache_response.data.poke(0.U)
     dut.io.cache_response.ready.poke(false.B)
     dut.clock.step()
@@ -74,18 +95,20 @@ class TLBSpec extends AnyFreeSpec with ChiselScalatestTester {
     }
   }
 
-  // returns (completed, fault_code); leaves logs of all requests issued
-  def translate(dut: TLB, mem: mutable.Map[BigInt, BigInt],
-                log: mutable.ArrayBuffer[(BigInt, Boolean)], maxCycles: Int = 60): (Boolean, BigInt) = {
+  // what a translation ended with
+  case class Result(done: Boolean, fault: BigInt, guest: Boolean, gpa: BigInt, pte: Boolean)
+
+  // leaves a log of all requests issued
+  def run(dut: TLB, mem: mutable.Map[BigInt, BigInt],
+          log: mutable.ArrayBuffer[(BigInt, Boolean)], maxCycles: Int = 60): Result = {
     dut.io.valid.poke(true.B)
     var cycles = 0
-    var fault = BigInt(0)
-    var done = false
-    while (!done && cycles < maxCycles) {
+    var result = Result(false, 0, false, 0, false)
+    while (!result.done && cycles < maxCycles) {
       respond(dut, mem, log)
       if (dut.io.tlb_ready.peek().litToBoolean) {
-        fault = dut.io.fault.peek().litValue
-        done = true
+        result = Result(true, dut.io.fault.peek().litValue, dut.io.fault_guest.peek().litToBoolean,
+          dut.io.fault_gpa.peek().litValue, dut.io.fault_pte.peek().litToBoolean)
       } else {
         dut.clock.step()
         cycles += 1
@@ -94,18 +117,26 @@ class TLBSpec extends AnyFreeSpec with ChiselScalatestTester {
     dut.clock.step()
     dut.io.valid.poke(false.B)
     dut.clock.step()
-    (done, fault)
+    result
   }
 
-  def doFlush(dut: TLB, asid: BigInt, vpn: BigInt): Unit = {
-    dut.io.tlb_flush_asid.poke(asid.U)
-    dut.io.tlb_flush_vpn.poke(vpn.U)
+  // returns (completed, fault_code)
+  def translate(dut: TLB, mem: mutable.Map[BigInt, BigInt],
+                log: mutable.ArrayBuffer[(BigInt, Boolean)]): (Boolean, BigInt) = {
+    val r = run(dut, mem, log)
+    (r.done, r.fault)
+  }
+
+  // drop the entries of guests (virt) or the others: all of them, or with
+  // `page` those that translate that address
+  def doFlush(dut: TLB, virt: Boolean = false, page: Option[BigInt] = None): Unit = {
+    dut.io.flush_virt.poke(virt.B)
+    dut.io.flush_page.poke(page.isDefined.B)
+    dut.io.flush_va.poke(page.getOrElse(BigInt(0)).U)
     dut.io.flush.poke(true.B)
     dut.clock.step()   // sIdle -> sFlush
-    dut.clock.step()   // sFlush invalidates, back to sIdle
     dut.io.flush.poke(false.B)
-    dut.io.tlb_flush_asid.poke(0.U)
-    dut.io.tlb_flush_vpn.poke(0.U)
+    dut.clock.step()   // sFlush invalidates, back to sIdle
     dut.clock.step()
   }
 
@@ -115,7 +146,7 @@ class TLBSpec extends AnyFreeSpec with ChiselScalatestTester {
   "dTLB walks a 4K page and issues the translated load" in {
     test(new TLB("dTLB")) { dut =>
       val mem = newMem()
-      map4k(VA4K, 0x44444, F_V | F_R | F_W | F_X | F_A | F_D, mem)
+      map4k(VA4K, 0x44444, F_ALL, mem)
       setup(dut, mem, va = VA4K)
       val log = mutable.ArrayBuffer[(BigInt, Boolean)]()
       val (done, fault) = translate(dut, mem, log)
@@ -137,7 +168,7 @@ class TLBSpec extends AnyFreeSpec with ChiselScalatestTester {
       val l1ppn = BigInt(0x22222)
       val leaf = BigInt(0x22200)              // low 9 ppn bits must be zero
       mem(ROOT + vpn2 * 8) = pte(l1ppn, F_V)
-      mem((l1ppn << 12) + vpn1 * 8) = pte(leaf, F_V | F_R | F_W | F_X | F_A | F_D)
+      mem((l1ppn << 12) + vpn1 * 8) = pte(leaf, F_ALL)
       setup(dut, mem, va = VA4K)
       val log = mutable.ArrayBuffer[(BigInt, Boolean)]()
       val (done, fault) = translate(dut, mem, log)
@@ -147,13 +178,21 @@ class TLBSpec extends AnyFreeSpec with ChiselScalatestTester {
       val addrs = log.map(_._1).toList
       assert(addrs == List(ROOT + vpn2 * 8, (l1ppn << 12) + vpn1 * 8, pa),
         s"request sequence wrong: ${addrs.map(_.toLong.toHexString)}")
+
+      // the entry covers the whole superpage
+      val other = VA4K + 0x5000
+      setup(dut, mem, va = other)
+      val log2 = mutable.ArrayBuffer[(BigInt, Boolean)]()
+      assert(translate(dut, mem, log2)._2 == 0)
+      assert(log2.map(_._1).toList == List(((leaf >> 9) << 21) | (other & 0x1fffff)),
+        s"superpage entry not used: ${log2}")
     }
   }
 
   "dTLB hits after fill without rewalking" in {
     test(new TLB("dTLB")) { dut =>
       val mem = newMem()
-      map4k(VA4K, 0x44444, F_V | F_R | F_W | F_X | F_A | F_D, mem)
+      map4k(VA4K, 0x44444, F_ALL, mem)
       setup(dut, mem, va = VA4K)
       val log1 = mutable.ArrayBuffer[(BigInt, Boolean)]()
       val (done1, fault1) = translate(dut, mem, log1)
@@ -210,10 +249,23 @@ class TLBSpec extends AnyFreeSpec with ChiselScalatestTester {
     }
   }
 
+  "an address that is not canonical raises page fault" in {
+    test(new TLB("dTLB")) { dut =>
+      val mem = newMem()
+      map4k(VA4K, 0x44444, F_ALL, mem)
+      setup(dut, mem, va = VA4K | (BigInt(1) << 40))
+      val log = mutable.ArrayBuffer[(BigInt, Boolean)]()
+      val (done, fault) = translate(dut, mem, log)
+      assert(done)
+      assert(fault == Page_fault.load_page_fault.litValue, s"fault=${fault}")
+      assert(log.isEmpty, "no memory access for such an address")
+    }
+  }
+
   "S mode cannot access user page when SUM=0" in {
     test(new TLB("dTLB")) { dut =>
       val mem = newMem()
-      map4k(VA4K, 0x44444, F_V | F_R | F_W | F_X | F_A | F_D | F_U, mem)
+      map4k(VA4K, 0x44444, F_ALL | F_U, mem)
       setup(dut, mem, va = VA4K, sum = false)
       val log = mutable.ArrayBuffer[(BigInt, Boolean)]()
       val (done, fault) = translate(dut, mem, log)
@@ -225,7 +277,7 @@ class TLBSpec extends AnyFreeSpec with ChiselScalatestTester {
   "S mode can access user page when SUM=1" in {
     test(new TLB("dTLB")) { dut =>
       val mem = newMem()
-      map4k(VA4K, 0x44444, F_V | F_R | F_W | F_X | F_A | F_D | F_U, mem)
+      map4k(VA4K, 0x44444, F_ALL | F_U, mem)
       setup(dut, mem, va = VA4K, sum = true)
       val log = mutable.ArrayBuffer[(BigInt, Boolean)]()
       val (done, fault) = translate(dut, mem, log)
@@ -238,7 +290,7 @@ class TLBSpec extends AnyFreeSpec with ChiselScalatestTester {
   "U mode cannot access supervisor page" in {
     test(new TLB("dTLB")) { dut =>
       val mem = newMem()
-      map4k(VA4K, 0x44444, F_V | F_R | F_W | F_X | F_A | F_D, mem)
+      map4k(VA4K, 0x44444, F_ALL, mem)
       setup(dut, mem, va = VA4K, priv = CSR_MODE_U.litValue)
       val log = mutable.ArrayBuffer[(BigInt, Boolean)]()
       val (done, fault) = translate(dut, mem, log)
@@ -272,6 +324,23 @@ class TLBSpec extends AnyFreeSpec with ChiselScalatestTester {
     }
   }
 
+  "an entry that does not permit the access is walked again" in {
+    test(new TLB("dTLB")) { dut =>
+      val mem = newMem()
+      map4k(VA4K, 0x44444, F_V | F_R | F_X | F_A | F_D, mem)
+      setup(dut, mem, va = VA4K)
+      val log1 = mutable.ArrayBuffer[(BigInt, Boolean)]()
+      assert(translate(dut, mem, log1)._2 == 0)
+
+      // the page became writable since the entry was filled
+      map4k(VA4K, 0x44444, F_ALL, mem)
+      setup(dut, mem, va = VA4K, wen = true)
+      val log2 = mutable.ArrayBuffer[(BigInt, Boolean)]()
+      assert(translate(dut, mem, log2)._2 == 0, "the walk finds the new permission")
+      assert(log2.length == 4, s"the store should walk the page table: ${log2}")
+    }
+  }
+
   "A=0 leaf raises page fault" in {
     test(new TLB("dTLB")) { dut =>
       val mem = newMem()
@@ -296,15 +365,15 @@ class TLBSpec extends AnyFreeSpec with ChiselScalatestTester {
     }
   }
 
-  "sfence with rs1=x0 rs2=x0 flushes everything" in {
+  "a flush without an address drops every entry" in {
     test(new TLB("dTLB")) { dut =>
       val mem = newMem()
-      map4k(VA4K, 0x44444, F_V | F_R | F_W | F_X | F_A | F_D, mem)
+      map4k(VA4K, 0x44444, F_ALL, mem)
       setup(dut, mem, va = VA4K)
       val log1 = mutable.ArrayBuffer[(BigInt, Boolean)]()
       assert(translate(dut, mem, log1)._1)
 
-      doFlush(dut, asid = 0, vpn = 0)
+      doFlush(dut)
       setup(dut, mem, va = VA4K)
       val log2 = mutable.ArrayBuffer[(BigInt, Boolean)]()
       assert(translate(dut, mem, log2)._2 == 0)
@@ -312,63 +381,31 @@ class TLBSpec extends AnyFreeSpec with ChiselScalatestTester {
     }
   }
 
-  "sfence with matching asid and any vpn flushes non-global entries" in {
+  "a flush of another page keeps the entry" in {
     test(new TLB("dTLB")) { dut =>
       val mem = newMem()
-      map4k(VA4K, 0x44444, F_V | F_R | F_W | F_X | F_A | F_D, mem)
+      map4k(VA4K, 0x44444, F_ALL, mem)
       setup(dut, mem, va = VA4K)
       val log1 = mutable.ArrayBuffer[(BigInt, Boolean)]()
       assert(translate(dut, mem, log1)._1)
 
-      doFlush(dut, asid = ASID, vpn = 0)
+      doFlush(dut, page = Some(VA4K + 0x1000))
       setup(dut, mem, va = VA4K)
       val log2 = mutable.ArrayBuffer[(BigInt, Boolean)]()
       assert(translate(dut, mem, log2)._2 == 0)
-      assert(log2.length == 4, "should rewalk after asid flush")
+      assert(log2.length == 1, "entry should survive the flush of another page")
     }
   }
 
-  "sfence with other asid keeps the entry" in {
+  "a flush of its page drops the entry" in {
     test(new TLB("dTLB")) { dut =>
       val mem = newMem()
-      map4k(VA4K, 0x44444, F_V | F_R | F_W | F_X | F_A | F_D, mem)
+      map4k(VA4K, 0x44444, F_ALL, mem)
       setup(dut, mem, va = VA4K)
       val log1 = mutable.ArrayBuffer[(BigInt, Boolean)]()
       assert(translate(dut, mem, log1)._1)
 
-      doFlush(dut, asid = ASID + 1, vpn = 0)
-      setup(dut, mem, va = VA4K)
-      val log2 = mutable.ArrayBuffer[(BigInt, Boolean)]()
-      assert(translate(dut, mem, log2)._2 == 0)
-      assert(log2.length == 1, "entry should survive other-asid flush")
-    }
-  }
-
-  "sfence with matching page but other asid keeps the entry" in {
-    test(new TLB("dTLB")) { dut =>
-      val mem = newMem()
-      map4k(VA4K, 0x44444, F_V | F_R | F_W | F_X | F_A | F_D, mem)
-      setup(dut, mem, va = VA4K)
-      val log1 = mutable.ArrayBuffer[(BigInt, Boolean)]()
-      assert(translate(dut, mem, log1)._1)
-
-      doFlush(dut, asid = ASID + 1, vpn = VA4K >> 12)
-      setup(dut, mem, va = VA4K)
-      val log2 = mutable.ArrayBuffer[(BigInt, Boolean)]()
-      assert(translate(dut, mem, log2)._2 == 0)
-      assert(log2.length == 1, "entry should survive other-asid page flush")
-    }
-  }
-
-  "sfence with matching page and all asid flushes the entry" in {
-    test(new TLB("dTLB")) { dut =>
-      val mem = newMem()
-      map4k(VA4K, 0x44444, F_V | F_R | F_W | F_X | F_A | F_D, mem)
-      setup(dut, mem, va = VA4K)
-      val log1 = mutable.ArrayBuffer[(BigInt, Boolean)]()
-      assert(translate(dut, mem, log1)._1)
-
-      doFlush(dut, asid = 0, vpn = VA4K >> 12)
+      doFlush(dut, page = Some(VA4K & ~BigInt(0xfff)))
       setup(dut, mem, va = VA4K)
       val log2 = mutable.ArrayBuffer[(BigInt, Boolean)]()
       assert(translate(dut, mem, log2)._2 == 0)
@@ -376,25 +413,153 @@ class TLBSpec extends AnyFreeSpec with ChiselScalatestTester {
     }
   }
 
-  "global entry survives asid flush but not full flush" in {
+  // ---------------- two-stage translation for a guest ----------------
+  val GPA = (BigInt(0x4444) << 12) | BigInt(0x100)    // guest physical 0x04444100
+  val HPA = GBASE + GPA
+  val G_ALL = F_ALL | F_U
+
+  "a guest address passes both stages, and so does every VS-stage PTE address" in {
     test(new TLB("dTLB")) { dut =>
       val mem = newMem()
-      map4k(VA4K, 0x44444, F_V | F_R | F_W | F_X | F_A | F_D | F_G, mem)
+      mapGuest(VA4K, 0x4444, F_ALL, G_ALL, mem)
+      setup(dut, mem, va = VA4K, virt = true)
+      val log = mutable.ArrayBuffer[(BigInt, Boolean)]()
+      val r = run(dut, mem, log)
+      assert(r.done && r.fault == 0, s"result ${r}")
+      val addrs = log.map(_._1).toList
+      assert(addrs == List(HROOT, GBASE + ROOT + 1 * 8, HROOT, GBASE + 0x22222000L, HROOT,
+        GBASE + 0x33333000L + 1 * 8, HROOT, HPA),
+        s"request sequence wrong: ${addrs.map(_.toLong.toHexString)}")
+
+      // the entry holds the whole translation
+      setup(dut, mem, va = VA4K, virt = true)
+      val log2 = mutable.ArrayBuffer[(BigInt, Boolean)]()
+      assert(run(dut, mem, log2).fault == 0)
+      assert(log2.map(_._1).toList == List(HPA), s"hit should issue only the data access: ${log2}")
+    }
+  }
+
+  "a guest without paging of its own is translated by the guest-physical stage" in {
+    test(new TLB("dTLB")) { dut =>
+      val mem = newMem()
+      mapGuest(VA4K, 0x4444, F_ALL, G_ALL, mem)
+      setup(dut, mem, va = GPA, virt = true, stage1 = false)
+      val log = mutable.ArrayBuffer[(BigInt, Boolean)]()
+      val r = run(dut, mem, log)
+      assert(r.done && r.fault == 0, s"result ${r}")
+      assert(log.map(_._1).toList == List(HROOT, HPA), s"request sequence wrong: ${log}")
+    }
+  }
+
+  "a guest physical address above 41 bits raises a guest-page fault" in {
+    test(new TLB("dTLB")) { dut =>
+      val mem = newMem()
+      mapGuest(VA4K, 0x4444, F_ALL, G_ALL, mem)
+      val gpa = GPA | (BigInt(1) << 41)
+      setup(dut, mem, va = gpa, virt = true, stage1 = false)
+      val log = mutable.ArrayBuffer[(BigInt, Boolean)]()
+      val r = run(dut, mem, log)
+      assert(r.done && r.fault == Page_fault.load_page_fault.litValue && r.guest, s"result ${r}")
+      assert(r.gpa == gpa && !r.pte, s"result ${r}")
+      assert(log.isEmpty)
+    }
+  }
+
+  "a guest physical address without a translation raises a guest-page fault" in {
+    test(new TLB("dTLB")) { dut =>
+      val mem = newMem()
+      // the guest maps the page to its second GiB, which the hypervisor did not map
+      mapGuest(VA4K, 0x44444, F_ALL, G_ALL, mem)
+      setup(dut, mem, va = VA4K, virt = true)
+      val log = mutable.ArrayBuffer[(BigInt, Boolean)]()
+      val r = run(dut, mem, log)
+      assert(r.done && r.fault == Page_fault.load_page_fault.litValue && r.guest, s"result ${r}")
+      assert(r.gpa == PA4K && !r.pte, s"result ${r}")
+    }
+  }
+
+  "a VS-stage page table that the hypervisor did not map raises a guest-page fault of the PTE" in {
+    test(new TLB("dTLB")) { dut =>
+      val mem = newMem()
+      mapGuest(VA4K, 0x4444, F_ALL, G_ALL, mem)
+      mem(HROOT) = 0
+      setup(dut, mem, va = VA4K, virt = true)
+      val log = mutable.ArrayBuffer[(BigInt, Boolean)]()
+      val r = run(dut, mem, log)
+      assert(r.done && r.fault == Page_fault.load_page_fault.litValue && r.guest, s"result ${r}")
+      assert(r.gpa == ROOT + 1 * 8 && r.pte, s"result ${r}")
+    }
+  }
+
+  "the guest-physical stage needs user pages" in {
+    test(new TLB("dTLB")) { dut =>
+      val mem = newMem()
+      mapGuest(VA4K, 0x4444, F_ALL, F_ALL, mem)       // no U
+      setup(dut, mem, va = VA4K, virt = true)
+      val log = mutable.ArrayBuffer[(BigInt, Boolean)]()
+      val r = run(dut, mem, log)
+      assert(r.done && r.fault != 0 && r.guest && r.pte, s"result ${r}")
+    }
+  }
+
+  "a page fault of the VS-stage is not a guest-page fault" in {
+    test(new TLB("dTLB")) { dut =>
+      val mem = newMem()
+      mapGuest(VA4K, 0x4444, F_V | F_R | F_A | F_D, G_ALL, mem)
+      setup(dut, mem, va = VA4K, virt = true, wen = true)
+      val log = mutable.ArrayBuffer[(BigInt, Boolean)]()
+      val r = run(dut, mem, log)
+      assert(r.done && r.fault == Page_fault.store_page_fault.litValue && !r.guest, s"result ${r}")
+    }
+  }
+
+  "HLVX needs execute permission in both stages" in {
+    test(new TLB("dTLB")) { dut =>
+      val mem = newMem()
+      mapGuest(VA4K, 0x4444, F_V | F_X | F_A, F_V | F_X | F_A | F_U | F_R, mem)
+      setup(dut, mem, va = VA4K, virt = true, hlvx = true)
+      val log = mutable.ArrayBuffer[(BigInt, Boolean)]()
+      assert(run(dut, mem, log).fault == 0, "execute-only in the VS-stage is enough")
+
+      doFlush(dut, virt = true)
+      mapGuest(VA4K, 0x4444, F_ALL, F_V | F_R | F_W | F_A | F_D | F_U, mem)
+      setup(dut, mem, va = VA4K, virt = true, hlvx = true)
+      val log2 = mutable.ArrayBuffer[(BigInt, Boolean)]()
+      val r = run(dut, mem, log2)
+      assert(r.fault == Page_fault.load_page_fault.litValue && r.guest && !r.pte, s"result ${r}")
+    }
+  }
+
+  "the entries of a guest are kept apart from the others" in {
+    test(new TLB("dTLB")) { dut =>
+      val mem = newMem()
+      map4k(VA4K, 0x44444, F_ALL, mem)
+      mapGuest(VA4K, 0x4444, F_ALL, G_ALL, mem)
       setup(dut, mem, va = VA4K)
       val log1 = mutable.ArrayBuffer[(BigInt, Boolean)]()
-      assert(translate(dut, mem, log1)._1)
-
-      doFlush(dut, asid = ASID, vpn = 0)
-      setup(dut, mem, va = VA4K)
+      assert(translate(dut, mem, log1)._2 == 0)
+      setup(dut, mem, va = VA4K, virt = true)
       val log2 = mutable.ArrayBuffer[(BigInt, Boolean)]()
-      assert(translate(dut, mem, log2)._2 == 0)
-      assert(log2.length == 1, "global entry should survive asid flush")
+      assert(run(dut, mem, log2).fault == 0)
+      assert(log2.last._1 == HPA && log2.length == 8, s"the guest walks its own tables: ${log2}")
 
-      doFlush(dut, asid = 0, vpn = 0)
+      // a flush of the guest entries leaves the other one
+      doFlush(dut, virt = true)
       setup(dut, mem, va = VA4K)
       val log3 = mutable.ArrayBuffer[(BigInt, Boolean)]()
       assert(translate(dut, mem, log3)._2 == 0)
-      assert(log3.length == 4, "global entry should not survive full flush")
+      assert(log3.map(_._1).toList == List(PA4K), s"entry should survive: ${log3}")
+      setup(dut, mem, va = VA4K, virt = true)
+      val log4 = mutable.ArrayBuffer[(BigInt, Boolean)]()
+      assert(run(dut, mem, log4).fault == 0)
+      assert(log4.length == 8, s"the guest entry is gone: ${log4}")
+
+      // and the other way around
+      doFlush(dut, virt = false)
+      setup(dut, mem, va = VA4K, virt = true)
+      val log5 = mutable.ArrayBuffer[(BigInt, Boolean)]()
+      assert(run(dut, mem, log5).fault == 0)
+      assert(log5.map(_._1).toList == List(HPA), s"guest entry should survive: ${log5}")
     }
   }
 }

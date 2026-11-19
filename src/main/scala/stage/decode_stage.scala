@@ -55,8 +55,17 @@ class DecodeStage extends Module{
 		val csr_r_addr = Output(UInt(12.W)) 
 
 		val csr_cmd = Output(UInt(3.W))
+		// the instruction in decode is HLV, HLVX or HSV
+		val hlsv = Output(Bool())
 
-		val csr_accessType_illegal = Input(Bool())
+		// the instruction in decode must not be executed in the current
+		// mode: it raises an illegal-instruction or, in a guest, a
+		// virtual-instruction exception
+		val csr_illegal = Input(Bool())
+		val csr_virtual = Input(Bool())
+		// the CSR the instruction accesses: in a guest the supervisor CSRs
+		// stand for their VS copies
+		val csr_target = Input(UInt(12.W))
 		val regFile_wen = Input(Bool())
 		val regFile_waddr = Input(UInt(5.W))
 		val regFile_wdata = Input(UInt(64.W))
@@ -102,9 +111,15 @@ class DecodeStage extends Module{
 			_.wb_en -> false.B,
 			_.csr_inst_mode -> CSR_MODE_U,
 			_.csr_is_illegal -> false.B,
+			_.csr_is_virtual -> false.B,
 			_.csr_inst_misalign -> false.B,
 			_.iTLB_fault -> 0.U,
+			_.iTLB_guest -> false.B,
+			_.iTLB_gpa -> 0.U,
+			_.iTLB_pte -> false.B,
 			_.amo_op -> AMO_NONE,
+			_.hlsv -> false.B,
+			_.hlvx -> false.B,
 			_.enable -> false.B
 		)
 	)
@@ -154,7 +169,12 @@ class DecodeStage extends Module{
 
 	io.csr_r_op := csr_op
 	io.csr_r_addr := io.fd_pipe_reg.inst(31, 20)
-	val mode_illegal = io.fd_pipe_reg.inst(29, 28) > io.csr_mode && (csr_op =/= CSR.N)
+
+	// HLV, HLVX and HSV: SYSTEM opcode with funct3 100
+	val is_hlsv = io.fd_pipe_reg.inst(6, 0) === "b1110011".U && io.fd_pipe_reg.inst(14, 12) === 4.U &&
+					!control.io.is_illegal
+	val is_hlvx = is_hlsv && io.fd_pipe_reg.inst(24, 20) === 3.U
+	io.hlsv := is_hlsv
 
 	// decode the A-extension operation from funct5(31:27) + funct3(14:12)
 	val amo_key = Cat(io.fd_pipe_reg.inst(31, 27), io.fd_pipe_reg.inst(14, 12))
@@ -179,7 +199,7 @@ class DecodeStage extends Module{
 								Mux(io.mw_pipe_reg_wb_sel === WB_PC4, io.mw_pipe_reg_pc + 4.U, 
 									Mux(io.mw_pipe_reg_wb_sel === WB_CSR, io.mw_pipe_reg_csr_read_data, io.mw_pipe_reg_load_data))), regFile.io.rdata(0))
 
-	val csr_write_addr = io.fd_pipe_reg.inst(31, 20)
+	val csr_write_addr = io.csr_target
 
 	when(io.flush_de && !io.stall){
 		de_pipe_reg.inst := Instructions.NOP
@@ -207,11 +227,15 @@ class DecodeStage extends Module{
 		de_pipe_reg.wb_en := false.B
 		de_pipe_reg.csr_inst_mode := CSR_MODE_U
 		de_pipe_reg.csr_is_illegal := false.B
+		de_pipe_reg.csr_is_virtual := false.B
 		de_pipe_reg.csr_inst_misalign := false.B
 		de_pipe_reg.iTLB_fault := 0.U
+		de_pipe_reg.iTLB_guest := false.B
 		de_pipe_reg.amo_op := AMO_NONE
+		de_pipe_reg.hlsv := false.B
+		de_pipe_reg.hlvx := false.B
 		de_pipe_reg.enable := false.B
-	}.elsewhen(!io.stall && !io.flush_de){			//&& !load_stall
+	}.elsewhen(!io.stall && !io.flush_de){//&& !load_stall
 		de_pipe_reg.inst := io.fd_pipe_reg.inst
 		de_pipe_reg.alu_op := control.io.alu_op
 		de_pipe_reg.A_sel := control.io.A_sel
@@ -242,10 +266,16 @@ class DecodeStage extends Module{
 		de_pipe_reg.wb_sel := control.io.wb_sel
 		de_pipe_reg.wb_en := control.io.wb_en
 		de_pipe_reg.csr_inst_mode := control.io.prv
-		de_pipe_reg.csr_is_illegal := control.io.is_illegal || mode_illegal || io.csr_accessType_illegal || (control.io.prv > io.csr_mode)
+		de_pipe_reg.csr_is_illegal := control.io.is_illegal || io.csr_illegal
+		de_pipe_reg.csr_is_virtual := !control.io.is_illegal && !io.csr_illegal && io.csr_virtual
 		de_pipe_reg.csr_inst_misalign := false.B
 		de_pipe_reg.iTLB_fault := io.fd_pipe_reg.iTLB_fault
+		de_pipe_reg.iTLB_guest := io.fd_pipe_reg.iTLB_guest
+		de_pipe_reg.iTLB_gpa := io.fd_pipe_reg.iTLB_gpa
+		de_pipe_reg.iTLB_pte := io.fd_pipe_reg.iTLB_pte
 		de_pipe_reg.amo_op := Mux(is_amo_inst, amo_op, AMO_NONE)
+		de_pipe_reg.hlsv := is_hlsv
+		de_pipe_reg.hlvx := is_hlvx
 		de_pipe_reg.enable := io.fd_pipe_reg.enable
 	}
 

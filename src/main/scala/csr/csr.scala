@@ -12,6 +12,10 @@ object ExceptCause{
 	val EXC_M_TIMER_INT = 7.U(63.W)		//m模式时钟中断
 	val EXC_S_EXT_INT = 9.U(63.W)		//s模式外部中断
 	val EXC_M_EXT_INT = 11.U(63.W)		//m模式外部中断
+	// interrupts of a guest: raised by its hypervisor through hvip
+	val EXC_VS_SOFT_INT = 2.U(63.W)
+	val EXC_VS_TIMER_INT = 6.U(63.W)
+	val EXC_VS_EXT_INT = 10.U(63.W)
 
 	val EXC_INST_ADDR = 0.U(63.W)		//取指非对齐异常
 	val EXC_ILL_INST = 2.U(63.W)		//非法指令异常
@@ -24,6 +28,12 @@ object ExceptCause{
 	val EXC_INST_PAGE = 12.U(63.W)
 	val EXC_LOAD_PAGE = 13.U(63.W)
 	val EXC_STORE_PAGE = 15.U(63.W)
+	// hypervisor extension
+	val EXC_VS_ECALL = 10.U(63.W)			// ecall from VS mode
+	val EXC_INST_GUEST_PAGE = 20.U(63.W)	// guest-page faults: no translation
+	val EXC_LOAD_GUEST_PAGE = 21.U(63.W)	// of a guest physical address
+	val EXC_VIRT_INST = 22.U(63.W)			// virtual instruction
+	val EXC_STORE_GUEST_PAGE = 23.U(63.W)
 }
 
 object CSR{
@@ -135,6 +145,35 @@ object CSR{
 	val CSR_PMPADDR13 = 0x3bd.U(12.W)
 	val CSR_PMPADDR14 = 0x3be.U(12.W)
 	val CSR_PMPADDR15 = 0x3bf.U(12.W)
+
+	// hypervisor extension: the CSRs of the hypervisor, ...
+	val CSR_HSTATUS    = 0x600.U(12.W)
+	val CSR_HEDELEG    = 0x602.U(12.W)
+	val CSR_HIDELEG    = 0x603.U(12.W)
+	val CSR_HIE        = 0x604.U(12.W)
+	val CSR_HCOUNTEREN = 0x606.U(12.W)
+	val CSR_HGEIE      = 0x607.U(12.W)
+	val CSR_HENVCFG    = 0x60a.U(12.W)
+	val CSR_HTVAL      = 0x643.U(12.W)
+	val CSR_HIP        = 0x644.U(12.W)
+	val CSR_HVIP       = 0x645.U(12.W)
+	val CSR_HTINST     = 0x64a.U(12.W)
+	val CSR_HGATP      = 0x680.U(12.W)
+	val CSR_HGEIP      = 0xe12.U(12.W)
+	// ... the two it adds to machine level, ...
+	val CSR_MTINST     = 0x34a.U(12.W)
+	val CSR_MTVAL2     = 0x34b.U(12.W)
+	// ... and the VS copies of the supervisor CSRs, which a guest uses
+	// under the supervisor numbers
+	val CSR_VSSTATUS   = 0x200.U(12.W)
+	val CSR_VSIE       = 0x204.U(12.W)
+	val CSR_VSTVEC     = 0x205.U(12.W)
+	val CSR_VSSCRATCH  = 0x240.U(12.W)
+	val CSR_VSEPC      = 0x241.U(12.W)
+	val CSR_VSCAUSE    = 0x242.U(12.W)
+	val CSR_VSTVAL     = 0x243.U(12.W)
+	val CSR_VSIP       = 0x244.U(12.W)
+	val CSR_VSATP      = 0x280.U(12.W)
 }
 
 import ExceptCause._
@@ -149,16 +188,23 @@ class CSR extends Module{
 		val r_op = Input(UInt(3.W))			//csr_cmd op
 		val r_addr = Input(UInt(12.W))		//要读的csr寄存器地址
 		val r_data = Output(UInt(64.W))		//读出的数据
+		// the CSR that r_addr stands for: in a guest the supervisor CSRs
+		// are their VS copies
+		val r_target = Output(UInt(12.W))
+		// the instruction in decode, and whether the current mode may
+		// execute it: illegal instruction, or virtual instruction when a
+		// guest tries what its hypervisor may do
+		val d_inst = Input(UInt(32.W))
+		val d_hlsv = Input(Bool())
+		val d_illegal = Output(Bool())
+		val d_virtual = Output(Bool())
 
 		val w_op = Input(UInt(3.W))			//csr_cmd op
 		val w_addr = Input(UInt(12.W))		//要写的地址
 		val w_data = Input(UInt(64.W))		//要些的数据
-		val retired = Input(Bool()) 		
+		val retired = Input(Bool())
 		val inst = Input(UInt(32.W))		//指令本身
 
-		//val inst_mode = Input(UInt(2.W))
-
-		//val excValue = Output(UInt(64.W))
 		val fd_pipe_reg_pc = Input(UInt(64.W))
 		val jump_addr = Input(UInt(64.W))
 
@@ -179,8 +225,18 @@ class CSR extends Module{
 		val mstatus = Output(UInt(64.W))
 		val sstatus = Output(UInt(64.W))
 		val satp    = Output(UInt(64.W))
-	val mprv    = Output(Bool())
-	val mpp     = Output(UInt(2.W))
+		val mprv    = Output(Bool())
+		val mpp     = Output(UInt(2.W))
+		// hypervisor extension: V (the hart runs a guest), the translation
+		// CSRs of the guest, SUM and MXR of vsstatus, and the modes that
+		// MPRV (MPV) and HLV/HSV (SPVP) access memory in
+		val virt    = Output(Bool())
+		val vsatp   = Output(UInt(64.W))
+		val hgatp   = Output(UInt(64.W))
+		val vs_sum  = Output(Bool())
+		val vs_mxr  = Output(Bool())
+		val mpv     = Output(Bool())
+		val spvp    = Output(Bool())
 		val trapVec = Output(UInt(64.W))
 		val stall = Input(Bool())
 		val trap = Output(Bool())
@@ -189,15 +245,25 @@ class CSR extends Module{
 		val trap_cause = Output(UInt(64.W))
 		val trap_epc = Output(UInt(64.W))
 		val trap_tval = Output(UInt(64.W))
+		val trap_tval2 = Output(UInt(64.W))
+		val trap_tinst = Output(UInt(64.W))
 		val mode = Output(UInt(2.W))
-		val accessType_illegal = Output(Bool())
 
 		val is_illegal = Input(Bool())
+		val is_virtual = Input(Bool())
 		val inst_misalign = Input(Bool())
 		val store_misalign = Input(Bool())
 		val load_misalign = Input(Bool())
 		val iTLB_fault = Input(UInt(2.W))
+		val iTLB_guest = Input(Bool())
+		val iTLB_gpa = Input(UInt(64.W))
+		val iTLB_pte = Input(Bool())
 		val dTLB_fault = Input(UInt(2.W))
+		val dTLB_guest = Input(Bool())
+		val dTLB_gpa = Input(UInt(64.W))
+		val dTLB_pte = Input(Bool())
+		// the data address of the instruction in EM is a guest virtual one
+		val data_virt = Input(Bool())
 		val alu_out = Input(UInt(64.W))
 		val mw_enable = Input(Bool())
 		val em_enable = Input(Bool())
@@ -206,6 +272,8 @@ class CSR extends Module{
 	})
 
 	val mode = RegInit(CSR_MODE_M)				//模式寄存器
+	// virtualization mode V: set while a guest runs (VS or VU mode)
+	val virt = RegInit(false.B)
 
 	val mstatus = RegInit(MstatusCsr.default)
 	val misa 	= MisaCsr.default				//misa只用进行读
@@ -221,8 +289,6 @@ class CSR extends Module{
 	val mcycle	= RegInit(McycleCsr.default)
 	val minstret= RegInit(MinstretCsr.default)
 	val sstatus = SstatusCsr(mstatus)
-	val sie		= SieCsr(mie)			//sie只是wire
-	val sip		= SipCsr(mip)			//sip只是wire
 	val stvec	= RegInit(StvecCsr.default)
 	val sscratch= RegInit(SscratchCsr.default)
 	val sepc	= RegInit(SepcCsr.default)
@@ -230,28 +296,58 @@ class CSR extends Module{
 	val stval	= RegInit(StvalCsr.default)
 	val satp	= RegInit(SatpCsr.default)
 
+	// ---- hypervisor extension ----
+	// hstatus
+	val h_vtsr = RegInit(false.B)		// SRET of the guest traps
+	val h_vtw  = RegInit(false.B)		// WFI of the guest traps
+	val h_vtvm = RegInit(false.B)		// SFENCE.VMA and satp of the guest trap
+	val h_hu   = RegInit(false.B)		// HLV/HSV allowed in U mode
+	val h_spvp = RegInit(false.B)		// the guest was in VS mode
+	val h_spv  = RegInit(false.B)		// the trap came from a guest
+	val h_gva  = RegInit(false.B)		// stval holds a guest virtual address
+	val hstatus = Cat(0.U(30.W), 2.U(2.W), 0.U(9.W), h_vtsr, h_vtw, h_vtvm, 0.U(10.W),
+					h_hu, h_spvp, h_spv, h_gva, 0.U(6.W))
+	val hedeleg = RegInit(0.U(64.W))
+	val hideleg = RegInit(0.U(64.W))
+	val hcounteren = RegInit(0.U(32.W))
+	val henvcfg = RegInit(0.U(64.W))
+	val htval   = RegInit(0.U(64.W))
+	val htinst  = RegInit(0.U(64.W))
+	val mtval2  = RegInit(0.U(64.W))
+	val mtinst  = RegInit(0.U(64.W))
+	// hgatp: Sv39x4 or bare, no VMID; the root page table is 16 KiB
+	val hgatp_mode = RegInit(0.U(4.W))
+	val hgatp_ppn = RegInit(0.U(44.W))
+	val hgatp = Cat(hgatp_mode, 0.U(16.W), hgatp_ppn)
+	// vsstatus has the fields of sstatus
+	val vs_mxr  = RegInit(false.B)
+	val vs_sum  = RegInit(false.B)
+	val vs_spp  = RegInit(false.B)
+	val vs_spie = RegInit(false.B)
+	val vs_sie  = RegInit(false.B)
+	val vsstatus = Cat(0.U(30.W), 2.U(2.W), 0.U(12.W), vs_mxr, vs_sum, 0.U(9.W), vs_spp,
+					0.U(2.W), vs_spie, 0.U(3.W), vs_sie, 0.U(1.W))
+	val vstvec	= RegInit(StvecCsr.default)
+	val vsscratch = RegInit(SscratchCsr.default)
+	val vsepc	= RegInit(SepcCsr.default)
+	val vscause = RegInit(ScauseCsr.default)
+	val vstval	= RegInit(StvalCsr.default)
+	val vsatp	= RegInit(SatpCsr.default)
+	// The VS-level interrupts (bits 10, 6, 2 of mip and mie) are always
+	// delegated to HS mode: these bits of mideleg read as one. hip, hie
+	// and hvip show those bits; vsip and vsie show the ones hideleg hands
+	// to the guest, at the supervisor positions.
+	val VS_INTS = "h444".U(64.W)
+	val mideleg_all = mideleg.asUInt | VS_INTS
+	val vsie_value = (mie.asUInt & hideleg) >> 1
+	val vsip_value = (mip.asUInt & hideleg) >> 1
+
 	// PMP registers (no hardware enforcement yet, just storage)
 	val pmpcfg0  = RegInit(0.U(64.W))
 	val pmpcfg1  = RegInit(0.U(64.W))
 	val pmpcfg2  = RegInit(0.U(64.W))
 	val pmpcfg3  = RegInit(0.U(64.W))
 	val pmpaddr  = RegInit(VecInit(Seq.fill(16)(0.U(64.W))))
-	val pmpaddr0 = WireDefault(pmpaddr(0))
-	val pmpaddr1 = WireDefault(pmpaddr(1))
-	val pmpaddr2 = WireDefault(pmpaddr(2))
-	val pmpaddr3 = WireDefault(pmpaddr(3))
-	val pmpaddr4 = WireDefault(pmpaddr(4))
-	val pmpaddr5 = WireDefault(pmpaddr(5))
-	val pmpaddr6 = WireDefault(pmpaddr(6))
-	val pmpaddr7 = WireDefault(pmpaddr(7))
-	val pmpaddr8 = WireDefault(pmpaddr(8))
-	val pmpaddr9 = WireDefault(pmpaddr(9))
-	val pmpaddr10 = WireDefault(pmpaddr(10))
-	val pmpaddr11 = WireDefault(pmpaddr(11))
-	val pmpaddr12 = WireDefault(pmpaddr(12))
-	val pmpaddr13 = WireDefault(pmpaddr(13))
-	val pmpaddr14 = WireDefault(pmpaddr(14))
-	val pmpaddr15 = WireDefault(pmpaddr(15))
 	val menvcfg  = RegInit(0.U(64.W))
 	val senvcfg  = RegInit(0.U(64.W))
 	val mseccfg  = RegInit(0.U(64.W))
@@ -263,7 +359,7 @@ class CSR extends Module{
 	val cycle 	= mcycle.asUInt
 	val instret = minstret.asUInt
 
-	//																writable				
+	//																writable
 	//														readable |
 	val default = 					List(0.U(64.W), false.B, false.B);
 	val csrTable = Array(
@@ -286,7 +382,7 @@ class CSR extends Module{
 		BitPat(CSR_MSTATUS)		->	List(mstatus.asUInt | MSTATUS_XL,	true.B,	true.B),
 		BitPat(CSR_MISA)		->	List(misa.asUInt,		true.B,	true.B),
 		BitPat(CSR_MEDELEG)		->	List(medeleg.asUInt,	true.B,	true.B),
-		BitPat(CSR_MIDELEG)		->	List(mideleg.asUInt,	true.B,	true.B),
+		BitPat(CSR_MIDELEG)		->	List(mideleg_all,		true.B,	true.B),
 		BitPat(CSR_MIE)			->	List(mie.asUInt,		true.B,	true.B),
 		BitPat(CSR_MTVEC)		->	List(mtvec.asUInt,		true.B,	true.B),
 		BitPat(CSR_MCOUNTEREN)	->	List(mcounteren,			true.B,	true.B),
@@ -323,36 +419,63 @@ class CSR extends Module{
 		BitPat(CSR_MHPMCOUNTER4)->	List(mhpmcounter(1),	true.B,	true.B),
 		BitPat(CSR_MHPMCOUNTER5)->	List(mhpmcounter(2),	true.B,	true.B),
 		BitPat(CSR_MHPMCOUNTER6)->	List(mhpmcounter(3),	true.B,	true.B),
-		// pmpaddr0-15
-		BitPat(CSR_PMPADDR0)	->	List(pmpaddr0,			true.B,	true.B),
-		BitPat(CSR_PMPADDR1)	->	List(pmpaddr1,			true.B,	true.B),
-		BitPat(CSR_PMPADDR2)	->	List(pmpaddr2,			true.B,	true.B),
-		BitPat(CSR_PMPADDR3)	->	List(pmpaddr3,			true.B,	true.B),
-		BitPat(CSR_PMPADDR4)	->	List(pmpaddr4,			true.B,	true.B),
-		BitPat(CSR_PMPADDR5)	->	List(pmpaddr5,			true.B,	true.B),
-		BitPat(CSR_PMPADDR6)	->	List(pmpaddr6,			true.B,	true.B),
-		BitPat(CSR_PMPADDR7)	->	List(pmpaddr7,			true.B,	true.B),
-		BitPat(CSR_PMPADDR8)	->	List(pmpaddr8,			true.B,	true.B),
-		BitPat(CSR_PMPADDR9)	->	List(pmpaddr9,			true.B,	true.B),
-		BitPat(CSR_PMPADDR10)	->	List(pmpaddr10,			true.B,	true.B),
-		BitPat(CSR_PMPADDR11)	->	List(pmpaddr11,			true.B,	true.B),
-		BitPat(CSR_PMPADDR12)	->	List(pmpaddr12,			true.B,	true.B),
-		BitPat(CSR_PMPADDR13)	->	List(pmpaddr13,			true.B,	true.B),
-		BitPat(CSR_PMPADDR14)	->	List(pmpaddr14,			true.B,	true.B),
-		BitPat(CSR_PMPADDR15)	->	List(pmpaddr15,			true.B,	true.B),
-	)
+		// hypervisor extension. There are no guest external interrupts:
+		// hgeie and hgeip read 0.
+		BitPat(CSR_HSTATUS)		->	List(hstatus,			true.B,	true.B),
+		BitPat(CSR_HEDELEG)		->	List(hedeleg,			true.B,	true.B),
+		BitPat(CSR_HIDELEG)		->	List(hideleg,			true.B,	true.B),
+		BitPat(CSR_HIE)			->	List(mie.asUInt & VS_INTS,	true.B,	true.B),
+		BitPat(CSR_HCOUNTEREN)	->	List(hcounteren,			true.B,	true.B),
+		BitPat(CSR_HGEIE)		->	List(0.U(64.W),			true.B,	true.B),
+		BitPat(CSR_HENVCFG)		->	List(henvcfg,			true.B,	true.B),
+		BitPat(CSR_HTVAL)		->	List(htval,				true.B,	true.B),
+		BitPat(CSR_HIP)			->	List(mip.asUInt & VS_INTS,	true.B,	true.B),
+		BitPat(CSR_HVIP)		->	List(mip.asUInt & VS_INTS,	true.B,	true.B),
+		BitPat(CSR_HTINST)		->	List(htinst,			true.B,	true.B),
+		BitPat(CSR_HGATP)		->	List(hgatp,				true.B,	true.B),
+		BitPat(CSR_HGEIP)		->	List(0.U(64.W),			true.B,	false.B),
+		BitPat(CSR_MTINST)		->	List(mtinst,			true.B,	true.B),
+		BitPat(CSR_MTVAL2)		->	List(mtval2,			true.B,	true.B),
+		BitPat(CSR_VSSTATUS)	->	List(vsstatus,			true.B,	true.B),
+		BitPat(CSR_VSIE)		->	List(vsie_value,		true.B,	true.B),
+		BitPat(CSR_VSTVEC)		->	List(vstvec.asUInt,		true.B,	true.B),
+		BitPat(CSR_VSSCRATCH)	->	List(vsscratch.asUInt,	true.B,	true.B),
+		BitPat(CSR_VSEPC)		->	List(vsepc.asUInt,		true.B,	true.B),
+		BitPat(CSR_VSCAUSE)		->	List(vscause.asUInt,	true.B,	true.B),
+		BitPat(CSR_VSTVAL)		->	List(vstval.asUInt,		true.B,	true.B),
+		BitPat(CSR_VSIP)		->	List(vsip_value,		true.B,	true.B),
+		BitPat(CSR_VSATP)		->	List(vsatp.asUInt,		true.B,	true.B),
+	) ++ (0 until 16).map(i => BitPat((0x3b0 + i).U(12.W)) -> List(pmpaddr(i), true.B, true.B))
 
 	io.mode := mode
+	io.virt := virt
 	io.mstatus := mstatus.asUInt | MSTATUS_XL
 	io.sstatus := sstatus.asUInt
 	io.satp    := satp.asUInt
+	io.vsatp   := vsatp.asUInt
+	io.hgatp   := hgatp
+	io.vs_sum  := vs_sum
+	io.vs_mxr  := vs_mxr
 	io.mprv    := mstatus.mprv
 	io.mpp     := mstatus.mpp
+	io.mpv     := mstatus.mpv
+	io.spvp    := h_spvp
+
+	// ---------------- the instruction in decode ----------------
+	// In VS and VU mode these supervisor CSRs stand for their VS copies,
+	// which have the same number with bits 9:8 changed from 1 to 2.
+	val vs_alias = virt && (io.r_addr === CSR_SSTATUS || io.r_addr === CSR_SIE || io.r_addr === CSR_STVEC ||
+							io.r_addr === CSR_SSCRATCH || io.r_addr === CSR_SEPC || io.r_addr === CSR_SCAUSE ||
+							io.r_addr === CSR_STVAL || io.r_addr === CSR_SIP || io.r_addr === CSR_SATP)
+	val r_target = Mux(vs_alias, io.r_addr ^ "h300".U(12.W), io.r_addr)
+	io.r_target := r_target
+
 	//csr这里要处理enable信号用于提示哪些流水寄存器中的信息不可用，下面每一个从io中得到的信息都要进行有效性判断
 	//从csrTable获取，寄存器中存储的信息，并且得知是否可读可写
-	val data :: (readable: Bool)  :: (writable: Bool) :: Nil = ListLookup(io.r_addr, default, csrTable)		//读这里不判断有效性，因为不影响之后运行流的处理
+	val data :: (readable: Bool)  :: (writable: Bool) :: Nil = ListLookup(r_target, default, csrTable)		//读这里不判断有效性，因为不影响之后运行流的处理
+	io.r_data := data
 
-	//是否满足了读写寄存器的读要求, 
+	//是否满足了读写寄存器的读要求,
 	val instValid = MuxLookup(io.r_op, true.B, Seq(
 		R	-> 	readable,
 		W	->	writable,
@@ -360,14 +483,55 @@ class CSR extends Module{
 		RS	->	(readable && writable),
 		RC	->	(readable && writable)
 	))
-	val counterEnable = Mux(mode === CSR_MODE_M, true.B,
-							Mux(mode === CSR_MODE_S, mcounteren(io.r_addr(4, 0)),
-								mcounteren(io.r_addr(4, 0)) && scounteren(io.r_addr(4, 0))))
-	val counterDenied = io.r_addr(11, 5) === "b1100000".U && !counterEnable
-	io.accessType_illegal := !instValid || (counterDenied && io.r_op =/= CSR.N)
 
-	io.r_data := data
+	val is_m = mode === CSR_MODE_M
+	val is_u = mode === CSR_MODE_U
+	val is_hs = mode === CSR_MODE_S && !virt
 
+	// Bits 9:8 of a CSR number are the level that may access it: 0 user,
+	// 1 supervisor, 2 hypervisor (HS mode), 3 machine. What HS mode may do
+	// raises a virtual-instruction exception in a guest.
+	val csr_level = io.r_addr(9, 8)
+	val csr_have = Mux(is_hs, 2.U, mode)
+	val csr_native_illegal = csr_level > csr_have ||
+		(is_hs && mstatus.tvm && (io.r_addr === CSR_SATP || io.r_addr === CSR_HGATP))
+	val csr_guest_illegal = csr_level === 3.U
+	val csr_guest_virtual = csr_level === 2.U || (csr_level === 1.U && is_u) ||
+		(io.r_addr === CSR_SATP && h_vtvm)
+	// the counters are gated by mcounteren, by hcounteren for a guest and
+	// by scounteren for user mode
+	val counter = io.r_addr(4, 0)
+	val is_counter = io.r_addr(11, 5) === "b1100000".U && !is_m
+	val counter_virtual = is_counter && mcounteren(counter) && virt && !hcounteren(counter)
+	val counter_illegal = is_counter && (!mcounteren(counter) ||
+		(!counter_virtual && is_u && !scounteren(counter)))
+	val csr_illegal = !instValid || Mux(virt, csr_guest_illegal, csr_native_illegal) || counter_illegal
+	val csr_virtual = virt && (csr_guest_virtual || counter_virtual)
+
+	// the privileged instructions
+	val d_mret = io.d_inst === Instructions.MRET
+	val d_sret = io.d_inst === Instructions.SRET
+	val d_wfi = io.d_inst === Instructions.WFI
+	val d_sfence = io.d_inst === Instructions.SFENCE_VMA
+	val d_hfence_v = io.d_inst === Instructions.HFENCE_VVMA
+	val d_hfence_g = io.d_inst === Instructions.HFENCE_GVMA
+	val sys_illegal = (d_mret && !is_m) ||
+		(d_sret && !virt && (is_u || (is_hs && mstatus.tsr))) ||
+		(d_wfi && !is_m && (mstatus.tw || (!virt && is_u))) ||
+		(d_sfence && !virt && (is_u || (is_hs && mstatus.tvm))) ||
+		(d_hfence_v && !virt && is_u) ||
+		(d_hfence_g && !virt && (is_u || (is_hs && mstatus.tvm))) ||
+		(io.d_hlsv && !virt && is_u && !h_hu)
+	val sys_virtual = virt && (
+		(d_sret && (is_u || h_vtsr)) ||
+		(d_wfi && (is_u || h_vtw)) ||
+		(d_sfence && (is_u || h_vtvm)) ||
+		d_hfence_v || d_hfence_g || io.d_hlsv)
+
+	io.d_illegal := Mux(io.r_op =/= CSR.N, csr_illegal, sys_illegal)
+	io.d_virtual := Mux(io.r_op =/= CSR.N, csr_virtual, sys_virtual)
+
+	// ---------------- the write of the instruction in writeback ----------------
 	//准备要写入csr的数据
 	val csrData :: _ :: _ :: Nil = ListLookup(io.w_addr, default, csrTable)
 	val csrData64 = csrData(63, 0)
@@ -386,110 +550,103 @@ class CSR extends Module{
 	*/
 
 	//异常具体判断
-	val hasExc 	= (io.is_illegal || io.inst_misalign || io.store_misalign || (io.iTLB_fault =/= 0.U)|| (io.dTLB_fault =/= 0.U)||
-					 io.load_misalign || (io.inst === Instructions.ECALL) || (io.inst === Instructions.EBREAK)) && io.em_enable && !io.stall && !writeEn
+	val isEcall = io.inst === Instructions.ECALL
+	val isEbreak = io.inst === Instructions.EBREAK
+	val iFault = io.iTLB_fault =/= 0.U
+	val dFault = io.dTLB_fault =/= 0.U
+	val hasExc 	= (io.is_illegal || io.is_virtual || io.inst_misalign || io.store_misalign || iFault || dFault ||
+					 io.load_misalign || isEcall || isEbreak) && io.em_enable && !io.stall && !writeEn
 
-	val excCause = Mux(io.iTLB_fault(0), EXC_INST_PAGE,
-						Mux(io.inst_misalign, EXC_INST_ADDR, 
-							Mux(io.is_illegal, EXC_ILL_INST, 
-								Mux(io.load_misalign, EXC_LOAD_ADDR,
-									Mux(io.store_misalign, EXC_STORE_ADDR, 
-										Mux(io.dTLB_fault =/= 0.U, Mux(io.dTLB_fault === load_page_fault.asUInt, EXC_LOAD_PAGE, EXC_STORE_PAGE), 
-											Mux(io.inst === Instructions.EBREAK, EXC_BRK_POINT,
-												Mux(mode === 0.U, EXC_U_ECALL,
-													Mux(mode === 1.U, EXC_S_ECALL, EXC_M_ECALL)
-												)
+	val ecallCause = Mux(is_m, EXC_M_ECALL, Mux(is_u, EXC_U_ECALL, Mux(virt, EXC_VS_ECALL, EXC_S_ECALL)))
+	// a guest-page fault is the page fault of the guest-physical stage
+	val dFaultCause = Mux(io.dTLB_fault === load_page_fault.asUInt,
+							Mux(io.dTLB_guest, EXC_LOAD_GUEST_PAGE, EXC_LOAD_PAGE),
+							Mux(io.dTLB_guest, EXC_STORE_GUEST_PAGE, EXC_STORE_PAGE))
+	val excCause = Mux(iFault, Mux(io.iTLB_guest, EXC_INST_GUEST_PAGE, EXC_INST_PAGE),
+						Mux(io.inst_misalign, EXC_INST_ADDR,
+							Mux(io.is_illegal, EXC_ILL_INST,
+								Mux(io.is_virtual, EXC_VIRT_INST,
+									Mux(io.load_misalign, EXC_LOAD_ADDR,
+										Mux(io.store_misalign, EXC_STORE_ADDR,
+											Mux(dFault, dFaultCause,
+												Mux(isEbreak, EXC_BRK_POINT, ecallCause)
 											)
 										)
 									)
 								)
-							)	
+							)
 						)
 					)
+	// which address, if any, the exception reports
+	val excOfFetch = excCause === EXC_INST_PAGE || excCause === EXC_INST_GUEST_PAGE || excCause === EXC_BRK_POINT
+	val excOfData = excCause === EXC_LOAD_PAGE || excCause === EXC_STORE_PAGE ||
+					excCause === EXC_LOAD_GUEST_PAGE || excCause === EXC_STORE_GUEST_PAGE ||
+					excCause === EXC_LOAD_ADDR || excCause === EXC_STORE_ADDR
 
-	val hasExcS = hasExc && medeleg.asUInt(excCause(3,0))
-	val handExcS = !mode(1) && hasExcS		//这里是想说明M模式下是无论如何都不会到S模式进行处理的
-
-	//中断的判断
-	val flagIntS = sip.asUInt & sie.asUInt 					//s模式中断判断，对应的中断使能并且sip中该位已经挂起
-	val flagIntM = mip.asUInt & mie.asUInt 					//M模式中断判断
-
-	/*
-	*	是否是s和m模式的中断，还要考虑相关的csr寄存器：
-	* 	1. 陷入S，特权级小于S或者在S模式下但是对应的mstatus的全局sie打开 ，最后做一个委托的判断
-	* 	2. 陷入M，当前特权级小于M或者在M特权下mie打开，最后作一个非委托判断
-	*/
-
-	//判断中断的flag位是否能生效
-	val hasIntS  = Mux(mode < CSR_MODE_S || (mode === CSR_MODE_S && mstatus.sie), (flagIntS & mideleg.asUInt).orR, false.B)
-	val hasIntM	 = Mux(mode <= CSR_MODE_S || mstatus.mie, (flagIntM & ~mideleg.asUInt).orR, false.B)
-	val hasInt = (hasIntM || hasIntS) &&  io.de_enable && !writeEn && !io.stall // && (hasExc || io.jump_taken || io.isSret || io.isMret)
-
-	//是否是S模式的中断
-	val handIntS = hasInt && !hasIntM 
-
+	// An exception is handled in M mode unless medeleg hands it to HS mode,
+	// and there unless it comes from a guest and hedeleg hands it on to
+	// VS mode.
+	val excToM = is_m || !medeleg.asUInt(excCause(5, 0))
+	val excToVS = !excToM && virt && hedeleg(excCause(5, 0))
 
 	/*
-	*	作一个仲裁判断，flagIntS，都是sip和sie的想与的结果，优先级为外部中断，大于软件中断，
-	*	最后大于时钟中断
-	*	M模式作类似的判断，但是M模式的优先级大于S模式
+	*	中断的判断: an interrupt is pending in mip and enabled in mie. mideleg
+	*	hands it to HS mode and hideleg from there to VS mode. A mode takes
+	*	its interrupts when it runs with them enabled, and always while a
+	*	less privileged mode runs. M mode comes first, then HS, then VS;
+	*	within one mode external, software, timer.
 	*/
-	val intCauseS = Mux(flagIntS(EXC_S_EXT_INT), EXC_S_EXT_INT,
-						Mux(flagIntS(EXC_S_SOFT_INT), EXC_S_SOFT_INT,
-													EXC_S_TIMER_INT))
-	
-	val intCause = Mux(flagIntM(EXC_M_EXT_INT), EXC_M_EXT_INT,
-						Mux(flagIntM(EXC_M_SOFT_INT), EXC_M_SOFT_INT,
-							Mux(flagIntM(EXC_M_TIMER_INT), EXC_M_TIMER_INT,intCauseS)	
-						)
-					)
+	val pending = mip.asUInt & mie.asUInt
+	val pendingM = pending & ~mideleg_all
+	val pendingHS = pending & mideleg_all & ~hideleg
+	val pendingVS = pending & mideleg_all & hideleg
+	val enableM = !is_m || mstatus.mie
+	val enableHS = !is_m && (virt || is_u || mstatus.sie)
+	val enableVS = virt && (is_u || vs_sie)
+	def firstInt(p: UInt): UInt = PriorityMux(Seq(11, 3, 7, 9, 1, 5, 10, 2, 6).map(i => (p(i), i.U(63.W))))
+	val intToM = enableM && pendingM.orR
+	val intToHS = !intToM && enableHS && pendingHS.orR
+	val intToVS = !intToM && !intToHS && enableVS && pendingVS.orR
+	val hasInt = (intToM || intToHS || intToVS) && io.de_enable && !writeEn && !io.stall
+	val intNumber = Mux(intToM, firstInt(pendingM), Mux(intToHS, firstInt(pendingHS), firstInt(pendingVS)))
+	// the guest sees its interrupts under the supervisor numbers
+	val intCause = Mux(intToVS, intNumber - 1.U, intNumber)
+
+	val trapToM = Mux(hasInt, intToM, excToM)
+	val trapToVS = Mux(hasInt, intToVS, excToVS)
+	val trapToHS = !trapToM && !trapToVS
 
 	//判断原因到底是中断还是异常
 	val cause = Mux(hasInt, Cat(true.B, intCause),
 							Cat(false.B, excCause))
-	
-	//printf(p"trap_cause:${Hexadecimal(cause)}\n")
-	val excValue = Mux(hasInt, 0.U, Mux(excCause === EXC_INST_PAGE, io.excPC,
-							Mux((excCause === EXC_LOAD_PAGE) || (excCause === EXC_STORE_PAGE) || 
-								(excCause === EXC_LOAD_ADDR) || (excCause === EXC_STORE_ADDR) ,io.alu_out,
-								Mux(excCause === EXC_BRK_POINT, io.excPC,
-									Mux(excCause === EXC_INST_ADDR, Cat(io.alu_out(63, 1), 0.U(1.W)),
-										Mux(excCause === EXC_ILL_INST, io.inst, 0.U)))
-							))) 
+
+	val excValue = Mux(hasInt, 0.U, Mux(excOfFetch, io.excPC,
+							Mux(excOfData, io.alu_out,
+								Mux(excCause === EXC_INST_ADDR, Cat(io.alu_out(63, 1), 0.U(1.W)),
+									Mux(excCause === EXC_ILL_INST || excCause === EXC_VIRT_INST, io.inst, 0.U))
+							)))
+	// A guest-page fault also reports the guest physical address, shifted
+	// right by 2, and in the trap instruction register that it occurred
+	// on the read of a VS-stage page table entry (a 64-bit load).
+	val excGuestFetch = excCause === EXC_INST_GUEST_PAGE
+	val excGuestData = excCause === EXC_LOAD_GUEST_PAGE || excCause === EXC_STORE_GUEST_PAGE
+	val excValue2 = Mux(hasInt, 0.U, Mux(excGuestFetch, io.iTLB_gpa >> 2,
+							Mux(excGuestData, io.dTLB_gpa >> 2, 0.U)))
+	val excInst = Mux(!hasInt && ((excGuestFetch && io.iTLB_pte) || (excGuestData && io.dTLB_pte)), "h3000".U(64.W), 0.U)
+	// the address reported is a guest virtual address
+	val excGva = !hasInt && ((excOfFetch || excCause === EXC_INST_ADDR) && virt || excOfData && io.data_virt)
 
 	//陷入的地址判断，只有一种情况会有偏移，那就是在在向量模式并且是终端，在direct模式下永远是直接进入stvec或者mtvec的地址
-	val trapVecS = Mux(stvec.mode(0) && hasInt, (stvec.base + cause(63, 0)), stvec.base) << 2
-	val trapVecM = Mux(mtvec.mode(0) && hasInt, (mtvec.base + cause(63, 0)), mtvec.base) << 2
-	val trapVec = Mux(handIntS || handExcS, trapVecS, trapVecM)
+	val tvec = Mux(trapToM, mtvec.asUInt, Mux(trapToVS, vstvec.asUInt, stvec.asUInt))
+	val trapVec = Cat(tvec(63, 2) + Mux(tvec(0) && hasInt, intCause(61, 0), 0.U), 0.U(2.W))
 
-	/*
-	*	特权级判断， interrput可以陷入s模式和m模式。异常也是如此，s模式的异常进入s模式进行处理，m模式的异常进入m模式进行处理
-	* 	sret，可以从spp中获取之前的优先级； mret,可以从mpp中获取之前的特权级。
-	* 	最后进入一个仲裁，优先中断，其次ret，最后是exception
-	*/
-	val intMode = Mux(handIntS, CSR_MODE_S, CSR_MODE_M)
-	val sretMode = Cat(false.B, sstatus.spp)
-	val mstatusWrite = writeEn && io.w_addr === CSR_MSTATUS
-	val mretMode = Mux(mstatusWrite, writeData(12, 11), mstatus.mpp)
-	val excMode = Mux(handExcS, CSR_MODE_S, CSR_MODE_M)
-	val trapMode = Mux(hasInt, intMode,
-					Mux(hasExc, excMode, 
-						Mux(io.isSret, sretMode,
-							Mux(io.isMret, mretMode, mode)
-							)
-						)
-					)
-	val nextMode = Mux((hasInt || hasExc) && !io.stall && !writeEn, trapMode,
-					Mux((io.isSret || io.isMret) && io.em_enable && !io.stall, trapMode, mode))		//冲刷之前的所有寄存器，所以不会存在异常和写同时存在的情况
-	mode := nextMode
-
-	//如果有中断，会将相应的位置高, 这里由于sip是线网所以会同步更新				
+	//如果有中断，会将相应的位置高, 这里由于sip是线网所以会同步更新
 	mip.meip := io.extern
 	mip.mtip := io.int_timer
 	mip.msip := io.int_soft
 
 	//更新计数寄存器
-	mcycle.data := mcycle.data + 1.U 
+	mcycle.data := mcycle.data + 1.U
 	when(io.retired){
 		minstret.data := minstret.data + 1.U
 	}
@@ -498,7 +655,7 @@ class CSR extends Module{
 	io.flush_mask := 0.U
 	when(!io.stall && (!writeEn || io.isSret || io.isMret)){
 		when(hasInt && !hasExc && !io.isSret && !io.isMret){
-			io.flush_mask := "b0111".U	
+			io.flush_mask := "b0111".U
 		}.elsewhen(hasInt && (hasExc || io.isMret || io.isSret)){											//&& !hasExc && !io.isMret && !io.isSret
 			io.flush_mask := "b1111".U
 		}.elsewhen(hasExc){
@@ -511,7 +668,14 @@ class CSR extends Module{
 	//exceptions and interrupts handling
 	val interrupt_return_addr = Mux(io.em_enable && !hasExc && !io.isSret && !io.isMret && io.jump_taken, io.jump_addr,
 									Mux(io.em_enable && (hasExc || io.isSret || io.isMret), io.excPC, io.de_pipe_reg_pc))
+	val trapPC = Mux(hasInt, interrupt_return_addr, io.excPC)
 
+	/*
+	*	特权级判断: a trap enters M, HS or VS mode. SRET returns to the mode in
+	*	sstatus.SPP and hstatus.SPV, or inside a guest to the one in
+	*	vsstatus.SPP; MRET to the mode in mstatus.MPP and MPV.
+	* 	优先中断，其次exception，最后是ret
+	*/
 	when(!io.stall){
 		when(writeEn){
 			when(io.w_addr === CSR_SSTATUS){
@@ -543,9 +707,12 @@ class CSR extends Module{
 			when(io.w_addr === CSR_MEDELEG){ medeleg <= writeData }
 			when(io.w_addr === CSR_MIDELEG){ mideleg <= writeData }
 			when(io.w_addr === CSR_MIE){ mie <= writeData }
+			// the machine-level pending bits are driven by the platform; of
+			// the VS-level bits only the software interrupt is writable here
 			when(io.w_addr === CSR_MIP){
 				mip.seip := writeData(9)
 				mip.stip := writeData(5)
+				mip.vssip := writeData(2)
 				mip.ssip := writeData(1)
 			}
 			when(io.w_addr === CSR_MTVEC){ mtvec <= writeData }
@@ -574,55 +741,132 @@ class CSR extends Module{
 			when(io.w_addr === CSR_MHPMCOUNTER4){ mhpmcounter(1) := writeData }
 			when(io.w_addr === CSR_MHPMCOUNTER5){ mhpmcounter(2) := writeData }
 			when(io.w_addr === CSR_MHPMCOUNTER6){ mhpmcounter(3) := writeData }
-			when(io.isMret && io.em_enable) {
-				mstatus.mie := Mux(mstatusWrite, writeData(7), mstatus.mpie)
-				mstatus.mpie := true.B
-				mstatus.mpp := CSR_MODE_U
-				when(mretMode =/= CSR_MODE_M){ mstatus.mprv := false.B }
+
+			// hypervisor extension
+			when(io.w_addr === CSR_HSTATUS){
+				h_vtsr := writeData(22)
+				h_vtw := writeData(21)
+				h_vtvm := writeData(20)
+				h_hu := writeData(9)
+				h_spvp := writeData(8)
+				h_spv := writeData(7)
+				h_gva := writeData(6)
 			}
-		}.elsewhen(handIntS){
-			sepc 	<= 	interrupt_return_addr//考虑跳转指令时发生中断的情况,Mux((hasExc || io.isSret || io.isMret) && io.em_enable, io.excPC,  interrupt_return_addr)
-			scause 	<= cause
-			stval 	<= excValue
-			mstatus.spie := mstatus.sie					
-			mstatus.sie := false.B
-			mstatus.spp := mode(0)
-		}.elsewhen(hasInt){
-			mepc 	<=  interrupt_return_addr
-			mcause  <= cause
-			mtval 	<= excValue
-			mstatus.mpie := mstatus.mie
-			mstatus.mie := false.B
-			mstatus.mpp := mode
-		}.elsewhen(handExcS){
-			sepc	<= io.excPC
-			scause 	<= cause
-			stval 	<= excValue
-			mstatus.spie := mstatus.sie
-			mstatus.sie := false.B
-			mstatus.spp := mode(0)
-		}.elsewhen(hasExc){
-			mepc <= io.excPC
-			mcause <= cause
-			mtval <= excValue
-			mstatus.mpie := mstatus.mie
-			mstatus.mie := false.B
-			mstatus.mpp := mode
-		}.elsewhen(io.isSret){
-			mstatus.sie := mstatus.spie									//
-			mstatus.spie := true.B										//
-			mstatus.spp	:= false.B										//spp只有一位可以直接赋值为false
-			mstatus.mprv := false.B
-		}.elsewhen(io.isMret){
+			// HS mode keeps its own ecalls, those of VS mode, guest-page
+			// faults and virtual-instruction exceptions
+			when(io.w_addr === CSR_HEDELEG){ hedeleg := writeData & "hb1ff".U }
+			when(io.w_addr === CSR_HIDELEG){ hideleg := writeData & VS_INTS }
+			when(io.w_addr === CSR_HIE){
+				mie.vseie := writeData(10)
+				mie.vstie := writeData(6)
+				mie.vssie := writeData(2)
+			}
+			when(io.w_addr === CSR_VSIE){
+				when(hideleg(10)){ mie.vseie := writeData(9) }
+				when(hideleg(6)){ mie.vstie := writeData(5) }
+				when(hideleg(2)){ mie.vssie := writeData(1) }
+			}
+			when(io.w_addr === CSR_HIP){ mip.vssip := writeData(2) }
+			// hvip is how a hypervisor raises the interrupts of its guest
+			when(io.w_addr === CSR_HVIP){
+				mip.vseip := writeData(10)
+				mip.vstip := writeData(6)
+				mip.vssip := writeData(2)
+			}
+			when(io.w_addr === CSR_VSIP){
+				when(hideleg(2)){ mip.vssip := writeData(1) }
+			}
+			when(io.w_addr === CSR_HCOUNTEREN){ hcounteren := writeData(31, 0) }
+			when(io.w_addr === CSR_HENVCFG){ henvcfg := writeData & 1.U }
+			when(io.w_addr === CSR_HTVAL){ htval := writeData }
+			when(io.w_addr === CSR_HTINST){ htinst := writeData }
+			when(io.w_addr === CSR_MTVAL2){ mtval2 := writeData }
+			when(io.w_addr === CSR_MTINST){ mtinst := writeData }
+			// a write that selects an unsupported mode leaves the mode unchanged
+			when(io.w_addr === CSR_HGATP){
+				when(writeData(63, 60) === 8.U || writeData(63, 60) === 0.U){ hgatp_mode := writeData(63, 60) }
+				hgatp_ppn := Cat(writeData(43, 2), 0.U(2.W))
+			}
+			when(io.w_addr === CSR_VSSTATUS){
+				vs_mxr := writeData(19)
+				vs_sum := writeData(18)
+				vs_spp := writeData(8)
+				vs_spie := writeData(5)
+				vs_sie := writeData(1)
+			}
+			when(io.w_addr === CSR_VSTVEC){ vstvec <= writeData }
+			when(io.w_addr === CSR_VSSCRATCH){ vsscratch <= writeData }
+			when(io.w_addr === CSR_VSEPC){ vsepc <= writeData }
+			when(io.w_addr === CSR_VSCAUSE){ vscause <= writeData }
+			when(io.w_addr === CSR_VSTVAL){ vstval <= writeData }
+			when(io.w_addr === CSR_VSATP && (writeData(63, 60) === 8.U || writeData(63, 60) === 0.U)){ vsatp <= writeData }
+		}.elsewhen(hasInt || hasExc){
+			when(trapToVS){
+				vsepc 	<= trapPC
+				vscause <= cause
+				vstval 	<= excValue
+				vs_spie := vs_sie
+				vs_sie := false.B
+				vs_spp := mode(0)
+				mode := CSR_MODE_S
+			}.elsewhen(trapToHS){
+				sepc 	<= trapPC
+				scause 	<= cause
+				stval 	<= excValue
+				htval 	:= excValue2
+				htinst 	:= excInst
+				mstatus.spie := mstatus.sie
+				mstatus.sie := false.B
+				mstatus.spp := mode(0)
+				h_spv := virt
+				h_gva := excGva
+				// SPVP follows SPP, but only for a trap that leaves a guest
+				when(virt){ h_spvp := mode(0) }
+				virt := false.B
+				mode := CSR_MODE_S
+			}.otherwise{
+				mepc 	<= trapPC
+				mcause  <= cause
+				mtval 	<= excValue
+				mtval2 	:= excValue2
+				mtinst 	:= excInst
+				mstatus.mpie := mstatus.mie
+				mstatus.mie := false.B
+				mstatus.mpp := mode
+				mstatus.mpv := virt
+				mstatus.gva := excGva
+				virt := false.B
+				mode := CSR_MODE_M
+			}
+		}.elsewhen(io.isSret && io.em_enable){
+			when(virt){
+				// inside a guest SRET works on vsstatus
+				vs_sie := vs_spie
+				vs_spie := true.B
+				vs_spp := false.B
+				mode := Cat(false.B, vs_spp)
+			}.otherwise{
+				mstatus.sie := mstatus.spie									//
+				mstatus.spie := true.B										//
+				mstatus.spp	:= false.B										//spp只有一位可以直接赋值为false
+				mstatus.mprv := false.B
+				mode := Cat(false.B, mstatus.spp)
+				virt := h_spv
+				h_spv := false.B
+			}
+		}.elsewhen(io.isMret && io.em_enable){
 			mstatus.mie := mstatus.mpie
 			mstatus.mpie := true.B
 			mstatus.mpp := CSR_MODE_U									//mpp有两位
+			mstatus.mpv := false.B
 			when(mstatus.mpp =/= CSR_MODE_M){ mstatus.mprv := false.B }
-		}		
+			mode := mstatus.mpp
+			virt := mstatus.mpv && mstatus.mpp =/= CSR_MODE_M
+		}
 	}
 
-	io.trapVec := Mux(hasInt || hasExc, trapVec, 
-					Mux(io.isMret, mepc.asUInt, sepc.asUInt
+	io.trapVec := Mux(hasInt || hasExc, trapVec,
+					Mux(io.isMret, mepc.asUInt, Mux(virt, vsepc.asUInt, sepc.asUInt)
 						)
 					)
 
@@ -630,6 +874,8 @@ class CSR extends Module{
 				((io.isSret || io.isMret) && io.em_enable && !io.stall)
 	io.trap_valid := (hasInt || hasExc) && !io.stall && !writeEn
 	io.trap_cause := cause
-	io.trap_epc := Mux(hasInt, interrupt_return_addr, io.excPC)
+	io.trap_epc := trapPC
 	io.trap_tval := excValue
+	io.trap_tval2 := excValue2
+	io.trap_tinst := excInst
 }

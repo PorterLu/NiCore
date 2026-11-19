@@ -5,6 +5,11 @@ class fetch_decode_pipeline_reg extends Bundle{
 	val inst = chiselTypeOf(Instructions.NOP)
 	val pc = UInt(64.W)
 	val iTLB_fault = UInt(2.W)
+	// an instruction guest-page fault: the guest physical address, and whether
+	// it is the address of a VS-stage page table entry
+	val iTLB_guest = Bool()
+	val iTLB_gpa = UInt(64.W)
+	val iTLB_pte = Bool()
 	val enable = Bool()
 }
 
@@ -35,9 +40,20 @@ class decode_execute_pipeline_reg extends Bundle{
 	val csr_cmd = UInt(3.W)
 	val csr_inst_mode = UInt(2.W)
 	val csr_is_illegal = Bool()
+	// raises a virtual-instruction exception: a guest executes what only
+	// its hypervisor may
+	val csr_is_virtual = Bool()
 	val csr_inst_misalign = Bool()
 	val iTLB_fault = UInt(2.W)
+	// an instruction guest-page fault: the guest physical address, and whether
+	// it is the address of a VS-stage page table entry
+	val iTLB_guest = Bool()
+	val iTLB_gpa = UInt(64.W)
+	val iTLB_pte = Bool()
 	val amo_op = UInt(4.W)
+	// HLV/HSV: the access is one of the guest; HLVX reads executable memory
+	val hlsv = Bool()
+	val hlvx = Bool()
 	val enable = Bool()
 }
 
@@ -60,11 +76,19 @@ class  execute_mem_pipeline_reg extends Bundle{
 	val is_clint = Bool()
 	val csr_inst_mode = UInt(2.W)
 	val csr_is_illegal = Bool()
+	val csr_is_virtual = Bool()
 	val csr_inst_misalign = Bool()
 	val csr_load_misalign = Bool()
 	val csr_store_misalign = Bool()
 	val iTLB_fault = UInt(2.W)
+	// an instruction guest-page fault: the guest physical address, and whether
+	// it is the address of a VS-stage page table entry
+	val iTLB_guest = Bool()
+	val iTLB_gpa = UInt(64.W)
+	val iTLB_pte = Bool()
 	val amo_op = UInt(4.W)
+	val hlsv = Bool()
+	val hlvx = Bool()
 	val sfence_rs1 = UInt(64.W)
 	val sfence_rs2 = UInt(64.W)
 	val enable = Bool()

@@ -40,17 +40,21 @@ class FetchStage extends Module{
 		val fd_pipe_reg = Output(new fetch_decode_pipeline_reg)
 		val icache_flush_tag = Output(Bool())
 
-		val sfence_rs1 = Input(UInt(64.W))
-		val sfence_rs2 = Input(UInt(64.W))
 		val tlb_valid = Input(Bool())
 		val tlb_ready = Output(Bool())
 		val tlb_flush = Input(Bool())
-		//val tlb_data = Output(UInt(64.W))
+		val tlb_flush_virt = Input(Bool())
+		val tlb_flush_page = Input(Bool())
+		val tlb_flush_va = Input(UInt(64.W))
+		// the mode instructions are fetched in; in a guest satp is vsatp
+		// and sum and mxr come from vsstatus
+		val virt 	= Input(Bool())
 		val sum 	= Input(Bool())
 		val mxr 	= Input(Bool())
+		val gmxr 	= Input(Bool())
 		val mode 	= Input(UInt(2.W))
 		val satp 	= Input(UInt(64.W))
-		//val tlb_fault = Output(UInt(2.W))
+		val hgatp 	= Input(UInt(64.W))
 	})
 
 	val fd_pipe_reg = RegInit(
@@ -58,6 +62,9 @@ class FetchStage extends Module{
 			_.inst -> Instructions.NOP,
 			_.pc -> "h80000000".U,
 			_.iTLB_fault -> 0.U,
+			_.iTLB_guest -> false.B,
+			_.iTLB_gpa -> 0.U,
+			_.iTLB_pte -> false.B,
 			_.enable -> false.B,
 		)
 	)
@@ -91,18 +98,22 @@ class FetchStage extends Module{
 	//printf(p"next_pc:${Hexadecimal(next_pc)}\n")
 
 	val iTLB = Module(new TLB("iTLB"))
-	iTLB.io.tlb_flush_vpn   := io.sfence_rs1(38, 12)
-	iTLB.io.tlb_flush_asid  := io.sfence_rs2
 	iTLB.io.flush := io.tlb_flush
+	iTLB.io.flush_virt := io.tlb_flush_virt
+	iTLB.io.flush_page := io.tlb_flush_page
+	iTLB.io.flush_va := io.tlb_flush_va
 	iTLB.io.stall := io.pipeline_stall
 	iTLB.io.valid := io.tlb_valid
+	iTLB.io.virt := io.virt
 	iTLB.io.priv := io.mode
-	iTLB.io.mprv := false.B 	//没有启用这个特性
 	iTLB.io.sum := io.sum
 	iTLB.io.mxr := io.mxr
-	iTLB.io.wen := false.B 
+	iTLB.io.gmxr := io.gmxr
+	iTLB.io.hlvx := false.B
+	iTLB.io.wen := false.B
 	iTLB.io.rw := false.B
 	iTLB.io.satp := io.satp
+	iTLB.io.hgatp := io.hgatp
 	iTLB.io.va := next_pc
 	iTLB.io.mask := 0.U 
 	iTLB.io.cache_response.data := Mux(iTLB.io.fetch_request.valid,
@@ -174,11 +185,15 @@ class FetchStage extends Module{
 		fd_pipe_reg.pc := "h80000000".U
 		fd_pipe_reg.inst := Instructions.NOP
 		fd_pipe_reg.iTLB_fault := 0.U
-		fd_pipe_reg.enable := false.B 
+		fd_pipe_reg.iTLB_guest := false.B
+		fd_pipe_reg.enable := false.B
 	}.elsewhen(!io.stall && !io.flush_fd){
-		fd_pipe_reg.pc := pc 
-		fd_pipe_reg.inst := inst 
+		fd_pipe_reg.pc := pc
+		fd_pipe_reg.inst := inst
 		fd_pipe_reg.iTLB_fault := iTLB.io.fault
+		fd_pipe_reg.iTLB_guest := iTLB.io.fault_guest
+		fd_pipe_reg.iTLB_gpa := iTLB.io.fault_gpa
+		fd_pipe_reg.iTLB_pte := iTLB.io.fault_pte
 		fd_pipe_reg.enable := true.B
 	}
 

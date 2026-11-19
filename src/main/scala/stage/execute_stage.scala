@@ -66,13 +66,19 @@ class ExecuteStage extends Module{
 			_.is_clint -> false.B,
 			_.csr_inst_mode -> CSR_MODE_U,
 			_.csr_is_illegal -> false.B,
+			_.csr_is_virtual -> false.B,
 			_.csr_inst_misalign -> false.B,
 			_.csr_load_misalign -> false.B,
 			_.csr_store_misalign -> false.B,
 			_.iTLB_fault -> 0.U,
+			_.iTLB_guest -> false.B,
+			_.iTLB_gpa -> 0.U,
+			_.iTLB_pte -> false.B,
 			_.sfence_rs1 -> 0.U,
 			_.sfence_rs2 -> 0.U,
 			_.amo_op -> AMO_NONE,
+			_.hlsv -> false.B,
+			_.hlvx -> false.B,
 			_.enable -> false.B
 		)
 	)
@@ -258,12 +264,16 @@ class ExecuteStage extends Module{
 		em_pipe_reg.pc := "h80000000".U
 		em_pipe_reg.is_clint := false.B
 		em_pipe_reg.csr_inst_mode := CSR_MODE_U
-		em_pipe_reg.csr_is_illegal := false.B 
+		em_pipe_reg.csr_is_illegal := false.B
+		em_pipe_reg.csr_is_virtual := false.B
 		em_pipe_reg.csr_inst_misalign := false.B
 		em_pipe_reg.csr_store_misalign := false.B
 		em_pipe_reg.csr_load_misalign := false.B
 		em_pipe_reg.iTLB_fault := 0.U
+		em_pipe_reg.iTLB_guest := false.B
 		em_pipe_reg.amo_op := AMO_NONE
+		em_pipe_reg.hlsv := false.B
+		em_pipe_reg.hlvx := false.B
 		em_pipe_reg.enable := false.B
 	}.elsewhen(!io.stall && !io.flush_em){
 		em_pipe_reg.inst := io.de_pipe_reg.inst
@@ -286,6 +296,7 @@ class ExecuteStage extends Module{
 		em_pipe_reg.is_clint := is_clint
 		em_pipe_reg.csr_inst_mode := io.de_pipe_reg.csr_inst_mode
 		em_pipe_reg.csr_is_illegal := io.de_pipe_reg.csr_is_illegal
+		em_pipe_reg.csr_is_virtual := io.de_pipe_reg.csr_is_virtual
 		em_pipe_reg.csr_inst_misalign := (io.brCond_taken || (io.de_pipe_reg.pc_sel === PC_ALU && io.de_pipe_reg.enable)) && alu_out(1)
 		em_pipe_reg.csr_store_misalign := (io.de_pipe_reg.st_type =/= ST_XXX) && 
 											MuxCase(false.B,
@@ -306,9 +317,14 @@ class ExecuteStage extends Module{
 												)
 											) 
 		em_pipe_reg.iTLB_fault := io.de_pipe_reg.iTLB_fault
+		em_pipe_reg.iTLB_guest := io.de_pipe_reg.iTLB_guest
+		em_pipe_reg.iTLB_gpa := io.de_pipe_reg.iTLB_gpa
+		em_pipe_reg.iTLB_pte := io.de_pipe_reg.iTLB_pte
 		em_pipe_reg.sfence_rs1 := src1_data
 		em_pipe_reg.sfence_rs2 := src2_data
 		em_pipe_reg.amo_op := io.de_pipe_reg.amo_op
+		em_pipe_reg.hlsv := io.de_pipe_reg.hlsv
+		em_pipe_reg.hlvx := io.de_pipe_reg.hlvx
 		em_pipe_reg.enable := io.de_pipe_reg.enable
 	}
 
