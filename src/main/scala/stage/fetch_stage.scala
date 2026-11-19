@@ -139,8 +139,24 @@ class FetchStage extends Module{
 
 	io.icache.accessType := word.asUInt
 	io.icache.flush := icache_flush_tag
-	io.icache.cpu_request.addr := Mux(io.tlb_valid, iTLB.io.fetch_request.addr, next_pc)
+	// The cache takes the address of a request from its input in every cycle
+	// of the request, so the address must not change before the response.
+	// next_pc does change during a request: a jump in execute that waits
+	// for its operand (a load in the memory stage) first redirects to a
+	// stale target and then to the loaded one. Hold the address of the
+	// request in flight; the redirect is still pending when the response
+	// comes, which drops the instruction fetched and starts again.
+	val fetch_pending = RegInit(false.B)
+	val fetch_addr = RegInit(0.U(64.W))
+	val direct_addr = Mux(fetch_pending, fetch_addr, next_pc)
+	io.icache.cpu_request.addr := Mux(io.tlb_valid, iTLB.io.fetch_request.addr, direct_addr)
 	io.icache.cpu_request.valid := Mux(io.tlb_valid, iTLB.io.fetch_request.valid, true.B) && !io.dcache_flush_tag
+	when(io.icache.cpu_response.ready || !io.icache.cpu_request.valid){
+		fetch_pending := false.B
+	}.elsewhen(!fetch_pending){
+		fetch_pending := true.B
+		fetch_addr := next_pc
+	}
 	io.icache.cpu_request.data := 0.U 
 	io.icache.cpu_request.rw := false.B 
 	io.icache.cpu_request.mask := 0.U
