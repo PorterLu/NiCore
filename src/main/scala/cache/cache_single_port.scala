@@ -289,11 +289,14 @@ class Cache(cache_name: String) extends Module{
 	switch(cache_state){
 		is(sIdle){
 			when(io.flush && io.cpu_request.valid){
+				// every flush walks all sets and ways from the start
+				flush_loop := 0.U
+				index_in_line := 0.U
+				flush_over := false.B
 				next_state := sFlush
 			}.elsewhen(io.cpu_request.valid && 
 					align_addr >= "h80000000".U && 
 					align_addr <= "h88000000".U){
-				
 				next_state := sMatch
 			}.elsewhen(io.cpu_request.valid){
 				when(io.cpu_request.rw){
