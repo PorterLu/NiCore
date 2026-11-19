@@ -90,7 +90,6 @@ class  execute_mem_pipeline_reg extends Bundle{
 	val hlsv = Bool()
 	val hlvx = Bool()
 	val sfence_rs1 = UInt(64.W)
-	val sfence_rs2 = UInt(64.W)
 	val enable = Bool()
 }
 

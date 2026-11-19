@@ -25,7 +25,7 @@ class AMOSpec extends AnyFreeSpec with ChiselScalatestTester {
       _.csr_store_misalign -> false.B, _.iTLB_fault -> 0.U,
       _.csr_is_virtual -> false.B, _.iTLB_guest -> false.B, _.iTLB_gpa -> 0.U,
       _.iTLB_pte -> false.B, _.hlsv -> false.B, _.hlvx -> false.B,
-      _.sfence_rs1 -> 0.U, _.sfence_rs2 -> 0.U, _.amo_op -> amoOp, _.enable -> true.B)
+      _.sfence_rs1 -> 0.U, _.amo_op -> amoOp, _.enable -> true.B)
 
   def emStore(va: BigInt = ADDR, st: UInt = ST_SD, data: BigInt = 0) =
     emAMO(AMO_NONE, LD_XXX, st, va, data)

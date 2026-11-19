@@ -75,7 +75,6 @@ class ExecuteStage extends Module{
 			_.iTLB_gpa -> 0.U,
 			_.iTLB_pte -> false.B,
 			_.sfence_rs1 -> 0.U,
-			_.sfence_rs2 -> 0.U,
 			_.amo_op -> AMO_NONE,
 			_.hlsv -> false.B,
 			_.hlvx -> false.B,
@@ -321,7 +320,6 @@ class ExecuteStage extends Module{
 		em_pipe_reg.iTLB_gpa := io.de_pipe_reg.iTLB_gpa
 		em_pipe_reg.iTLB_pte := io.de_pipe_reg.iTLB_pte
 		em_pipe_reg.sfence_rs1 := src1_data
-		em_pipe_reg.sfence_rs2 := src2_data
 		em_pipe_reg.amo_op := io.de_pipe_reg.amo_op
 		em_pipe_reg.hlsv := io.de_pipe_reg.hlsv
 		em_pipe_reg.hlvx := io.de_pipe_reg.hlvx
