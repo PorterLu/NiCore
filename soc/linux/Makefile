@@ -19,7 +19,8 @@ LINUX_FLAGS ?=
 MARCH = rv64ima_zicsr_zifencei
 O := $(abspath build)
 IMAGE = $(LINUX)/arch/riscv/boot/Image
-KERNEL_MAKE = $(MAKE) -C $(LINUX) ARCH=riscv CROSS_COMPILE=$(CROSS_COMPILE) $(LINUX_FLAGS)
+KERNEL_MAKE = $(MAKE) -C $(LINUX) ARCH=riscv CROSS_COMPILE=$(CROSS_COMPILE) \
+	KBUILD_BUILD_USER=nicore KBUILD_BUILD_HOST=nicore $(LINUX_FLAGS)
 
 all: $(O)/linux.bin
 

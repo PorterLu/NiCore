@@ -1,4 +1,4 @@
 [submodule "third_party/sustemu"]
 	path = third_party/sustemu
 	url = https://github.com/PorterLu/sustemu.git
-	branch = nicore
+	branch = main
