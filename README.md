@@ -1,7 +1,5 @@
 ## NiCore (A rv64 core with MMU)
-  This project contains a RISC-V 5-stage in-order core with an Sv39 MMU, supporting Integer and Multiplication extensions. To debug the core, I also developed an RV64 emulator in C for diﬀerential testing against the core (https://github.com/PorterLu/sustemu).
-
-The core now also has the A and H extensions and S/U mode. In a Verilator simulation it boots OpenSBI and Linux, and Linux starts a guest with KVM.
+  This project contains a RISC-V 5-stage in-order core with an Sv39 MMU, supporting the Integer, Multiplication, Atomic and Hypervisor extensions (RV64IMAH) and the M, S and U privilege modes. In a Verilator simulation it boots OpenSBI and Linux, and Linux starts a guest with KVM. To debug the core, I also developed an RV64 emulator in C for diﬀerential testing against the core (https://github.com/PorterLu/sustemu).
 
 ### Result
 
