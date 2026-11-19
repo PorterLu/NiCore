@@ -27,6 +27,7 @@ class ExecuteStage extends Module{
 		val dcache_cpu_response_ready = Input(Bool())
 		val data_cache_tag = Input(Bool())
 		val clint_r_data = Input(UInt(64.W))
+		val amo_forward_data = Input(UInt(64.W))
 		val is_clint = Output(Bool())
 		val data_cache_response_data = Input(UInt(64.W))
 		val de_pipe_reg = Input(new decode_execute_pipeline_reg)
@@ -41,6 +42,7 @@ class ExecuteStage extends Module{
 		val mw_pipe_reg_csr_read_data = Input(UInt(64.W))
 		val mw_pipe_reg_load_data = Input(UInt(64.W))
 		val dTLB_ready = Input(Bool())
+		val em_fault = Input(Bool())
 		val src_unready = Output(Bool())
 	})
 
@@ -99,12 +101,12 @@ class ExecuteStage extends Module{
 	val computation_result = WireInit(0.U(64.W))
 	val src1_data = WireInit(0.U(64.W))
 	val src2_data = WireInit(0.U(64.W))
-	val is_clint = alu_out >= "h2000000".U && alu_out <= "h200ffff".U && io.de_pipe_reg.enable && 
-					(io.de_pipe_reg.ld_type.orR || io.de_pipe_reg.st_type.orR)
+	val is_clint = false.B
 
 	io.is_clint := is_clint
 
-	val load_data_hazard = Mux(em_pipe_reg.is_clint && em_pipe_reg.enable, io.clint_r_data, io.data_cache_response_data >> ((em_pipe_reg.alu_out & "h07".U) << 3.U))
+	val load_data_hazard = Mux(em_pipe_reg.amo_op =/= AMO_NONE, io.amo_forward_data,
+			Mux(em_pipe_reg.is_clint && em_pipe_reg.enable, io.clint_r_data, io.data_cache_response_data >> ((em_pipe_reg.alu_out & "h07".U) << 3.U)))
 	val load_data_ext_hazard = Mux(em_pipe_reg.ld_type === LD_LW, Cat(Mux(load_data_hazard(31).asBool, "hffffffff".U, 0.U(32.W)), load_data_hazard(31, 0)),
 								Mux(em_pipe_reg.ld_type === LD_LWU, Cat(Fill(32, 0.U), load_data_hazard(31, 0)),
 									Mux(em_pipe_reg.ld_type === LD_LH, Cat(Mux(load_data_hazard(15).asBool, "hffffffffffff".U, 0.U(48.W)), load_data_hazard(15, 0)),
@@ -119,7 +121,7 @@ class ExecuteStage extends Module{
 
 	val src_unready = ((io.de_pipe_reg.src1_addr === em_pipe_reg.dest) 
 						|| (io.de_pipe_reg.src2_addr === em_pipe_reg.dest)) && em_pipe_reg.ld_type.orR && !io.data_cache_tag && 
-						em_pipe_reg.enable && io.de_pipe_reg.enable && !em_pipe_reg.is_clint
+						em_pipe_reg.enable && io.de_pipe_reg.enable && !em_pipe_reg.is_clint && !io.em_fault
 	io.src_unready := src_unready
 
 	val mul_result = RegInit(0.U(64.W))
@@ -284,7 +286,7 @@ class ExecuteStage extends Module{
 		em_pipe_reg.is_clint := is_clint
 		em_pipe_reg.csr_inst_mode := io.de_pipe_reg.csr_inst_mode
 		em_pipe_reg.csr_is_illegal := io.de_pipe_reg.csr_is_illegal
-		em_pipe_reg.csr_inst_misalign := io.de_pipe_reg.csr_inst_misalign
+		em_pipe_reg.csr_inst_misalign := (io.brCond_taken || (io.de_pipe_reg.pc_sel === PC_ALU && io.de_pipe_reg.enable)) && alu_out(1)
 		em_pipe_reg.csr_store_misalign := (io.de_pipe_reg.st_type =/= ST_XXX) && 
 											MuxCase(false.B,
 												IndexedSeq(
@@ -299,7 +301,7 @@ class ExecuteStage extends Module{
 												IndexedSeq(
 													(io.de_pipe_reg.ld_type === LD_LB || io.de_pipe_reg.ld_type === LD_LBU) -> false.B,
 													(io.de_pipe_reg.ld_type === LD_LH || io.de_pipe_reg.ld_type === LD_LHU) -> (alu_out(0) =/= 0.U),
-													(io.de_pipe_reg.ld_type === LD_LW || io.de_pipe_reg.ld_type === LWU)	-> (alu_out(1, 0) =/= 0.U),
+													(io.de_pipe_reg.ld_type === LD_LW || io.de_pipe_reg.ld_type === LD_LWU)	-> (alu_out(1, 0) =/= 0.U),
 													(io.de_pipe_reg.ld_type === LD_LD) -> (alu_out(2,0) =/= 0.U)
 												)
 											) 

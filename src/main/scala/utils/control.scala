@@ -183,7 +183,7 @@ object Control{
 		FENCE_I	->	List(PC_0,		A_XXX,	B_XXX,	 W_D,	IMM_X,		ALU_XXX,		BR_XXX,		ST_XXX,		LD_XXX,		WB_ALU,		N,		CSR_MODE_U,	CSR_NOP,		N,		N),
 		FENCE	->	List(PC_4,		A_XXX,	B_XXX,	 W_D,	IMM_X,		ALU_XXX,		BR_XXX,		ST_XXX,		LD_XXX,		WB_ALU,		N,		CSR_MODE_U,	CSR_NOP,		N,		N),	// treated as a nop
 		WFI		->	List(PC_4,		A_XXX,	B_XXX,	 W_D,	IMM_X,		ALU_XXX,		BR_XXX,		ST_XXX,		LD_XXX,		WB_ALU,		N,		CSR_MODE_U,	CSR_NOP,		N,		N),	// treated as a nop
-		SFENCE_VMA -> List(PC_4,	A_XXX,	B_XXX,	 W_D,	IMM_U,		ALU_COPY_B,	 	BR_XXX, 	ST_XXX, 	LD_XXX,		WB_ALU,		Y,		CSR_MODE_U,	CSR_NOP,		Y,		N)
+		SFENCE_VMA -> List(PC_4,	A_XXX,	B_XXX,	 W_D,	IMM_U,		ALU_COPY_B,	 	BR_XXX, 	ST_XXX, 	LD_XXX,		WB_ALU,		Y,		CSR_MODE_S,	CSR_NOP,		Y,		N)
 	)
 }
 
@@ -200,7 +200,7 @@ class ControlSignals extends Bundle{
 	val wb_sel = Output(UInt(2.W))
 	val wb_en = Output(Bool())
 	val alu_op = Output(UInt(5.W))
-	val prv = Output(UInt(1.W))
+	val prv = Output(UInt(2.W))
 	val csr_cmd = Output(UInt(3.W))
 	val is_illegal = Output(Bool())
 	val is_kill = Output(Bool())
@@ -209,6 +209,9 @@ class ControlSignals extends Bundle{
 class Control extends Module{
 	val io = IO(new ControlSignals)
 	val ctrlSignals = ListLookup(io.inst, Control.default, Control.map)
+	val isSFENCE = io.inst(6, 0) === "b1110011".U &&
+							 io.inst(14, 12) === 0.U &&
+							 io.inst(31, 25) === "b0001001".U
 
 	io.pc_sel := ctrlSignals(0)
 
@@ -225,6 +228,6 @@ class Control extends Module{
 	io.wb_en := ctrlSignals(10).asBool
 	io.prv := ctrlSignals(11)
 	io.csr_cmd := ctrlSignals(12)
-	io.is_illegal := ctrlSignals(13)
+	io.is_illegal := ctrlSignals(13).asBool && !isSFENCE
 	io.is_kill := ctrlSignals(14)
 }

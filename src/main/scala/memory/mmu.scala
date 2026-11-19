@@ -44,7 +44,7 @@ class PTE extends Bundle{
 	}
 
 	def fetchCheck(priv: UInt, sum: Bool) : Bool = {
-		privCheck(priv, sum) && X 
+		Mux(priv === CSR_MODE_S, !U, privCheck(priv, sum)) && X
 	}
 
 	def lsCheck(priv: UInt, sum: Bool, is_load: Bool, mxr: Bool) : Bool = {
@@ -136,7 +136,7 @@ class TLBEntry extends Bundle{
 	}
 
 	def fetchCheck(priv: UInt, sum: Bool) : Bool = {
-		privCheck(priv, sum) && X 
+		Mux(priv === CSR_MODE_S, !U, privCheck(priv, sum)) && X
 	}
 
 	def lsCheck(priv: UInt, sum: Bool, is_load: Bool, mxr: Bool) : Bool = {
@@ -171,7 +171,8 @@ class TLB(tlb_name: String) extends Module{
 		val mprv = Input(Bool())
 		val sum	  = Input(Bool())
 		val mxr   = Input(Bool())
-		val wen   = Input(Bool())
+		val wen   = Input(Bool())		// access needs store permission
+		val rw    = Input(Bool())		// direction of the translated request
 		val satp  = Input(UInt(64.W))
 		val va 	  = Input(UInt(64.W))
 		val mask  = Input(UInt(8.W))
@@ -183,6 +184,7 @@ class TLB(tlb_name: String) extends Module{
 
 		val flush = Input(Bool())
 		val tlb_request = Output(new CPU_Request)
+		val fetch_request = Output(new CPU_Request)
 		val cache_response = Input(new CPU_Response)
 	})
 
@@ -213,6 +215,11 @@ class TLB(tlb_name: String) extends Module{
 	io.tlb_request.mask  := 0.U 
 	io.tlb_request.rw 	 := false.B 
 	io.tlb_request.valid := false.B
+	io.fetch_request.addr := 0.U
+	io.fetch_request.data := 0.U
+	io.fetch_request.mask := 0.U
+	io.fetch_request.rw := false.B
+	io.fetch_request.valid := false.B
 	io.fault := no_page_falut.asUInt
 	io.tlb_ready := false.B
 
@@ -261,7 +268,11 @@ class TLB(tlb_name: String) extends Module{
 		is(sMatch){
 			next_state := sMatch
 			when(!io.stall){
-				when(matchList.reduce(_|_)){
+				when(va_reg(63, 39) =/= Fill(25, va_reg(38))){
+					io.fault := raise_fault()
+					io.tlb_ready := true.B
+					next_state := sIdle
+				}.elsewhen(matchList.reduce(_|_)){
 					// check the permission of the matched entries only
 					val permList = for(i <- 0 until 16) yield {
 						matchList(i) && Mux(tlb_type, tlbe(i.U).fetchCheck(io.priv, io.sum), 
@@ -374,7 +385,7 @@ class TLB(tlb_name: String) extends Module{
 		is(sData){						// issue the translated memory access
 			next_state := sData 
 			io.tlb_request.valid := true.B 
-			io.tlb_request.rw 	  := io.wen
+			io.tlb_request.rw 	  := io.rw
 			io.tlb_request.mask  := io.mask
 			val pa = WireDefault(0.U(56.W))
 			when(page_size_reg === pg_1g.asUInt){
@@ -385,6 +396,11 @@ class TLB(tlb_name: String) extends Module{
 				pa := Cat(pte_reg.ppn, va_reg(11, 0))
 			}
 			io.tlb_request.addr := pa(31, 0)
+			io.fetch_request.addr := pa(31, 0)
+			io.fetch_request.data := 0.U
+			io.fetch_request.mask := 0.U
+			io.fetch_request.rw := false.B
+			io.fetch_request.valid := true.B
 
 			// only refill after a page walk; use the PTE from the walk, not the data response
 			when(walked){
@@ -393,7 +409,11 @@ class TLB(tlb_name: String) extends Module{
 			when(!io.stall && io.cache_response.ready){
 				next_state := sIdle
 				io.tlb_ready := true.B
-			} 
+				// the next walk fills the next entry
+				when(walked){
+					random.inc()
+				}
+			}
 		}
 	}
 

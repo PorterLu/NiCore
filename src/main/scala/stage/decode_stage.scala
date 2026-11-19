@@ -243,7 +243,7 @@ class DecodeStage extends Module{
 		de_pipe_reg.wb_en := control.io.wb_en
 		de_pipe_reg.csr_inst_mode := control.io.prv
 		de_pipe_reg.csr_is_illegal := control.io.is_illegal || mode_illegal || io.csr_accessType_illegal || (control.io.prv > io.csr_mode)
-		de_pipe_reg.csr_inst_misalign := ((io.fd_pipe_reg.pc & 3.U) =/= 0.U) && io.fd_pipe_reg.enable
+		de_pipe_reg.csr_inst_misalign := false.B
 		de_pipe_reg.iTLB_fault := io.fd_pipe_reg.iTLB_fault
 		de_pipe_reg.amo_op := Mux(is_amo_inst, amo_op, AMO_NONE)
 		de_pipe_reg.enable := io.fd_pipe_reg.enable

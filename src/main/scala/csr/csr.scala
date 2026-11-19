@@ -92,6 +92,8 @@ object CSR{
 
 	// ---- M-mode CSRs required by OpenSBI ----
 	val CSR_MCOUNTINHIBIT = 0x320.U(12.W)
+	// mstatus bits 35:32, SXL and UXL: the lower modes are 64 bit
+	val MSTATUS_XL = "h0000000a00000000".U(64.W)
 	val CSR_MENVCFG    = 0x30a.U(12.W)
 	val CSR_MSECCFG   = 0x747.U(12.W)
 	val CSR_SENVCFG   = 0x10a.U(12.W)
@@ -182,6 +184,11 @@ class CSR extends Module{
 		val trapVec = Output(UInt(64.W))
 		val stall = Input(Bool())
 		val trap = Output(Bool())
+		// trap event for the difftest: the cycle an exception or interrupt is taken
+		val trap_valid = Output(Bool())
+		val trap_cause = Output(UInt(64.W))
+		val trap_epc = Output(UInt(64.W))
+		val trap_tval = Output(UInt(64.W))
 		val mode = Output(UInt(2.W))
 		val accessType_illegal = Output(Bool())
 
@@ -249,6 +256,8 @@ class CSR extends Module{
 	val senvcfg  = RegInit(0.U(64.W))
 	val mseccfg  = RegInit(0.U(64.W))
 	val mcountinhibit = RegInit(0.U(64.W))
+	val mcounteren = RegInit(0.U(32.W))
+	val scounteren = RegInit(0.U(32.W))
 	val mhpmevent = RegInit(VecInit(Seq.fill(4)(0.U(64.W))))
 	val mhpmcounter = RegInit(VecInit(Seq.fill(4)(0.U(64.W))))
 	val cycle 	= mcycle.asUInt
@@ -261,26 +270,26 @@ class CSR extends Module{
 		BitPat(CSR_CYCLE)		->	List(cycle, 			true.B,	false.B),
 		BitPat(CSR_INSTRET) 	->	List(instret, 			true.B,	false.B),
 		BitPat(CSR_SSTATUS)		->	List(sstatus.asUInt, 	true.B,	true.B),
-		BitPat(CSR_SIE)			->	List(sie.asUInt,		true.B,	true.B),
+		BitPat(CSR_SIE)			->	List(mie.asUInt & mideleg.asUInt,	true.B,	true.B),
 		BitPat(CSR_STVEC)		-> 	List(stvec.asUInt,		true.B,	true.B),
-		BitPat(CSR_SCOUNTEREN)	-> 	List(0.U(64.W),				true.B,	true.B),
+		BitPat(CSR_SCOUNTEREN)	-> 	List(scounteren,			true.B,	true.B),
 		BitPat(CSR_SSCRATCH)	-> 	List(sscratch.asUInt,	true.B,	true.B),
 		BitPat(CSR_SEPC)		->	List(sepc.asUInt,		true.B,	true.B),
 		BitPat(CSR_SCAUSE)		-> 	List(scause.asUInt,		true.B,	true.B),
 		BitPat(CSR_STVAL)		->	List(stval.asUInt,		true.B,	true.B),
-		BitPat(CSR_SIP)			->	List(sip.asUInt,		true.B,	true.B),
+		BitPat(CSR_SIP)			->	List(mip.asUInt & mideleg.asUInt,	true.B,	true.B),
 		BitPat(CSR_SATP)		->	List(satp.asUInt,		true.B,	true.B),
 		BitPat(CSR_MVENDERID)	->	List(0.U(64.W),				true.B,	false.B),
 		BitPat(CSR_MARCHID)		-> 	List(0.U(64.W),				true.B,	false.B),
 		BitPat(CSR_MIMPID)		->	List(0.U(64.W),				true.B,	false.B),
 		BitPat(CSR_MHARTID)		->	List(0.U(64.W),				true.B,	false.B),
-		BitPat(CSR_MSTATUS)		->	List(mstatus.asUInt,	true.B,	true.B),
-		BitPat(CSR_MISA)		->	List(misa.asUInt,		true.B,	false.B),
+		BitPat(CSR_MSTATUS)		->	List(mstatus.asUInt | MSTATUS_XL,	true.B,	true.B),
+		BitPat(CSR_MISA)		->	List(misa.asUInt,		true.B,	true.B),
 		BitPat(CSR_MEDELEG)		->	List(medeleg.asUInt,	true.B,	true.B),
 		BitPat(CSR_MIDELEG)		->	List(mideleg.asUInt,	true.B,	true.B),
 		BitPat(CSR_MIE)			->	List(mie.asUInt,		true.B,	true.B),
 		BitPat(CSR_MTVEC)		->	List(mtvec.asUInt,		true.B,	true.B),
-		BitPat(CSR_MCOUNTEREN)	->	List(0.U(64.W),				true.B,	true.B),
+		BitPat(CSR_MCOUNTEREN)	->	List(mcounteren,			true.B,	true.B),
 		BitPat(CSR_MSCRATCH)	->	List(mscratch.asUInt,	true.B,	true.B),
 		BitPat(CSR_MEPC)		->	List(mepc.asUInt,		true.B,	true.B),
 		BitPat(CSR_MCAUSE)		-> 	List(mcause.asUInt,		true.B,	true.B),
@@ -299,12 +308,12 @@ class CSR extends Module{
 		BitPat(CSR_MSECCFG)		->	List(mseccfg,			true.B,	true.B),
 		BitPat(CSR_MCONFIGPTR)	->	List(0.U(64.W),				true.B,	false.B),
 		BitPat(CSR_MCOUNTINHIBIT)->	List(mcountinhibit,	true.B,	true.B),
-		// trigger (read 0, no write)
-		BitPat(CSR_TSELECT)		->	List(0.U(64.W),				true.B,	false.B),
-		BitPat(CSR_TDATA1)		->	List(0.U(64.W),				true.B,	false.B),
-		BitPat(CSR_TDATA2)		->	List(0.U(64.W),				true.B,	false.B),
-		BitPat(CSR_TDATA3)		->	List(0.U(64.W),				true.B,	false.B),
-		BitPat(CSR_MCONTEXT)	->	List(0.U(64.W),				true.B,	false.B),
+		// no debug triggers: the registers read 0 and ignore writes
+		BitPat(CSR_TSELECT)		->	List(0.U(64.W),				true.B,	true.B),
+		BitPat(CSR_TDATA1)		->	List(0.U(64.W),				true.B,	true.B),
+		BitPat(CSR_TDATA2)		->	List(0.U(64.W),				true.B,	true.B),
+		BitPat(CSR_TDATA3)		->	List(0.U(64.W),				true.B,	true.B),
+		BitPat(CSR_MCONTEXT)	->	List(0.U(64.W),				true.B,	true.B),
 		// performance counters
 		BitPat(CSR_MHPMEVENT3)	->	List(mhpmevent(0),		true.B,	true.B),
 		BitPat(CSR_MHPMEVENT4)	->	List(mhpmevent(1),		true.B,	true.B),
@@ -334,7 +343,7 @@ class CSR extends Module{
 	)
 
 	io.mode := mode
-	io.mstatus := mstatus.asUInt
+	io.mstatus := mstatus.asUInt | MSTATUS_XL
 	io.sstatus := sstatus.asUInt
 	io.satp    := satp.asUInt
 	io.mprv    := mstatus.mprv
@@ -351,7 +360,11 @@ class CSR extends Module{
 		RS	->	(readable && writable),
 		RC	->	(readable && writable)
 	))
-	io.accessType_illegal := !instValid
+	val counterEnable = Mux(mode === CSR_MODE_M, true.B,
+							Mux(mode === CSR_MODE_S, mcounteren(io.r_addr(4, 0)),
+								mcounteren(io.r_addr(4, 0)) && scounteren(io.r_addr(4, 0))))
+	val counterDenied = io.r_addr(11, 5) === "b1100000".U && !counterEnable
+	io.accessType_illegal := !instValid || (counterDenied && io.r_op =/= CSR.N)
 
 	io.r_data := data
 
@@ -436,12 +449,13 @@ class CSR extends Module{
 							Cat(false.B, excCause))
 	
 	//printf(p"trap_cause:${Hexadecimal(cause)}\n")
-	val excValue = Mux(excCause === EXC_INST_PAGE, io.excPC,
+	val excValue = Mux(hasInt, 0.U, Mux(excCause === EXC_INST_PAGE, io.excPC,
 							Mux((excCause === EXC_LOAD_PAGE) || (excCause === EXC_STORE_PAGE) || 
 								(excCause === EXC_LOAD_ADDR) || (excCause === EXC_STORE_ADDR) ,io.alu_out,
-								Mux((excCause === EXC_BRK_POINT) || (excCause === EXC_INST_ADDR), io.excPC,
-										Mux(excCause === EXC_ILL_INST, io.inst, 0.U))
-							)) 
+								Mux(excCause === EXC_BRK_POINT, io.excPC,
+									Mux(excCause === EXC_INST_ADDR, Cat(io.alu_out(63, 1), 0.U(1.W)),
+										Mux(excCause === EXC_ILL_INST, io.inst, 0.U)))
+							))) 
 
 	//陷入的地址判断，只有一种情况会有偏移，那就是在在向量模式并且是终端，在direct模式下永远是直接进入stvec或者mtvec的地址
 	val trapVecS = Mux(stvec.mode(0) && hasInt, (stvec.base + cause(63, 0)), stvec.base) << 2
@@ -455,7 +469,8 @@ class CSR extends Module{
 	*/
 	val intMode = Mux(handIntS, CSR_MODE_S, CSR_MODE_M)
 	val sretMode = Cat(false.B, sstatus.spp)
-	val mretMode = mstatus.mpp
+	val mstatusWrite = writeEn && io.w_addr === CSR_MSTATUS
+	val mretMode = Mux(mstatusWrite, writeData(12, 11), mstatus.mpp)
 	val excMode = Mux(handExcS, CSR_MODE_S, CSR_MODE_M)
 	val trapMode = Mux(hasInt, intMode,
 					Mux(hasExc, excMode, 
@@ -464,20 +479,14 @@ class CSR extends Module{
 							)
 						)
 					)
-	val nextMode = Mux((hasInt || hasExc) && !io.stall && !writeEn, trapMode, mode)		//冲刷之前的所有寄存器，所以不会存在异常和写同时存在的情况
+	val nextMode = Mux((hasInt || hasExc) && !io.stall && !writeEn, trapMode,
+					Mux((io.isSret || io.isMret) && io.em_enable && !io.stall, trapMode, mode))		//冲刷之前的所有寄存器，所以不会存在异常和写同时存在的情况
 	mode := nextMode
 
 	//如果有中断，会将相应的位置高, 这里由于sip是线网所以会同步更新				
-	mip.meip := mip.meip & io.extern		
-	mip.seip := mip.seip & io.extern
-	mip.mtip := (mip.mtip | io.int_timer) && !io.int_timer_clear
-	mip.stip := (mip.stip | io.int_timer) && !io.int_timer_clear
-	mip.msip := (mip.msip | io.int_soft) && !io.int_soft_clear 
-	mip.ssip := (mip.ssip | io.int_soft) && !io.int_soft_clear
-	sip.seip := mip.seip
-	sip.stip := mip.stip
-	sip.ssip := mip.ssip
-	sie.castAssign(MieCsr(), mie.asUInt)
+	mip.meip := io.extern
+	mip.mtip := io.int_timer
+	mip.msip := io.int_soft
 
 	//更新计数寄存器
 	mcycle.data := mcycle.data + 1.U 
@@ -487,7 +496,7 @@ class CSR extends Module{
 
 	//根据情况刷新不同阶段的流水线
 	io.flush_mask := 0.U
-	when(!io.stall && !writeEn){
+	when(!io.stall && (!writeEn || io.isSret || io.isMret)){
 		when(hasInt && !hasExc && !io.isSret && !io.isMret){
 			io.flush_mask := "b0111".U	
 		}.elsewhen(hasInt && (hasExc || io.isMret || io.isSret)){											//&& !hasExc && !io.isMret && !io.isSret
@@ -505,9 +514,23 @@ class CSR extends Module{
 
 	when(!io.stall){
 		when(writeEn){
-			when(io.w_addr === CSR_SSTATUS){ mstatus.castAssign(SstatusCsr(), writeData)}
-			when(io.w_addr === CSR_SIE){ mie.castAssign(SieCsr(), writeData) }
-			when(io.w_addr === CSR_SIP){ mip.castAssign(SipCsr(), writeData) }
+			when(io.w_addr === CSR_SSTATUS){
+				mstatus.mxr := writeData(19)
+				mstatus.sum := writeData(18)
+				mstatus.spp := writeData(8)
+				mstatus.spie := writeData(5)
+				mstatus.sie := writeData(1)
+			}
+			when(io.w_addr === CSR_SIE){
+				when(mideleg.asUInt(9)){ mie.seie := writeData(9) }
+				when(mideleg.asUInt(5)){ mie.stie := writeData(5) }
+				when(mideleg.asUInt(1)){ mie.ssie := writeData(1) }
+			}
+			when(io.w_addr === CSR_SIP){
+				when(mideleg.asUInt(1)){ mip.ssip := writeData(1) }
+			}
+			when(io.w_addr === CSR_MCOUNTEREN){ mcounteren := writeData(31, 0) }
+			when(io.w_addr === CSR_SCOUNTEREN){ scounteren := writeData(31, 0) }
 			when(io.w_addr === CSR_MCYCLE){ mcycle <= writeData }
 			when(io.w_addr === CSR_MINSTRET){ minstret <= writeData }
 			when(io.w_addr === CSR_STVEC){ stvec <= writeData }
@@ -515,38 +538,48 @@ class CSR extends Module{
 			when(io.w_addr === CSR_SEPC){ sepc <= writeData }
 			when(io.w_addr === CSR_SCAUSE){ scause <= writeData }
 			when(io.w_addr === CSR_STVAL){ stval <= writeData }
-			when(io.w_addr === CSR_SATP){ satp <= writeData }
+			when(io.w_addr === CSR_SATP && (writeData(63, 60) === 8.U || writeData(63, 60) === 0.U)){ satp <= writeData }
 			when(io.w_addr === CSR_MSTATUS){ mstatus <= writeData }
 			when(io.w_addr === CSR_MEDELEG){ medeleg <= writeData }
 			when(io.w_addr === CSR_MIDELEG){ mideleg <= writeData }
 			when(io.w_addr === CSR_MIE){ mie <= writeData }
-			when(io.w_addr === CSR_MIP){ mip <= writeData }
+			when(io.w_addr === CSR_MIP){
+				mip.seip := writeData(9)
+				mip.stip := writeData(5)
+				mip.ssip := writeData(1)
+			}
 			when(io.w_addr === CSR_MTVEC){ mtvec <= writeData }
 			when(io.w_addr === CSR_MSCRATCH){ mscratch <= writeData }
 			when(io.w_addr === CSR_MEPC){ mepc <= writeData }
 			when(io.w_addr === CSR_MCAUSE){ mcause <= writeData }
 			when(io.w_addr === CSR_MTVAL){ mtval <= writeData }
-			when(io.w_addr === CSR_PMPCFG0){ pmpcfg0 <= writeData }
-			when(io.w_addr === CSR_PMPCFG1){ pmpcfg1 <= writeData }
-			when(io.w_addr === CSR_PMPCFG2){ pmpcfg2 <= writeData }
-			when(io.w_addr === CSR_PMPCFG3){ pmpcfg3 <= writeData }
+			when(io.w_addr === CSR_PMPCFG0){ pmpcfg0 := writeData }
+			when(io.w_addr === CSR_PMPCFG1){ pmpcfg1 := writeData }
+			when(io.w_addr === CSR_PMPCFG2){ pmpcfg2 := writeData }
+			when(io.w_addr === CSR_PMPCFG3){ pmpcfg3 := writeData }
 			for(i <- 0 until 16){
 				when(io.w_addr === ("h3b0".U(12.W) + i.U)){
-					pmpaddr(i) <= writeData
+					pmpaddr(i) := writeData
 				}
 			}
-			when(io.w_addr === CSR_MENVCFG){ menvcfg <= writeData }
-			when(io.w_addr === CSR_SENVCFG){ senvcfg <= writeData }
-			when(io.w_addr === CSR_MSECCFG){ mseccfg <= writeData }
-			when(io.w_addr === CSR_MCOUNTINHIBIT){ mcountinhibit <= writeData }
-			when(io.w_addr === CSR_MHPMEVENT3){ mhpmevent(0) <= writeData }
-			when(io.w_addr === CSR_MHPMEVENT4){ mhpmevent(1) <= writeData }
-			when(io.w_addr === CSR_MHPMEVENT5){ mhpmevent(2) <= writeData }
-			when(io.w_addr === CSR_MHPMEVENT6){ mhpmevent(3) <= writeData }
-			when(io.w_addr === CSR_MHPMCOUNTER3){ mhpmcounter(0) <= writeData }
-			when(io.w_addr === CSR_MHPMCOUNTER4){ mhpmcounter(1) <= writeData }
-			when(io.w_addr === CSR_MHPMCOUNTER5){ mhpmcounter(2) <= writeData }
-			when(io.w_addr === CSR_MHPMCOUNTER6){ mhpmcounter(3) <= writeData }
+			when(io.w_addr === CSR_MENVCFG){ menvcfg := writeData }
+			when(io.w_addr === CSR_SENVCFG){ senvcfg := writeData }
+			when(io.w_addr === CSR_MSECCFG){ mseccfg := writeData }
+			when(io.w_addr === CSR_MCOUNTINHIBIT){ mcountinhibit := writeData }
+			when(io.w_addr === CSR_MHPMEVENT3){ mhpmevent(0) := writeData }
+			when(io.w_addr === CSR_MHPMEVENT4){ mhpmevent(1) := writeData }
+			when(io.w_addr === CSR_MHPMEVENT5){ mhpmevent(2) := writeData }
+			when(io.w_addr === CSR_MHPMEVENT6){ mhpmevent(3) := writeData }
+			when(io.w_addr === CSR_MHPMCOUNTER3){ mhpmcounter(0) := writeData }
+			when(io.w_addr === CSR_MHPMCOUNTER4){ mhpmcounter(1) := writeData }
+			when(io.w_addr === CSR_MHPMCOUNTER5){ mhpmcounter(2) := writeData }
+			when(io.w_addr === CSR_MHPMCOUNTER6){ mhpmcounter(3) := writeData }
+			when(io.isMret && io.em_enable) {
+				mstatus.mie := Mux(mstatusWrite, writeData(7), mstatus.mpie)
+				mstatus.mpie := true.B
+				mstatus.mpp := CSR_MODE_U
+				when(mretMode =/= CSR_MODE_M){ mstatus.mprv := false.B }
+			}
 		}.elsewhen(handIntS){
 			sepc 	<= 	interrupt_return_addr//考虑跳转指令时发生中断的情况,Mux((hasExc || io.isSret || io.isMret) && io.em_enable, io.excPC,  interrupt_return_addr)
 			scause 	<= cause
@@ -561,7 +594,7 @@ class CSR extends Module{
 			mstatus.mpie := mstatus.mie
 			mstatus.mie := false.B
 			mstatus.mpp := mode
-		}.elsewhen(hasExcS){
+		}.elsewhen(handExcS){
 			sepc	<= io.excPC
 			scause 	<= cause
 			stval 	<= excValue
@@ -579,10 +612,12 @@ class CSR extends Module{
 			mstatus.sie := mstatus.spie									//
 			mstatus.spie := true.B										//
 			mstatus.spp	:= false.B										//spp只有一位可以直接赋值为false
+			mstatus.mprv := false.B
 		}.elsewhen(io.isMret){
 			mstatus.mie := mstatus.mpie
 			mstatus.mpie := true.B
 			mstatus.mpp := CSR_MODE_U									//mpp有两位
+			when(mstatus.mpp =/= CSR_MODE_M){ mstatus.mprv := false.B }
 		}		
 	}
 
@@ -591,5 +626,10 @@ class CSR extends Module{
 						)
 					)
 
-	io.trap := (((hasExc || io.isSret || io.isMret) && io.em_enable)|| hasInt)  && !io.stall & !writeEn
+	io.trap := (((hasExc && io.em_enable) || hasInt) && !io.stall && !writeEn) ||
+				((io.isSret || io.isMret) && io.em_enable && !io.stall)
+	io.trap_valid := (hasInt || hasExc) && !io.stall && !writeEn
+	io.trap_cause := cause
+	io.trap_epc := Mux(hasInt, interrupt_return_addr, io.excPC)
+	io.trap_tval := excValue
 }

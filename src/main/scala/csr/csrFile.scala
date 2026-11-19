@@ -96,9 +96,9 @@ class SstatusCsr extends CSR_Bundle{	//继承了Csr_Bundle会有自动检查宽�
 		requireWidth(data)
 		sd   	:= data(63)
 		wpri0 	:= 0.U(29.W)
-		uxl		:= 0.U(1.W)
+		uxl		:= 2.U(2.W)
 		wpri1	:= 0.U(12.W)
-		mxr 	:= 0.U(1.W)
+		mxr 	:= data(19)
 		sum  	:= data(18)
 		wpri2	:= 0.U(1.W)
 		xs		:= 0.U(2.W)
@@ -305,7 +305,8 @@ class MisaCsr extends CSR_Bundle {
 
 object MisaCsr extends CSR_Object[MisaCsr] {
   def apply() = new MisaCsr
-  override def default() = "h8000000000001100".U.asTypeOf(apply())
+  // RV64IMA with S and U mode
+  override def default() = "h8000000000141101".U.asTypeOf(apply())
 }
 
 // machine exception delegation register
@@ -315,8 +316,7 @@ class MedelegCsr extends CSR_Bundle {
   //instruction misaligned; illegal inst; breakpoint,; load misaligned; store misaligned; ecall from u; ecall from s, ecall from m;
   override def <=(d: UInt) = {
     requireWidth(d)
-    data  := Cat(0.U(52.W), d(11), 0.U(1.W), d(9, 8),
-                 0.U(1.W), d(6), 0.U(1.W), d(4, 2), 0.U(1.W), d(0))
+    data  := d & "hf7ff".U
   }
 }
 
@@ -330,7 +330,7 @@ class MidelegCsr extends CSR_Bundle {
 
   override def <=(d: UInt) = {
     requireWidth(d)
-    data  := Cat(0.U(52.W), d(11), 0.U(1.W), d(9), 0.U(1.W), d(7), 0.U(1.W), d(5), 0.U(1.W), d(3), 0.U(1.W), d(1), 0.U(1.W))
+    data  := d & "h222".U
   }
 }
 

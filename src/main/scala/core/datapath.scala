@@ -22,17 +22,63 @@ class CacheIO extends Bundle{
 	val accessType = Output(UInt(2.W))
 }
 
+class DCacheArbiter extends Module{
+	val io = IO(new Bundle{
+		val cpu = Flipped(new CacheIO)
+		val ptw = Flipped(new CacheIO)
+		val out = new CacheIO
+	})
+
+	val selecting_cpu = RegInit(true.B)
+	val busy = RegInit(false.B)
+	val request_cpu = Mux(busy, selecting_cpu, io.cpu.cpu_request.valid)
+
+	when(!busy) {
+		busy := io.cpu.cpu_request.valid || io.ptw.cpu_request.valid
+		selecting_cpu := io.cpu.cpu_request.valid || !io.ptw.cpu_request.valid
+	}.elsewhen(io.out.cpu_response.ready) {
+		busy := false.B
+	}
+
+	io.out.cpu_request := Mux(request_cpu, io.cpu.cpu_request, io.ptw.cpu_request)
+	io.out.flush := request_cpu && io.cpu.flush
+	io.out.accessType := Mux(request_cpu, io.cpu.accessType, io.ptw.accessType)
+
+	io.cpu.cpu_response.data := Mux(selecting_cpu, io.out.cpu_response.data, 0.U)
+	io.ptw.cpu_response.data := Mux(selecting_cpu, 0.U, io.out.cpu_response.data)
+	when(selecting_cpu) {
+		io.cpu.cpu_response.ready := io.out.cpu_response.ready
+		io.ptw.cpu_response.ready := false.B
+	}.otherwise {
+		io.cpu.cpu_response.ready := false.B
+		io.ptw.cpu_response.ready := io.out.cpu_response.ready
+	}
+}
+
 class DatapathIO extends Bundle{
 	val pc = Output(UInt(64.W))
 	val inst = Output(chiselTypeOf(Instructions.NOP))
 	val commit_inst = Output(chiselTypeOf(Instructions.NOP))
 	val commit_valid = Output(Bool())   // true when an instruction retires this cycle
 	val commit_pc = Output(UInt(64.W))  // PC of the retiring instruction
+	val commit_wb_en = Output(Bool())
+	val commit_wb_addr = Output(UInt(5.W))
+	val commit_wb_data = Output(UInt(64.W))
+	val trap_valid = Output(Bool())
+	val trap_cause = Output(UInt(64.W))
+	val trap_epc = Output(UInt(64.W))
+	val trap_tval = Output(UInt(64.W))
+	val store_valid = Output(Bool())
+	val store_addr = Output(UInt(64.W))
+	val store_data = Output(UInt(64.W))
+	val store_mask = Output(UInt(8.W))
 	val start = Output(Bool())
 	val stall = Output(Bool())
 	val icache = new CacheIO
 	val dcache = new CacheIO
 	val interrupt = Input(Bool())
+	val timer_interrupt = Input(Bool())
+	val soft_interrupt = Input(Bool())
 }
 
 class Datapath extends Module{
@@ -44,6 +90,7 @@ class Datapath extends Module{
 	val execute_stage = Module(new ExecuteStage)
 	val memory_stage = Module(new MemoryStage)
 	val writeback_stage = Module(new WritebackStage)
+	val dcache_arb = Module(new DCacheArbiter)
 
 	val csr = Module(new CSR)							//csr寄存器文件，同时可以用于特权判断，中断和异常处理
 	val satp = csr.io.satp
@@ -51,8 +98,11 @@ class Datapath extends Module{
 	val sstatus = csr.io.sstatus
 	val sum = sstatus(18)
 	val mxr = sstatus(19)
-	// Sv39 paging is active in S/U mode when satp.MODE == 8
+	// Sv39 paging is active in S/U mode when satp.MODE == 8. Data accesses
+	// use the effective privilege: MPP while mstatus.MPRV is set.
 	val is_page = !csr.io.mode(1) && (satp(63, 60) === 8.U)
+	val data_mode = Mux(csr.io.mprv, csr.io.mpp, csr.io.mode)
+	val is_page_data = !data_mode(1) && (satp(63, 60) === 8.U)
 
 	//必须使得enable信号为false时，对应的流水线寄存器中输出的内容不对CPU状态机的运行产生影响
 	val icache_flush_tag = fetch_stage.io.icache_flush_tag
@@ -65,7 +115,7 @@ class Datapath extends Module{
 	val dcache_stall = (execute_stage.io.em_pipe_reg.ld_type.orR || execute_stage.io.em_pipe_reg.st_type.orR || 
 						execute_stage.io.em_pipe_reg.inst === FENCE_I) && 
 						execute_stage.io.em_pipe_reg.enable && (!data_cache_tag || memory_stage.io.amo_busy) && !(execute_stage.io.em_pipe_reg.is_clint) &&
-						(memory_stage.io.dTLB_fault === 0.U)
+						!memory_stage.io.em_fault
 	val icache_stall = !io.icache.cpu_response.ready && fetch_stage.io.icache.cpu_request.valid
 	val itlb_stall = !fetch_stage.io.tlb_ready
 	val dtlb_stall = !memory_stage.io.tlb_ready
@@ -91,10 +141,18 @@ class Datapath extends Module{
 	val csr_wen = (csr.io.w_op === CSR.W || csr.io.w_op === CSR.RW || csr.io.w_op === CSR.RS || csr.io.w_op === CSR.RC) && csr.io.mw_enable
 	val satp_flush = csr.io.w_addr === CSR_SATP && csr_wen
 	val tlb_flush = sfence_em || satp_flush
+	// SFENCE.VMA, FENCE.I and a write to satp change how the instructions
+	// behind them are fetched: when such an instruction leaves EM (or MW for
+	// the CSR write), everything younger is flushed and fetched again from
+	// the instruction after it.
+	val fence_i_em = execute_stage.io.em_pipe_reg.inst === FENCE_I && execute_stage.io.em_pipe_reg.enable
+	val serialize_em = sfence_em || fence_i_em
+	val serial_redirect = RegInit(false.B)
+	val serial_redirect_pc = RegInit("h80000000".U(64.W))
 
-	val flush_fd = csr.io.flush_mask(0) || (br_flush || jmp_flush) || csr_atomic_flush(0) || icache_flush_tag || dcache_flush_tag || sfence_em
-	val flush_de = csr.io.flush_mask(1)	|| (br_flush || jmp_flush) || csr_atomic_flush(1) || icache_flush_tag || dcache_flush_tag || sfence_em	// && !stall
-	val flush_em = csr.io.flush_mask(2)	|| csr_atomic_flush(2) || (icache_flush_tag || dcache_flush_tag)							// && !stall
+	val flush_fd = csr.io.flush_mask(0) || (br_flush || jmp_flush) || csr_atomic_flush(0) || serialize_em || satp_flush || serial_redirect
+	val flush_de = csr.io.flush_mask(1)	|| (br_flush || jmp_flush) || csr_atomic_flush(1) || serialize_em || satp_flush || serial_redirect	// && !stall
+	val flush_em = csr.io.flush_mask(2)	|| csr_atomic_flush(2) || serialize_em || satp_flush || serial_redirect							// && !stall
 	val flush_mw = csr.io.flush_mask(3) || csr_atomic_flush(3)
 
 	val brCond_taken = WireInit(false.B)
@@ -104,8 +162,8 @@ class Datapath extends Module{
 	io.start := started
 	csr.io.int_timer_clear := memory_stage.io.clint_timer_clear
 	csr.io.int_soft_clear := memory_stage.io.clint_soft_clear
-	csr.io.int_timer := memory_stage.io.clint_timer_valid
-	csr.io.int_soft  := memory_stage.io.clint_soft_valid
+	csr.io.int_timer := io.timer_interrupt
+	csr.io.int_soft  := io.soft_interrupt
 	csr.io.extern    := io.interrupt
 	io.stall := stall
 
@@ -137,6 +195,15 @@ class Datapath extends Module{
 		started := false.B
 	}
 
+	when(!stall) {
+		serial_redirect := (serialize_em || satp_flush) && !csr.io.trap
+		when(serialize_em) {
+			serial_redirect_pc := execute_stage.io.em_pipe_reg.pc + 4.U
+		}.elsewhen(satp_flush) {
+			serial_redirect_pc := memory_stage.io.mw_pipe_reg.pc + 4.U
+		}
+	}
+
 	fetch_stage.io.started := started
 	fetch_stage.io.stall := stall 
 	fetch_stage.io.pipeline_stall := pipeline_stall
@@ -151,6 +218,8 @@ class Datapath extends Module{
 	fetch_stage.io.csr_trap := csr.io.trap
 	fetch_stage.io.csr_trapVec := csr.io.trapVec
 	fetch_stage.io.csr_next_fetch := csr_next_fetch
+	fetch_stage.io.serial_redirect := serial_redirect
+	fetch_stage.io.serial_redirect_pc := serial_redirect_pc
 	fetch_stage.io.icache.cpu_response.ready := io.icache.cpu_response.ready
 	fetch_stage.io.icache.cpu_response.data := io.icache.cpu_response.data
 	fetch_stage.io.dcache_flush_tag := execute_stage.io.dcache_flush_tag
@@ -163,6 +232,7 @@ class Datapath extends Module{
 	fetch_stage.io.brCond_taken := execute_stage.io.brCond_taken
 	fetch_stage.io.jump_addr := execute_stage.io.jump_addr
 	fetch_stage.io.icache <> io.icache
+	fetch_stage.io.ptw <> dcache_arb.io.ptw
 	fetch_stage.io.csr_atomic := csr_atomic
 	csr.io.fd_enable := fetch_stage.io.fd_pipe_reg.enable
 	csr.io.fd_pipe_reg_pc := fetch_stage.io.fd_pipe_reg.pc	
@@ -196,6 +266,7 @@ class Datapath extends Module{
 	br_flush := execute_stage.io.br_flush
 	brCond_taken := execute_stage.io.brCond_taken
 	execute_stage.io.clint_r_data := memory_stage.io.clint_r_data
+	execute_stage.io.amo_forward_data := memory_stage.io.amo_forward_data
 	execute_stage.io.data_cache_response_data := memory_stage.io.data_cache_response_data
 	execute_stage.io.data_cache_tag := memory_stage.io.data_cache_tag
 	execute_stage.io.dcache_cpu_response_ready := io.dcache.cpu_response.ready
@@ -211,10 +282,11 @@ class Datapath extends Module{
 	execute_stage.io.mw_pipe_reg_load_data := memory_stage.io.mw_pipe_reg.load_data
 	execute_stage.io.mw_pipe_reg_wb_sel := memory_stage.io.mw_pipe_reg.wb_sel
 	execute_stage.io.dTLB_ready := memory_stage.io.tlb_ready
+	execute_stage.io.em_fault := memory_stage.io.em_fault
 
 	memory_stage.io.stall := stall
 	memory_stage.io.pipeline_stall := pipeline_stall
-	memory_stage.io.tlb_valid := is_page
+	memory_stage.io.tlb_valid := is_page_data
 	memory_stage.io.sum := sum
 	memory_stage.io.mxr := mxr 
 	memory_stage.io.mode := csr.io.mode
@@ -232,14 +304,15 @@ class Datapath extends Module{
 	data_cache_tag := memory_stage.io.data_cache_tag
 	data_cache_response_data := memory_stage.io.data_cache_response_data
 	memory_stage.io.em_pipe_reg <> execute_stage.io.em_pipe_reg
-	io.dcache <> memory_stage.io.dcache
+	memory_stage.io.dcache <> dcache_arb.io.cpu
+	io.dcache <> dcache_arb.io.out
 	csr.io.inst := memory_stage.io.csr_inst
 	csr.io.isSret := memory_stage.io.csr_isSret
 	csr.io.isMret := memory_stage.io.csr_isMret
 	csr.io.excPC := memory_stage.io.csr_excPC
 	csr.io.jump_taken := memory_stage.io.csr_jump_taken
 	csr.io.jump_addr := memory_stage.io.alu_out
-	csr.io.alu_out := memory_stage.io.alu_out
+	csr.io.alu_out := memory_stage.io.csr_alu_out
 	csr.io.is_illegal := memory_stage.io.csr_is_illegal
 	csr.io.inst_misalign := memory_stage.io.csr_inst_misalign
 	csr.io.store_misalign := memory_stage.io.csr_store_misalign
@@ -268,6 +341,17 @@ class Datapath extends Module{
 	commit_fire := memory_stage.io.mw_pipe_reg.enable && !io.stall
 	io.commit_valid := commit_fire
 	io.commit_pc := memory_stage.io.mw_pipe_reg.pc
+	io.commit_wb_en := writeback_stage.io.regFile_wen
+	io.commit_wb_addr := writeback_stage.io.regFile_waddr
+	io.commit_wb_data := writeback_stage.io.regFile_wdata
+	io.trap_valid := csr.io.trap_valid
+	io.trap_cause := csr.io.trap_cause
+	io.trap_epc := csr.io.trap_epc
+	io.trap_tval := csr.io.trap_tval
+	io.store_valid := memory_stage.io.store_valid
+	io.store_addr := memory_stage.io.store_addr
+	io.store_data := memory_stage.io.store_data
+	io.store_mask := memory_stage.io.store_mask
 }
 
 class S011HD1P_X32Y2D128_BW extends BlackBox{
@@ -289,10 +373,23 @@ class myCPU extends Module{
 		val commit_inst = Output(UInt(32.W))
 		val commit_valid = Output(Bool())
 		val commit_pc = Output(UInt(64.W))
+		val commit_wb_en = Output(Bool())
+		val commit_wb_addr = Output(UInt(5.W))
+		val commit_wb_data = Output(UInt(64.W))
+		val trap_valid = Output(Bool())
+		val trap_cause = Output(UInt(64.W))
+		val trap_epc = Output(UInt(64.W))
+		val trap_tval = Output(UInt(64.W))
+		val store_valid = Output(Bool())
+		val store_addr = Output(UInt(64.W))
+		val store_data = Output(UInt(64.W))
+		val store_mask = Output(UInt(8.W))
 		val start = Output(Bool())
 		val stall = Output(Bool())
 		
 		val interrupt = Input(Bool())
+		val timer_interrupt = Input(Bool())
+		val soft_interrupt = Input(Bool())
 
 		//write address channel
 		val master_awready = Input(Bool())
@@ -442,6 +539,8 @@ class myCPU extends Module{
 	datapath.io.icache.cpu_response <> icache.io.cpu_response
 	datapath.io.dcache.cpu_response <> dcache.io.cpu_response
 	datapath.io.interrupt := io.interrupt
+	datapath.io.timer_interrupt := io.timer_interrupt
+	datapath.io.soft_interrupt := io.soft_interrupt
 	icache.io.flush	:= datapath.io.icache.flush
 	dcache.io.flush	:= datapath.io.dcache.flush
 	icache.io.accessType := datapath.io.icache.accessType
@@ -551,6 +650,17 @@ class myCPU extends Module{
 	io.commit_inst := datapath.io.commit_inst
 	io.commit_valid := datapath.io.commit_valid
 	io.commit_pc := datapath.io.commit_pc
+	io.commit_wb_en := datapath.io.commit_wb_en
+	io.commit_wb_addr := datapath.io.commit_wb_addr
+	io.commit_wb_data := datapath.io.commit_wb_data
+	io.trap_valid := datapath.io.trap_valid
+	io.trap_cause := datapath.io.trap_cause
+	io.trap_epc := datapath.io.trap_epc
+	io.trap_tval := datapath.io.trap_tval
+	io.store_valid := datapath.io.store_valid
+	io.store_addr := datapath.io.store_addr
+	io.store_data := datapath.io.store_data
+	io.store_mask := datapath.io.store_mask
 	io.pc_debug := datapath.io.pc
 	io.start := datapath.io.start
 	io.stall := datapath.io.stall

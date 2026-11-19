@@ -33,12 +33,14 @@ class StageSpec extends AnyFreeSpec with ChiselScalatestTester {
   def newMem() = mutable.Map[BigInt, BigInt]()
 
   // ------------------------------------------------------------------
-  // fake icache with one cycle latency: serves iTLB page-walk reads and
-  // instruction fetches; pending models an in-flight request
+  // fake caches with one cycle latency: the icache port serves instruction
+  // fetches, the ptw port (the data cache) the page-walk reads of the iTLB;
+  // pending and walk model an in-flight request on each port
   // ------------------------------------------------------------------
   class FetchMem(mem: mutable.Map[BigInt, BigInt], dataAt: BigInt => BigInt,
                  log: mutable.ArrayBuffer[BigInt]) {
     private var pending: Option[BigInt] = None
+    private var walk: Option[BigInt] = None
     def cycle(fetch: FetchStage): Unit = {
       val responding = pending.isDefined
       pending match {
@@ -49,9 +51,22 @@ class StageSpec extends AnyFreeSpec with ChiselScalatestTester {
         case None =>
           fetch.io.icache.cpu_response.ready.poke(false.B)
       }
+      val walking = walk.isDefined
+      walk match {
+        case Some(a) =>
+          fetch.io.ptw.cpu_response.data.poke(dataAt(a).U)
+          fetch.io.ptw.cpu_response.ready.poke(true.B)
+          walk = None
+        case None =>
+          fetch.io.ptw.cpu_response.ready.poke(false.B)
+      }
       if (!responding && fetch.io.icache.cpu_request.valid.peek().litToBoolean) {
         pending = Some(fetch.io.icache.cpu_request.addr.peek().litValue)
         log += pending.get
+      }
+      if (!walking && fetch.io.ptw.cpu_request.valid.peek().litToBoolean) {
+        walk = Some(fetch.io.ptw.cpu_request.addr.peek().litValue)
+        log += walk.get
       }
     }
   }
@@ -101,6 +116,10 @@ class StageSpec extends AnyFreeSpec with ChiselScalatestTester {
     fetch.io.satp.poke(satp(ASID, ROOT_PPN).U)
     fetch.io.icache.cpu_response.data.poke(0.U)
     fetch.io.icache.cpu_response.ready.poke(false.B)
+    fetch.io.ptw.cpu_response.data.poke(0.U)
+    fetch.io.ptw.cpu_response.ready.poke(false.B)
+    fetch.io.serial_redirect.poke(false.B)
+    fetch.io.serial_redirect_pc.poke(0x80000000L.U)
     fetch.reset.poke(true.B)
     fetch.clock.step()
     fetch.reset.poke(false.B)

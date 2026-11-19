@@ -18,6 +18,8 @@ class FetchStage extends Module{
 		val csr_trapVec = Input(UInt(64.W))
 		val csr_atomic = Input(Bool())
 		val csr_next_fetch = Input(UInt(64.W))
+		val serial_redirect = Input(Bool())
+		val serial_redirect_pc = Input(UInt(64.W))
 
 		val dcache_flush_tag = Input(Bool())
 
@@ -34,6 +36,7 @@ class FetchStage extends Module{
 		val jump_addr = Input(UInt(64.W))
 		
 		val icache = new CacheIO
+		val ptw = new CacheIO
 		val fd_pipe_reg = Output(new fetch_decode_pipeline_reg)
 		val icache_flush_tag = Output(Bool())
 
@@ -73,6 +76,7 @@ class FetchStage extends Module{
 		pc + 4.U,
 		IndexedSeq(
 			(io.csr_trap) -> io.csr_trapVec,
+			io.serial_redirect -> io.serial_redirect_pc,
 			// NOTE: the dcache/icache flush tag redirect is removed: when the
 			// stall drops before the tag clears, it would redirect pc BACK to
 			// em_pc+4 and re-execute already committed instructions
@@ -97,10 +101,14 @@ class FetchStage extends Module{
 	iTLB.io.sum := io.sum
 	iTLB.io.mxr := io.mxr
 	iTLB.io.wen := false.B 
+	iTLB.io.rw := false.B
 	iTLB.io.satp := io.satp
 	iTLB.io.va := next_pc
 	iTLB.io.mask := 0.U 
-	iTLB.io.cache_response <> io.icache.cpu_response
+	iTLB.io.cache_response.data := Mux(iTLB.io.fetch_request.valid,
+		io.icache.cpu_response.data, io.ptw.cpu_response.data)
+	iTLB.io.cache_response.ready := Mux(iTLB.io.fetch_request.valid,
+		io.icache.cpu_response.ready, io.ptw.cpu_response.ready)
 	//io.tlb_fault := iTLB.io.
 
 	//io.tlb_ready := iTLB.io.tlb_ready
@@ -131,11 +139,20 @@ class FetchStage extends Module{
 
 	io.icache.accessType := word.asUInt
 	io.icache.flush := icache_flush_tag
-	io.icache.cpu_request.addr := Mux(io.tlb_valid, iTLB.io.tlb_request.addr, next_pc)
-	io.icache.cpu_request.valid := Mux(io.tlb_valid, iTLB.io.tlb_request.valid , true.B) 
+	io.icache.cpu_request.addr := Mux(io.tlb_valid, iTLB.io.fetch_request.addr, next_pc)
+	io.icache.cpu_request.valid := Mux(io.tlb_valid, iTLB.io.fetch_request.valid, true.B) && !io.dcache_flush_tag
 	io.icache.cpu_request.data := 0.U 
 	io.icache.cpu_request.rw := false.B 
 	io.icache.cpu_request.mask := 0.U
+
+	io.ptw.accessType := double.asUInt
+	io.ptw.flush := false.B
+	io.ptw.cpu_request.addr := iTLB.io.tlb_request.addr
+	io.ptw.cpu_request.valid := io.tlb_valid && iTLB.io.tlb_request.valid &&
+								!iTLB.io.fetch_request.valid
+	io.ptw.cpu_request.data := 0.U
+	io.ptw.cpu_request.rw := false.B
+	io.ptw.cpu_request.mask := 0.U
 
 	when(io.flush_fd && !io.stall){
 		fd_pipe_reg.pc := "h80000000".U
