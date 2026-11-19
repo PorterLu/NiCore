@@ -6,6 +6,10 @@
  * copy-on-write, signals from faults, the timer and the atomic instructions.
  * It prints one line per check and powers the machine off, which ends the
  * simulation.
+ *
+ * The last check starts a virtual machine with KVM (kvm.c) and runs a second
+ * kernel in it. That guest has this program as its /init too, built with
+ * GUEST defined, and makes the same checks except for this last one.
  */
 typedef unsigned long size_t;
 
@@ -253,6 +257,10 @@ static int check_arithmetic(void)
 	       hash == 0x88690ca2ee4dd218ul;
 }
 
+#ifndef GUEST
+#include "kvm.c"
+#endif
+
 static const struct {
 	const char *name;
 	int (*run)(void);
@@ -265,6 +273,9 @@ static const struct {
 	{"signals", check_signals},
 	{"sleep", check_sleep},
 	{"arithmetic", check_arithmetic},
+#ifndef GUEST
+	{"guest", check_guest},
+#endif
 };
 
 void main(void)
@@ -272,7 +283,11 @@ void main(void)
 	const int total = sizeof(checks) / sizeof(checks[0]);
 	int passed = 0;
 
+#ifdef GUEST
+	print("\nNiCore Linux guest init reached\n");
+#else
 	print("\nNiCore Linux init reached\n");
+#endif
 	for (int i = 0; i < total; i++) {
 		const int ok = checks[i].run();
 		print(ok ? "PASS " : "FAIL ");

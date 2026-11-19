@@ -1,0 +1,41 @@
+/dts-v1/;
+
+/* The virtual machine that kvm.c creates: one hart, 32 MiB of RAM and the
+ * console, timer and power-off calls of the SBI that KVM implements. */
+/ {
+    #address-cells = <2>;
+    #size-cells = <2>;
+    compatible = "nicore,guest";
+    model = "NiCore KVM guest";
+
+    chosen {
+        bootargs = "console=hvc0 earlycon=sbi";
+    };
+
+    memory@80000000 {
+        device_type = "memory";
+        reg = <0x0 0x80000000 0x0 0x2000000>;
+    };
+
+    cpus {
+        #address-cells = <1>;
+        #size-cells = <0>;
+        /* the time of the guest counts like that of the host */
+        timebase-frequency = <10000000>;
+        cpu@0 {
+            device_type = "cpu";
+            reg = <0>;
+            status = "okay";
+            compatible = "riscv";
+            riscv,isa = "rv64ima_zicsr_zifencei";
+            riscv,isa-base = "rv64i";
+            riscv,isa-extensions = "i", "m", "a", "zicsr", "zifencei";
+            mmu-type = "riscv,sv39";
+            interrupt-controller {
+                compatible = "riscv,cpu-intc";
+                interrupt-controller;
+                #interrupt-cells = <1>;
+            };
+        };
+    };
+};

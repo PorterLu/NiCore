@@ -14,7 +14,7 @@
 
     memory@80000000 {
         device_type = "memory";
-        reg = <0x0 0x80000000 0x0 0x8000000>;
+        reg = <0x0 0x80000000 0x0 0x10000000>;
     };
 
     cpus {
@@ -27,9 +27,9 @@
             reg = <0>;
             status = "okay";
             compatible = "riscv";
-            riscv,isa = "rv64ima_zicsr_zifencei";
+            riscv,isa = "rv64imah_zicsr_zifencei";
             riscv,isa-base = "rv64i";
-            riscv,isa-extensions = "i", "m", "a", "zicsr", "zifencei";
+            riscv,isa-extensions = "i", "m", "a", "h", "zicsr", "zifencei";
             mmu-type = "riscv,sv39";
             clock-frequency = <100000000>;
             cpu_intc: interrupt-controller {
@@ -40,8 +40,10 @@
         };
     };
 
+    /* A 16550 with a FIFO of 128 bytes. It has no interrupt line, and the
+     * kernel then sends one FIFO per timer tick. */
     uart@10000000 {
-        compatible = "ns16550a";
+        compatible = "altr,16550-FIFO128", "ns16550a";
         reg = <0x0 0x10000000 0x0 0x100>;
         clock-frequency = <1843200>;
         current-speed = <115200>;
