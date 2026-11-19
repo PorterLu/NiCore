@@ -1,23 +1,45 @@
-VERILATOR = verilator
-TOP = Vnicore
+VERILATOR ?= verilator
+SBT ?= sbt
+# Use the system archiver: a GNU ar found first in PATH on macOS writes
+# archives that the macOS linker cannot read.
+AR := $(firstword $(wildcard /usr/bin/ar) ar)
 
-all: obj_dir/$(TOP)
+SCALA_SRCS := $(shell find ../src/main/scala -name '*.scala')
+RTL = build/nicore.v
+OBJ ?= obj_dir
+SIM = $(OBJ)/Vnicore
 
-obj_dir/Vnicore.mk: sim_main.cpp sram_model.v gpr_ptr.v ../nicore.v
-	$(VERILATOR) --cc --exe --public -Wno-fatal -Wno-WIDTHEXPAND -Wno-WIDTHTRUNC \
-		--top-module nicore -o $(TOP) sim_main.cpp sram_model.v gpr_ptr.v ../nicore.v
+VFLAGS = --cc --exe --build -j 0 -O3 --x-assign fast --x-initial fast \
+	-Wno-fatal -Wno-WIDTHEXPAND -Wno-WIDTHTRUNC \
+	-CFLAGS -O3 -LDFLAGS -ldl -MAKEFLAGS AR=$(AR) \
+	--top-module nicore --Mdir $(OBJ) -o Vnicore
+# make TRACE=1 OBJ=obj_trace builds a second simulator that can dump
+# waveforms (see sim_main.cpp)
+ifdef TRACE
+VFLAGS += --trace
+endif
 
-obj_dir/$(TOP): obj_dir/Vnicore.mk sim_main.cpp
-	$(MAKE) -C obj_dir -f Vnicore.mk -j 1 || true
-	cd obj_dir && rm -rf fixlib && mkdir fixlib && cd fixlib && \
-		/usr/bin/ar x ../Vnicore__ALL.a && /usr/bin/ar r ../Vnicore__ALL.a *.o && cd .. && \
-	c++ -Wl,-U,__Z15vl_time_stamp64v,-U,__Z13sc_time_stampv,-U,_vlog_startup_routines \
-		sim_main.o verilated.o verilated_threads.o Vnicore__ALL.a -pthread -o Vnicore
+all: $(SIM)
 
-run: obj_dir/$(TOP)
-	./obj_dir/$(TOP) firmware.bin
+# Chisel names the top module nicore_myCPU; the testbench expects nicore.
+$(RTL): $(SCALA_SRCS)
+	cd .. && $(SBT) 'runMain myCPU.Driver --target-dir soc/build'
+	sed 's/^module nicore_myCPU(/module nicore(/' build/myCPU.v > $@
+
+$(SIM): sim_main.cpp difftest.h sram_model.v gpr_ptr.v $(RTL)
+	$(VERILATOR) $(VFLAGS) sim_main.cpp sram_model.v gpr_ptr.v $(RTL)
+
+run: $(SIM)
+	./$(SIM) firmware.bin
+
+# The difftest reference: SUSTemu's own Makefile builds its objects and is
+# then asked to link them as a shared library.
+SUSTEMU = ../third_party/sustemu
+difftest:
+	$(MAKE) -C $(SUSTEMU)
+	$(MAKE) -C $(SUSTEMU) TARGET=$(abspath $(SUSTEMU))/build/sustemu-difftest.so LD='$(CXX) -shared'
 
 clean:
-	rm -rf obj_dir
+	rm -rf obj_dir obj_trace build
 
-.PHONY: run clean
+.PHONY: all run difftest clean

@@ -1,4 +1,6 @@
 obj_dir/
+obj_trace/
+build/
 *.bin
 !firmware.bin
 *.o
