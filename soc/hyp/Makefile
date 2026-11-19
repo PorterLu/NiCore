@@ -25,10 +25,13 @@ BUILD := build
 CC := $(CROSS_COMPILE)gcc
 OBJCOPY := $(CROSS_COMPILE)objcopy
 
-# norvc.h stands in for the compressed instructions NiCore does not have
+# norvc.h stands in for the compressed instructions NiCore does not have.
+# -O1: the tests read a record that their trap handlers fill in, and from -O2
+# on GCC 13 moves such a read before the access that traps when nothing is
+# printed in between.
 MARCH ?= rv64ima_zicsr
 COMPAT ?= -include norvc.h
-CFLAGS := -march=$(MARCH) -mabi=lp64 -mcmodel=medany -O2 -ffreestanding \
+CFLAGS := -march=$(MARCH) -mabi=lp64 -mcmodel=medany -O1 -ffreestanding \
 	-fno-builtin -fno-toplevel-reorder -D LOG_LEVEL=$(LOG_LEVEL) \
 	-I$(HYP_TESTS)/inc -I. $(COMPAT) -w
 
