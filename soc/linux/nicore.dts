@@ -1,0 +1,62 @@
+/dts-v1/;
+
+/* The system that soc/sim_main.cpp models around the core. */
+/ {
+    #address-cells = <2>;
+    #size-cells = <2>;
+    compatible = "nicore,soc";
+    model = "NiCore RV64";
+
+    chosen {
+        bootargs = "console=ttyS0,115200 earlycon";
+        stdout-path = "/uart@10000000";
+    };
+
+    memory@80000000 {
+        device_type = "memory";
+        reg = <0x0 0x80000000 0x0 0x8000000>;
+    };
+
+    cpus {
+        #address-cells = <1>;
+        #size-cells = <0>;
+        /* mtime advances once every 10 cycles of the 100 MHz core clock */
+        timebase-frequency = <10000000>;
+        cpu@0 {
+            device_type = "cpu";
+            reg = <0>;
+            status = "okay";
+            compatible = "riscv";
+            riscv,isa = "rv64ima_zicsr_zifencei";
+            riscv,isa-base = "rv64i";
+            riscv,isa-extensions = "i", "m", "a", "zicsr", "zifencei";
+            mmu-type = "riscv,sv39";
+            clock-frequency = <100000000>;
+            cpu_intc: interrupt-controller {
+                compatible = "riscv,cpu-intc";
+                interrupt-controller;
+                #interrupt-cells = <1>;
+            };
+        };
+    };
+
+    uart@10000000 {
+        compatible = "ns16550a";
+        reg = <0x0 0x10000000 0x0 0x100>;
+        clock-frequency = <1843200>;
+        current-speed = <115200>;
+    };
+
+    clint@2000000 {
+        compatible = "riscv,clint0";
+        reg = <0x0 0x02000000 0x0 0x10000>;
+        interrupts-extended = <&cpu_intc 3 &cpu_intc 7>;
+    };
+
+    /* writing 0x5555 here ends the simulation; OpenSBI uses it for the
+     * system reset calls of the kernel */
+    poweroff@100000 {
+        compatible = "sifive,test1", "sifive,test0", "syscon";
+        reg = <0x0 0x100000 0x0 0x1000>;
+    };
+};
